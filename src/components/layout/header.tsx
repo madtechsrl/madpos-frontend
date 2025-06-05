@@ -3,6 +3,8 @@
 import { useAuth } from "../../contexts/auth-context"
 import { useState } from "react"
 import { ROLES} from "../../types/roles"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faChevronDown, faSignOutAlt } from "@fortawesome/free-solid-svg-icons"
 
 type HeaderProps = {
   title: string
@@ -73,12 +75,12 @@ export function Header({ title }: HeaderProps) {
                 )}
               </div>
             </div>
-            <i className="fas fa-chevron-down text-secondary small"></i>
+            <i><FontAwesomeIcon icon={faChevronDown} /></i>
           </div>
 
           <div className={`dropdown-menu dropdown-menu-end ${showDropdown ? "show" : ""}`}>
             <button className="dropdown-item d-flex align-items-center" onClick={logout}>
-              <i className="fas fa-sign-out-alt me-2"></i>
+              <FontAwesomeIcon icon={faSignOutAlt} />
               Cerrar sesión
             </button>
           </div>

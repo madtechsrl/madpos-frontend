@@ -132,43 +132,7 @@ export const loginAPI = async (email: string, password: string) => {
 
 
 
-// export async function authenticateUser(email: string, password: string): Promise<User | null> {
-//     try {
-//         const loginResponse = await axios.post(api + "/v1/auth/sign-in", { email, password });
-//         const accessToken = loginResponse.data?.data?.accessToken || loginResponse.data?.accessToken || loginResponse.data?.token;
-    
-//         if (!accessToken) {
-//           throw new Error("No access token received from server");
-//         }
-    
-//         const profileResponse = await axios.get(api + "/v1/auth/profile", {
-//           params: { email },
-//           headers: { Authorization: `Bearer ${accessToken}` },
-//         });
-    
-//         const profileData = profileResponse.data?.data;
-    
-//         if (!profileData) {
-//           throw new Error("No profile data received");
-//         }
-    
-//         const user: User = {
-//           id: profileData.id,
-//           email: profileData.email,
-//           fullname: profileData.fullname,
-//           role: profileData.role,
-//           enabled: profileData.enabled,
-//           createdAt: profileData.createdAt,
-//           password: "",
-//         };
-    
-//         return user;
-//       } catch (error) {
-//         console.error("Error authenticating user:", error);
-//         handleError(error);
-//         return null;
-//       }
-// }
+
 
 
 

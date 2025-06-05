@@ -67,73 +67,8 @@ export default function UserManagement({ compact = false }: UserManagementProps)
     // Add more as needed
   };
   const role = mapUuidToRole(user?.role ?? "")
-  const roleConf = getRoleConfig(role)
-  
+  const roleConf = getRoleConfig(role)  
 
-
-  
-// Validate and refresh token
-// useEffect(() => {
-
-//   if(!token || !isAuthenticated) return;
-
-//   axiosInstance.get(`${BASE_URL}/v1/auth/profile`, {
-//     headers: { Authorization: `Bearer ${token}` },
-//     withCredentials: true,
-//   }).then((response) => {
-//     console.log("UserManagement: Token is valid", response.data);
-//   }).catch((err) => {
-//     console.error("UserManagement: Token validation failed", err);
-//     localStorage.removeItem("token");
-//   })
-//   async function validateAndRefreshToken() {
-//     if (!token || !isAuthenticated) {
-//       // console.log("UserManagement: No token or not authenticated, skipping token validation");
-//       return;
-
-
-//     }
-    
-//     try {
-//       console.log("UserManagement: Validating token");
-//       // Call an endpoint to validate the token (e.g., /v1/auth/profile)
-//       await axiosInstance.get(`${BASE_URL}/v1/auth/profile`, {
-//         headers: { Authorization: `Bearer ${token}` },
-//         withCredentials: false,
-//       });
-//       console.log("UserManagement: Token is valid");
-//     } catch (err: any) {
-//       console.error("UserManagement: Token validation failed", err);
-//       if (err.response?.status === 401) {
-//         console.log("UserManagement: Token expired, attempting to refresh");
-//         try {
-//           const response = await axiosInstance.post(`${BASE_URL}/refresh-token`, null, {
-//             withCredentials: true, // Send jwt cookie
-//           });
-//           const { accessToken } = response.data;
-//           if (!accessToken) {
-//             throw new Error("No access token received from refresh");
-//           }
-//           console.log("UserManagement: Token refreshed successfully", accessToken);
-//           localStorage.setItem("token", accessToken);
-//           setToken(accessToken);
-//         } catch (refreshErr: any) {
-//           console.error("UserManagement: Token refresh failed", refreshErr);
-//           localStorage.removeItem("token");
-//           localStorage.removeItem("user");
-//           navigate("/");
-//         }
-//       } else {
-//         console.error("UserManagement: Unexpected error during token validation", err);
-//       }
-//     }
-//   }
-
-//   validateAndRefreshToken();
-//   // Run every 5 minutes to check token validity
-//   const interval = setInterval(validateAndRefreshToken, 5 * 60 * 1000);
-//   return () => clearInterval(interval);
-// }, [token, isAuthenticated,]);
 
 useEffect(() => {
   if (!token || !isAuthenticated) return;
@@ -357,98 +292,7 @@ const userCounts = {
   propietario: Array.isArray(users) ? users.filter(user => user.role === ROLES.PROPIETARIO).length : 0,
 };
 
-  // if (!isAuthenticated) {
-  //   return null; // Redirect handled in useEffect
-  // }
-
-  // return (
-  //   <div className="container p-4">
-  //     <div className="d-flex justify-content-between align-items-center mb-4">
-  //       <h2 className="fw-bold">Gestión de Usuarios</h2>
-  //       <button
-  //         className="btn btn-success"
-  //         onClick={handleCreateUser}
-  //         disabled={loading}
-  //       >
-  //         <FontAwesomeIcon icon={faPlus} className="me-2" />
-  //         Crear Usuario
-  //       </button>
-  //     </div>
-
-  //     {loading && (
-  //       <div className="text-center p-4">
-  //         <FontAwesomeIcon icon={faSpinner} spin size="2x" />
-  //         <p className="mt-2">Cargando usuarios...</p>
-  //       </div>
-  //     )}
-
-  //     {error && (
-  //       <div className="alert alert-danger" role="alert">
-  //         {error}
-  //         <button className="btn btn-outline-danger btn-sm ms-3" onClick={()=> window.location.reload()}>
-  //           Reintentar
-  //         </button>
-  //       </div>
-  //     )}
-
-  //     {!loading && !error && (
-  //       <>
-  //         {users.length === 0 ? (
-  //           <div className="alert alert-info" role="alert">
-  //             No hay usuarios disponibles.
-  //           </div>
-  //         ) : (
-  //           <div className="table-responsive">
-  //             <table className="table table-striped table-hover">
-  //               <thead className="table-dark">
-  //                 <tr>
-  //                   <th scope="col">ID</th>
-  //                   <th scope="col">Nombre Completo</th>
-  //                   <th scope="col">Correo</th>
-  //                   <th scope="col">Rol</th>
-  //                   <th scope="col">Estado</th>
-  //                   <th scope="col">Creado</th>
-  //                 </tr>
-  //               </thead>
-  //               <tbody>                
-  //                 {users.map((u) => (
-  //                   console.log("UserManagement: Rendering user",{id: u.id, role: u.role, displayName: roleDisplayNames[u.role as keyof typeof roleDisplayNames]}),                  
-  //                   <tr key={u.id}>
-  //                     <td>{u.id}</td>
-  //                     <td>{u.fullname}</td>
-  //                     <td>{u.email}</td>
-  //                     <td>
-  //                       {typeof u.role === "string" && u.role in roleDisplayNames
-  //                         ? roleDisplayNames[u.role as keyof typeof roleDisplayNames]
-  //                         : `Rol desconocido (UUID: ${u.role || 'undefined'})`}
-  //                     </td>
-  //                     <td>
-  //                       <span
-  //                         className={`badge ${
-  //                           u.enabled ? "bg-success" : "bg-secondary"
-  //                         }`}
-  //                       >
-  //                         {u.enabled ? "Activo" : "Inactivo"}
-  //                       </span>
-  //                     </td>
-  //                     <td>
-  //                       {new Date(u.createdAt).toLocaleDateString("es-DO", {
-  //                         year: "numeric",
-  //                         month: "long",
-  //                         day: "numeric",
-  //                       })}
-  //                     </td>
-  //                   </tr>
-  //                 ))}
-  //               </tbody>
-  //             </table>
-  //           </div>
-  //         )}
-  //       </>
-  //     )}
-  //   </div>
-  // );
-
+ 
 
   ///////////////test2////
   if (isloading && users.length === 0) {
@@ -462,17 +306,7 @@ const userCounts = {
     )
   }
 
-  // if (error) {
-  //   return (
-  //     <div className="alert alert-danger" role="alert">
-  //       {error}
-  //       <button className="btn btn-outline-danger btn-sm ms-3" onClick={() => window.location.reload()}>
-  //         Reintentar
-  //       </button>
-  //     </div>
-  //   )
-  // }
-   
+
   return (
     <div className="container-fluid px-0">
       {!compact && (        

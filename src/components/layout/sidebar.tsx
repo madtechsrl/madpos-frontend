@@ -3,8 +3,6 @@ import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "../../contexts/auth-context"
 import { ROLES } from "../../types/roles"
 import { Tooltip } from "react-tooltip"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faBoxOpen, faPlus, faSearch, faFilter, faDownload } from "@fortawesome/free-solid-svg-icons"
 
 
 
@@ -12,7 +10,7 @@ import { faBoxOpen, faPlus, faSearch, faFilter, faDownload } from "@fortawesome/
 const menuItems = [
   {
     href: "/dashboard",
-    icon: "fa-check-circle",
+    icon: "fa-light fa-shop",
     label: "Vender",
     roles: [ROLES.ADMIN, ROLES.CAJERO, ROLES.ALMACENISTA, ROLES.PROPIETARIO, ROLES.USER],
     highlight: true,
@@ -37,13 +35,13 @@ const menuItems = [
     roles: [ROLES.ADMIN, ROLES.CAJERO, ROLES.ALMACENISTA, ROLES.PROPIETARIO, ROLES.USER],
     tooltip: "Productos",
   },
-  {
-    href: "/catalogo",
-    icon: "fa-list",
-    label: "Catálogo",
-    roles: [ROLES.ADMIN, ROLES.CAJERO],
-    tooltip: "Catálogo",
-  },
+  // {
+  //   href: "/catalogo",
+  //   icon: "fa-list",
+  //   label: "Catálogo",
+  //   roles: [ROLES.ADMIN, ROLES.CAJERO],
+  //   tooltip: "Catálogo",
+  // },
   {
     href: "/clientes",
     icon: "fa-users",
@@ -64,12 +62,13 @@ const menuItems = [
   //   label: "Finanzas",
   //   roles: [userRoles.administrador, userRoles.propietario],
   // },
-  // {
-  //   href: "/estadisticas",
-  //   icon: "fa-chart-bar",
-  //   label: "Estadísticas",
-  //   roles: [userRoles.administrador, userRoles.propietario],
-  // },
+  {
+    href: "/estadisticas",
+    icon: "fa-light fa-chart-simple",
+    label: "Estadísticas",
+    roles: [ROLES.ADMIN, ROLES.PROPIETARIO],
+    tooltip: "Estadísticas",
+  },
   // {
   //   href: "/usuarios",
   //   icon: "fa-user-friends",

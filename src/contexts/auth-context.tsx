@@ -113,16 +113,27 @@ const loginUser = async (email: string, password: string) => {
   }
 };
 
-  const logout = () => {
-    localStorage.removeItem("token")
-    localStorage.removeItem("user")    
+const logout = async () => {
+  try {
+    await axios.post(`${api}/v1/auth/sign-out`, null, {
+      withCredentials: true,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+
+    // Clear client-side data after successful logout
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
     setUser(null);
-    setIsAuthenticated(false); 
-    axios.post(api + "/v1/auth/sign-out").catch((error)=>{
-      console.error("Logout error:", error);
-    })   
-    navigate("/")
+    setIsAuthenticated(false);
+    navigate("/");
+  } catch (error) {
+    console.error("Logout error:", error);
   }
+};
+
 
   // Helper function to check if user has required role(s)
   const hasPermission = (requiredRole: string | string[]): boolean => {
