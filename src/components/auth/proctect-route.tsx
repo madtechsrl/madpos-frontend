@@ -2,8 +2,8 @@
 
 import type React from "react"
 import { Navigate } from "react-router-dom"
-import { useAuth } from "../contexts/auth-context"
-import Loading from "../loading"
+import { useAuth } from "../../contexts/auth-context"
+import Loading from "../../loading"
 
 type ProtectedRouteProps = {
   children: React.ReactNode
@@ -22,7 +22,7 @@ export default function ProtectedRoute({ children, requiredRoles }: ProtectedRou
   }
 
   // Check role-based access if requiredRoles is provided
-  if (requiredRoles && user && !requiredRoles.includes(user.role)) {
+  if (requiredRoles && user && user.role && !requiredRoles.includes(user.role)) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-100">
         <div className="text-center">

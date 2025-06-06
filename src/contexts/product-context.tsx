@@ -11,6 +11,8 @@ export type Product = {
   image?: string
   bgColor?: string
   textColor?: string
+  stock?: number
+  minStock?: number
 }
 
 type ProductContextType = {

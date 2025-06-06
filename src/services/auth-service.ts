@@ -105,14 +105,3 @@ export const loginAPI = async (email: string, password: string) => {
     throw error;
   }
 };
-
-
-
-
-
-
-
-
-
-
-

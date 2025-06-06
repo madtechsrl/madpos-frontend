@@ -30,7 +30,7 @@ export default function NewProductPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Product data:", formData);
-    navigate("/products");
+    navigate("/productos");
   };
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -40,7 +40,7 @@ export default function NewProductPage() {
   return (
     <div className="container py-4">
       <div className="mb-3">
-        <button className="btn btn-outline-secondary" onClick={() => navigate("/products")}> 
+        <button className="btn btn-outline-secondary" onClick={() => navigate("/productos")}> 
           <FontAwesomeIcon icon={faArrowLeft} className="me-2" /> Volver
         </button>
       </div>

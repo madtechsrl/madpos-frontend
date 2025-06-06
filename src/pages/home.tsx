@@ -1,6 +1,6 @@
 import { useAuth } from "../contexts/auth-context"
 import { Header } from "../components/layout/header"
-import { CartSidebar } from "../components/productos/cart-sidebar"
+import { CartSidebar } from "../components/ventas/cart-sidebar"
 import { SearchBar } from "../components/layout/search-bar"
 import { ProductGrid } from "../components/productos/product-grid"
 import { ROLES } from "../types/User"

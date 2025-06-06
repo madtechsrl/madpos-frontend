@@ -1,11 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { CartItem } from "../productos/cart-item"
+import { CartItem } from "../ventas/cart-item"
 import { PaymentMethods } from "../pagos/payment-methods"
 import { useCart } from "../../contexts/cart-context"
 import { useUser } from "../../contexts/user-context"
 import { formatCurrency } from "../../lib/utils"
+
+const TAX_RATE = 0.18
 
 export function CartSidebar() {
   const { cart, clearCart, cartTotal, isCartOpen, setIsCartOpen, addPaymentRecord } = useCart()
@@ -13,7 +15,18 @@ export function CartSidebar() {
   const [showPaymentOptions, setShowPaymentOptions] = useState(false)
   const [paymentComplete, setPaymentComplete] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null)
+  // const [applyDiscount, setApplyDiscount] = useState(false)
+  const [discountInput, setDiscountInput] = useState("0")
+  const [applyTax, setApplyTax] = useState(false)
 
+
+  const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
+  const rawDiscount = Number(discountInput)
+  const discountRate = isNaN(rawDiscount) ? 0 : Math.min(Math.max(rawDiscount, 0), 100) / 100  
+  const discountAmount = subtotal * (discountRate)
+  const taxAmount = applyTax ? (subtotal - discountAmount) * TAX_RATE : 0
+  const total = subtotal - discountAmount + taxAmount 
+  
   // Process checkout
   const processCheckout = () => {
     if (cart.length === 0) return
@@ -83,14 +96,57 @@ export function CartSidebar() {
                       <CartItem key={item.id} item={item} />
                     ))}
                   </div>
+
+
                   <div className="border-top p-3">
+                  <div className="mb-2">
+                    <label className="form-check-label small">Descuento(%)</label>
+                      
+                      <input
+                        className="form-control form-control-sm"
+                        min={0}
+                        max={100}
+                        type="number"
+                        value={discountInput}
+                        onChange={(e) => setDiscountInput(e.target.value)}
+                      />
+                       <div className="form-check mb-2">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id="applyTax"
+                        checked={applyTax}
+                        onChange={() => setApplyTax(!applyTax)}
+                      />
+                      <label className="form-check-label small" htmlFor="applyTax">
+                        Aplicar ITBIS (18%)
+                      </label>
+                    </div>
+
+                    </div>
                     <div className="d-flex justify-content-between mb-2">
                       <span className="text-secondary">Subtotal:</span>
-                      <span className="fw-medium">{formatCurrency(cartTotal)}</span>
+                      <span className="fw-medium">{formatCurrency(subtotal)}</span>
                     </div>
+
+                     {parseFloat(discountInput) > 0 && (
+                      <div className="d-flex justify-content-between mb-2 text-success">
+                        <span className="text-secondary">Desc ( {discountInput}%):</span>
+                        <span className="fw-medium">-{formatCurrency(discountAmount)}</span>
+                      </div>
+                    )} 
+
+                    {applyTax && (
+                      <div className="d-flex justify-content-between mb-2">
+                      <span className="text-secondary">ITBIS (18%):</span>
+                      <span className="fw-medium">{formatCurrency(taxAmount)}</span>
+                    </div>
+                    )}
+
+                    
                     <div className="d-flex justify-content-between mb-3">
                       <span className="text-secondary">Total:</span>
-                      <span className="fw-bold fs-5">{formatCurrency(cartTotal)}</span>
+                      <span className="fw-bold fs-5">{formatCurrency(total)}</span>
                     </div>
                   </div>
                 </>
@@ -102,7 +158,7 @@ export function CartSidebar() {
                 <i className="fas fa-shopping-cart fa-2x text-secondary"></i>
               </div>
               <h3 className="fw-medium fs-5 mb-1">Tu carrito está vacío.</h3>
-              <p className="text-secondary small">Clica en los artículos para añadirlos a la venta.</p>
+              <p className="text-secondary small">Click en los artículos para añadirlos a la venta.</p>
             </div>
           )}
         </>

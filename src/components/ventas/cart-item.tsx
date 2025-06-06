@@ -8,6 +8,8 @@ type CartItemProps = {
     price: number
     quantity: number
     image?: string
+    tax?: number
+    discount?: number
   }
 }
 
