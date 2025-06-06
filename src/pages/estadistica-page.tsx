@@ -1,22 +1,23 @@
+
 import { useAuth } from "../contexts/auth-context"
-import ProductManagement from "../components/productos/Product-Management"
+import Estadistica from "../components/analitica/estadistica"
 import Sidebar from "../components/layout/sidebar"
 import { ROLES } from "../types/roles"
 import { Header } from "../components/layout/header"
 
-export default function ProductosPage() {
+export default function EstadisticaPage() {
   const { hasPermission } = useAuth()
-  const isAdmin = hasPermission([ROLES.ADMIN, ROLES.PROPIETARIO])
+  const isAdmin = hasPermission(ROLES.ADMIN)
 
   return (
     <>   
       {isAdmin && ( 
         <div>          
-          <Header title="Productos" />        
+          <Header title="Estadísticas" />        
           <div className="d-flex flex-grow-1 overflow-hidden">
-            <Sidebar />
+          <Sidebar />
             <div className="flex-grow-1  p-4" style={{transition: "margin-left 0.3s ease"}}>
-              <ProductManagement/>                     
+              <Estadistica />                     
             </div>
           </div>
         </div>

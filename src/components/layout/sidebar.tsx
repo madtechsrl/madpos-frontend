@@ -14,7 +14,7 @@ const menuItems = [
     label: "Vender",
     roles: [ROLES.ADMIN, ROLES.CAJERO, ROLES.ALMACENISTA, ROLES.PROPIETARIO, ROLES.USER],
     highlight: true,
-    tooltip: "Vender",
+   
   },
   // {
   //   href: "/demo",
@@ -63,7 +63,7 @@ const menuItems = [
   //   roles: [userRoles.administrador, userRoles.propietario],
   // },
   {
-    href: "/estadisticas",
+    href: "/stats",
     icon: "fa-light fa-chart-simple",
     label: "Estadísticas",
     roles: [ROLES.ADMIN, ROLES.PROPIETARIO],

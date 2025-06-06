@@ -6,7 +6,7 @@ import { useAuth } from "../../contexts/auth-context"
 import {  type Transaction } from "../../types/transacion"
 import { TransactionFiltersComponent } from "./transaction-filters"
 import { TransactionSummaryComponent } from "./transaction-summary"
-import {  type UserRole, type UserRoleId, getRoleById } from "../../types/User"
+import {  type UserRoleId, getRoleById } from "../../types/User"
 
 
 export default function TransactionsPage() {

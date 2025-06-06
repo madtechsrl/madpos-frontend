@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import { Suspense , lazy} from "react"
 import { AppProvider } from "./contexts/app-provider"
-import { AuthProvider } from "./contexts/auth-context"
+import { AuthProvider} from "./contexts/auth-context"
 import { UserProvider } from "./contexts/user-context"
 // import ProtectedRoute from "./components/proctect-route"
 import Loading from "./loading"
@@ -16,9 +16,11 @@ const ProductsPage = lazy(() => import("./pages/productos-page"))
 const Transaciones = lazy(() => import("./pages/transaciones-page"))
 const AddProduct = lazy(() => import("./components/productos/addProduct"))
 const UsersPage = lazy(() => import("./pages/user"))
+const StatsPage = lazy(() => import("./pages/estadistica-page"))
 // const NotFoundPage = lazy(() => import("./pages/not-found"))
 
 function App() {
+ 
   return (
     <Router>
       <AuthProvider>
@@ -32,7 +34,8 @@ function App() {
               <Route path="/transaciones" element={<Transaciones />} />
               <Route path="/productos" element={<ProductsPage />} />
               <Route path="/productos/addProduct" element={<AddProduct />} />
-              {/* Protected routes */}
+              <Route path="/stats" element={<StatsPage />} />
+                {/* Protected routes */}
               <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route index element={<HomePage />} />
                 {/* <Route path="productos" element={<ProductsPage />} />

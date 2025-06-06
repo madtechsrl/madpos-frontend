@@ -2,12 +2,11 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 import { useNavigate } from "react-router-dom"
 import type { User } from "../types/User"
 import { loginAPI } from "../services/auth-service"
-import axios from "axios";
 import { createUser } from "../services/user-service"
 import { ROLES } from "../types/roles" 
-// import api from "../lib/api";
+import api from "../lib/api";
 
-const api = "http://localhost:8184"
+
 
 type AuthContextType = {
   user: User | null
@@ -40,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const parserUser = JSON.parse(storeUser);        
       setUser(parserUser);
       setToken(StoredToken);
-      axios.defaults.headers.common["Authorization"] = `Bearer ${StoredToken}`;
+      api.defaults.headers.common["Authorization"] = `Bearer ${StoredToken}`;
     }
     setIsLoading(false);
   }, []);
@@ -103,7 +102,7 @@ const loginUser = async (email: string, password: string) => {
       localStorage.setItem("user", JSON.stringify(userObj));       
       setUser(userObj);      
       setToken(response.accessToken);
-      axios.defaults.headers.common["Authorization"] = `Bearer ${response.accessToken}`; 
+      api.defaults.headers.common["Authorization"] = `Bearer ${response.accessToken}`; 
       // console.log("loginUser: axios.defaults.headers.common", axios.defaults.headers.common);
       navigate("/dashboard");
     }
@@ -113,26 +112,15 @@ const loginUser = async (email: string, password: string) => {
   }
 };
 
-const logout = async () => {
-  try {
-    await axios.post(`${api}/v1/auth/sign-out`, null, {
-      withCredentials: true,
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    });
 
-    // Clear client-side data after successful logout
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
 
-    setUser(null);
-    setIsAuthenticated(false);
-    navigate("/");
-  } catch (error) {
-    console.error("Logout error:", error);
-  }
-};
+const logout = () => {
+  localStorage.removeItem("user")
+  document.cookie = "auth-token=; path=/; max-age=0"
+  document.cookie = "user-role=; path=/; max-age=0"
+  setIsAuthenticated(false)
+  navigate("/")
+}
 
 
   // Helper function to check if user has required role(s)

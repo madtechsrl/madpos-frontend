@@ -12,7 +12,7 @@ import { Link } from "react-router-dom";
 // import axios from "axios";
 import axiosInstance from "../../lib/api";
 
- const BASE_URL = "http://localhost:8184"
+//  const BASE_URL = "http://localhost:8184"
 
 
 
@@ -55,26 +55,25 @@ export default function UserManagement({ compact = false }: UserManagementProps)
   const [isloading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const navigate = useNavigate();
-  const roleBadgeColors: { [key: string]: string } = {
-    ADMIN: "bg-primary",
-    CAJERO: "bg-info",
-    MANAGER: "bg-success",
-    SUPERVISOR: "bg-warning",
-    EMPLOYEE: "bg-secondary",
-    CUSTOMER: "bg-dark",
-    GUEST: "bg-light text-dark",
-    OTHER: "bg-secondary",
-    // Add more as needed
-  };
+  // const roleBadgeColors: { [key: string]: string } = {
+  //   ADMIN: "bg-primary",
+  //   CAJERO: "bg-info",
+  //   MANAGER: "bg-success",
+  //   SUPERVISOR: "bg-warning",
+  //   EMPLOYEE: "bg-secondary",
+  //   CUSTOMER: "bg-dark",
+  //   GUEST: "bg-light text-dark",
+  //   OTHER: "bg-secondary",
+  //   // Add more as needed
+  // };
   const role = mapUuidToRole(user?.role ?? "")
   const roleConf = getRoleConfig(role)  
 
 
 useEffect(() => {
   if (!token || !isAuthenticated) return;
-
   axiosInstance.get('/v1/auth/profile')
-    .then(() => console.log("UserManagement: Profile valid"))
+    // .then(() => console.log("UserManagement: Profile valid"))
     .catch(err => console.error("Profile fetch failed", err));
 }, [token, isAuthenticated]);
 
@@ -83,7 +82,7 @@ useEffect(() => {
 useEffect(() => {
   async function loadUsers() {
     if (!isAuthenticated) {
-      console.log("UserManagement: No autenticado, redirigiendo a /login");
+      // console.log("UserManagement: No autenticado, redirigiendo a /login");
       navigate("/");
       return;
     }
@@ -96,23 +95,23 @@ useEffect(() => {
     }
 
     try {
-      console.log("UserManagement: Obteniendo usuarios");
-      const response = await axiosInstance.get(`${BASE_URL}/v1/users`, {
+      // console.log("UserManagement: Obteniendo usuarios");
+      const response = await axiosInstance.get("/v1/users", {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
       const fetchedUsers: User[] = response.data?.data?.records || [];
-      console.log("UserManagement: Usuarios obtenidos", fetchedUsers);
-      if (fetchedUsers.length > 0) {
-        console.log("UserManagement: First user structure", {
-          id: fetchedUsers[0].id,
-          role: fetchedUsers[0].role,
-          fullname: fetchedUsers[0].fullname,
-          email: fetchedUsers[0].email,
-          enabled: fetchedUsers[0].enabled,
-          createdAt: fetchedUsers[0].createdAt,
-        });
-      }
+      // console.log("UserManagement: Usuarios obtenidos", fetchedUsers);
+      // if (fetchedUsers.length > 0) {
+      //   console.log("UserManagement: First user structure", {
+      //     id: fetchedUsers[0].id,
+      //     role: fetchedUsers[0].role,
+      //     fullname: fetchedUsers[0].fullname,
+      //     email: fetchedUsers[0].email,
+      //     enabled: fetchedUsers[0].enabled,
+      //     createdAt: fetchedUsers[0].createdAt,
+      //   });
+      // }
       setUsers(fetchedUsers);
       setError(null);
     } catch (err: any) {
@@ -135,55 +134,43 @@ useEffect(() => {
   loadUsers();
 }, [isAuthenticated, hasPermission, navigate, user, token]);
 
-  
-  
-  // useEffect(() => {
-  //   if (activeTab !== "all"){
-  //     setUsers(users.filter((user)=> user.role === activeTab));
-  //   }
-  // }, [activeTab]);
+    
+ 
 
 
-  const filteredUsers = Array.isArray(users) ? users.filter((user) => {
-    const userRoleDisplayName = typeof user.role === "string" && user.role in roleDisplayNames
-      ? roleDisplayNames[user.role as keyof typeof roleDisplayNames]
-      : user.role || "";
-    const matchesRole = activeTab === "all" || userRoleDisplayName === activeTab;
-    const matchesSearch = 
-      user.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      userRoleDisplayName.toLowerCase().includes(searchTerm.toLowerCase());
-    console.log("UserManagement: Filtering user", {
-      userId: user.id,
-      userRole: user.role,
-      userRoleDisplayName,
-      activeTab,
-      matchesRole,
-      searchTerm,
-      matchesSearch,
-    });
-    return matchesRole && matchesSearch;
-  }) : [];
+const filteredUsers = Array.isArray(users) ? users.filter((user) => {
+  const matchesRole = 
+  activeTab === "all" ||   
+  activeTab === "administradores" && user.role === ROLES.ADMIN ||
+  activeTab === "propietarios" && user.role === ROLES.PROPIETARIO ||
+  activeTab === "cajeros" && user.role === ROLES.CAJERO ||
+  activeTab === "usuarios" && user.role === ROLES.USER;
+  const matchesSearch =
+    user.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase());
+  return matchesRole && matchesSearch;
+}) : [];
 
  const displayedUsers = compact ? filteredUsers.slice(0, 5) : filteredUsers;
 
  
 
  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-  const { name, value } = e.target;
   if (!currentUser) return;
-  setCurrentUser({
-    ...currentUser,
-    [name]: value,
-    // Ensure required fields are never undefined
-    id: currentUser.id ?? "",
-    email: currentUser.email ?? "",
-    fullname: currentUser.fullname ?? "",
-    password: currentUser.password ?? "",
-    role: currentUser.role ?? "",
-    enabled: typeof currentUser.enabled === "boolean" ? currentUser.enabled : true,
-    createdAt: currentUser.createdAt ?? new Date().toISOString(),
-  });
+  const { name, value } = e.target;
+
+  if(name === "enabled"){
+    setCurrentUser({
+      ...currentUser,
+      enabled: value === "true",
+    });
+    return;
+  }else{
+    setCurrentUser({
+      ...currentUser,
+      [name]: value,
+    });
+  }  
  };
 
 
@@ -290,6 +277,7 @@ const userCounts = {
   cajero: Array.isArray(users) ? users.filter(user => user.role === ROLES.CAJERO).length : 0,
   almacenista: Array.isArray(users) ? users.filter(user => user.role === ROLES.ALMACENISTA).length : 0,
   propietario: Array.isArray(users) ? users.filter(user => user.role === ROLES.PROPIETARIO).length : 0,
+  usuario: Array.isArray(users) ? users.filter(user => user.role === ROLES.USER).length : 0,
 };
 
  
@@ -360,34 +348,47 @@ const userCounts = {
       )}
 
 <div className="mb-4">
-        <div className="btn-group" role="group" aria-label="Filtrar usuarios por rol">
+<div className="nav nav-pills mb-3" role="tablist">
+          <li className="nav-item" role="presentation">
           <button
             type="button"
-            className={`btn ${activeTab === "all" ? "btn-secondary" : "btn-outline-secondary"}`}
+            className={`nav-link ${activeTab === "all" ? "active" : ""}`}
             onClick={() => setActiveTab("all")}
           >
             Todos <span className="badge bg-light text-dark ms-1">{userCounts.all}</span>
           </button>
+          </li>
+          <li className="nav-item" role="presentation">
           <button
             type="button"
-            className={`btn ${activeTab === roleDisplayNames.PROPIETARIO ? "btn-danger" : "btn-outline-danger"}`}
-            onClick={() => setActiveTab(roleDisplayNames.PROPIETARIO)}
+            className={`nav-link ${activeTab === 'propietarios' ? "active" : ""}`}
+            onClick={() => setActiveTab('propietarios')}
           >
             Propietarios <span className="badge bg-light text-dark ms-1">{userCounts.propietario}</span>
           </button>
+          </li>
+          <li className="nav-item" role="presentation">
           <button
             type="button"
-            className={`btn ${activeTab === roleDisplayNames.ADMIN ? "btn-primary" : "btn-outline-primary"}`}
-            onClick={() => setActiveTab(roleDisplayNames.ADMIN)}
+            className={`nav-link ${activeTab === 'administradores' ? "active" : ""}`}
+            onClick={() => setActiveTab('administradores')}
           >
             Administradores <span className="badge bg-light text-dark ms-1">{userCounts.admin}</span>
           </button>
+          </li>
           <button
             type="button"
-            className={`btn ${activeTab === roleDisplayNames.CAJERO ? "btn-secondary" : "btn-outline-secondary"}`}
-            onClick={() => setActiveTab(roleDisplayNames.CAJERO)}
+            className={`nav-link ${activeTab === 'cajeros' ? "active" : ""}`}
+            onClick={() => setActiveTab('cajeros')}
           >
             Cajeros <span className="badge bg-light text-dark ms-1">{userCounts.cajero}</span>
+          </button>
+          <button
+            type="button"
+            className={`nav-link ${activeTab === 'usuarios' ? "active" : ""}`}
+            onClick={() => setActiveTab('usuarios')}
+          >
+            Usuarios <span className="badge bg-light text-dark ms-1">{userCounts.usuario}</span>
           </button>
         </div>
       </div>
