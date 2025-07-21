@@ -13,6 +13,16 @@ export type Product = {
   textColor?: string
 }
 
+export type Categories = {
+  id: string
+  name: string
+}
+
+export type costType = {
+  cost: number
+  unit: string
+  currentStock: number  
+}
 type ProductContextType = {
   products: Product[]
   filteredProducts: Product[]
