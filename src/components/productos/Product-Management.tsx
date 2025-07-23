@@ -130,7 +130,7 @@ export default function ProductsPage() {
           <button className="btn btn-outline-primary">
             <FontAwesomeIcon icon={faBoxOpen} />
           </button>
-          <a href="/productos/addProduct" className="btn btn-primary">
+          <a href="/pages/add-products" className="btn btn-primary">
             <FontAwesomeIcon icon={faPlus} className="me-2" />
             Producto
           </a>
