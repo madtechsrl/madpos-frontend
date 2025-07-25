@@ -18,6 +18,7 @@ const Transaciones = lazy(() => import("./pages/transaciones-page"))
 const AddProduct = lazy(() => import("./pages/add-products"))
 const UsersPage = lazy(() => import("./pages/user"))
 const StatsPage = lazy(() => import("./pages/estadistica-page"))
+const Configuraciones = lazy(() => import("./pages/configuraciones"))
 
 // const NotFoundPage = lazy(() => import("./pages/not-found"))
 
@@ -37,6 +38,7 @@ function App() {
               <Route path="/productos" element={<ProductsPage />} />
               <Route path="/pages/add-products" element={<AddProduct />} />
               <Route path="/stats" element={<StatsPage />} />
+              <Route path="/configuraciones" element={<Configuraciones />} />
                 {/* Protected routes */}
               <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route index element={<HomePage />} />

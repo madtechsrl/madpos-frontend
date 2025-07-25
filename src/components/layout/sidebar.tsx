@@ -85,7 +85,7 @@ const menuItems = [
   {
     href: "/configuraciones",
     icon: "fa-cog",
-    label: "Configuraciones",
+    label: "Configuracione",
     roles: [ROLES.ADMIN],
     tooltip: "Configuraciones",
   },
