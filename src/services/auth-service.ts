@@ -3,99 +3,48 @@ import type { User } from "../types/User";
 import { ROLES } from '../types/roles';
 import axiosInstance  from '../lib/api';
 
-// Define types for authentication
-
-
-export const registerAPI = async(fullname: string, email: string,  role: string, enable:string)=>{
-    try {
-        const response = await axiosInstance.post("/v1/auth/sign-up", {
-            fullname,
-            email,
-            role,
-            enable  
-        });
-       
-        const datawithToken = {
-            token: `fake-jwt-token-${Date.now()}`,
-            userName: response.data.userName,
-            email: response.data.email,            
-        };
-        // console.log("datawithToken:", datawithToken);
-        await axiosInstance.post("/tokens",datawithToken);
-        return datawithToken;  
-    }catch (error) {
-        handleError(error);
-        throw error;
-    }
-
-}
-
-
-
-
-
-
-export const fetchProfile = async (accessToken: string): Promise<User> => {
+export const fetchProfile = async (): Promise<User> => {
   try {
-    const res = await axiosInstance.get("/v1/auth/profile", {
-      withCredentials: true,
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
+    const res = await axiosInstance.get("/v1/auth/profile");
     const data = res.data?.data;
     if (!data) throw new Error("No profile data received");
-
     if (!Object.values(ROLES).includes(data.role)) {
       throw new Error(`Invalid role received: ${data.role}`);
     }
-
     return {
       id: data.id,
       email: data.email,
       fullname: data.fullname,
       role: data.role,
       enabled: data.enabled,
-      createdAt: data.createdAt,
-      password: "",
+      createdAt: data.createdAt,      
     };
-  } catch (err: any) {
-    console.error("fetchProfile error:", err?.response?.data || err.message);
-    if (
-      err.message.includes("CORS") ||
-      err.message.includes("Access to XMLHttpRequest")
-    ) {
-      throw new Error("CORS blocked profile request — check backend CORS settings.");
-    }
-    throw err;
+  } catch (error) {
+    console.error("fetchProfile error:", error);
+    handleError(error);
+    throw error;
   }
 };
 
+
 export const loginAPI = async (email: string, password: string) => {
-    try {
-      // Step 1: Authenticate to get token
-      // console.log("loginAPI: Sending /v1/auth/sign-in request", { email });
-      const loginResponse = await axiosInstance.post("/v1/auth/sign-in", { email, password });
-      // console.log("loginAPI: /v1/auth/sign-in response", loginResponse.data);
-      
-      const accessToken = loginResponse.data?.data?.accessToken || loginResponse.data?.accessToken || loginResponse.data?.token;
-      
-      if (!accessToken) {
-        throw new Error("No access token received from server");
-      }
-      // console.log("loginAPI: Access token", accessToken);
-  
-      const user = await fetchProfile(accessToken);
+  try {
+    const loginResponse = await axiosInstance.post("/v1/auth/sign-in", { email, password });
+    const accessToken = loginResponse.data?.data?.accessToken || loginResponse.data?.access
+     if (!accessToken) {
+      throw new Error("No access token received from server");
+    }
 
     localStorage.setItem("token", accessToken);
-    localStorage.setItem("user", JSON.stringify(user));
     axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
-    // Validate role
+    const user = await fetchProfile();
+    localStorage.setItem("user", JSON.stringify(user));
     return {
       accessToken,
       id: user.id,
       email: user.email,
       fullname: user.fullname,
-      role: user.role,
+      role: user.role as typeof ROLES[keyof typeof ROLES],
       createdAt: user.createdAt,
       enabled: user.enabled,
     };
@@ -105,3 +54,33 @@ export const loginAPI = async (email: string, password: string) => {
     throw error;
   }
 };
+
+
+export const registerAPI = async (
+  fullname: string,
+  email: string,
+  password: string,
+  role: string,
+  enabled: boolean
+): Promise<boolean> => {
+  try {
+    const newUser = {
+      fullname,
+      email,
+      password,
+      role,
+      enabled,
+      createdAt: new Date().toISOString(),
+    };
+
+    const response = await axiosInstance.post("/v1/auth/sign-up", newUser);
+    return !!response.data;
+  } catch (error) {
+    console.error("Registration failed:", error);
+    handleError(error);
+    return false;
+  }
+} 
+
+
+

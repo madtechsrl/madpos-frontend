@@ -1,5 +1,5 @@
 import { useAuth } from "../contexts/auth-context"
-// import Configuraciones from "../components/configuraciones/General"
+import {ConfigurationTabs }from "../components/configuraciones/configuration-tabs"
 import Sidebar from "../components/layout/sidebar"
 import { ROLES } from "../types/roles"
 import { Header } from "../components/layout/header"
@@ -15,9 +15,9 @@ export default function ProductosPage() {
           <Header title="Configuraciones" />        
           <div className="d-flex flex-grow-1 overflow-hidden">
             <Sidebar />
-            {/* <div className="flex-grow-1  p-4" style={{transition: "margin-left 0.3s ease"}}>
-              <Configuraciones/>                     
-            </div> */}
+            <div className="flex-grow-1  p-4" style={{transition: "margin-left 0.3s ease"}}>
+              <ConfigurationTabs/>                     
+            </div>
           </div>
         </div>
       )}

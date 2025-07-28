@@ -13,8 +13,7 @@ const roleMapping: Record<string, string> = {
   "ALMACENISTA": ROLES.ALMACENISTA
 }
 
-// API URL - actual API endpoint
-// const api = "http://localhost:8184"
+
 
 
 const checkToken = ()=>{

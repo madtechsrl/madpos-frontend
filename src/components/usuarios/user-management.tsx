@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/auth-context";
 import { createUser, deleteUser, updateUser } from "../../services/user-service";
 import type { User } from "../../types/User";
-import { roleDisplayNames, ROLES, roleUuidToCode, getRoleConfig, mapUuidToRole } from "../../types/roles";
+import { ROLES, roleUuidToCode, getRoleConfig, mapUuidToRole } from "../../types/roles";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 // import axios from "axios";
 import axiosInstance from "../../lib/api";
+import { AxiosError } from "axios";
 
 //  const BASE_URL = "http://localhost:8184"
 
@@ -46,6 +47,7 @@ interface UserManagementProps {
 }
 
 export default function UserManagement({ compact = false }: UserManagementProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user, isAuthenticated, hasPermission , register, token, setToken} = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -67,15 +69,21 @@ export default function UserManagement({ compact = false }: UserManagementProps)
   //   // Add more as needed
   // };
   const role = mapUuidToRole(user?.role ?? "")
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const roleConf = getRoleConfig(role)  
 
 
 useEffect(() => {
   if (!token || !isAuthenticated) return;
+
   axiosInstance.get('/v1/auth/profile')
-    // .then(() => console.log("UserManagement: Profile valid"))
-    .catch(err => console.error("Profile fetch failed", err));
+    .then(res => setUsers(res.data.data))
+    .catch(err => {
+      console.error("Profile fetch failed", err);
+      // maybe redirect to login or clear token
+    });
 }, [token, isAuthenticated]);
+
 
 
 // Fetch users
@@ -114,27 +122,52 @@ useEffect(() => {
       // }
       setUsers(fetchedUsers);
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("UserManagement: Error", err);
-      if (err.message.includes("CORS")) {
-        setError("Error de CORS: verifica la configuración del servidor.");
-      } else if (err.response?.status === 401 || err.response?.status === 403) {
-        console.log("UserManagement: Token inválido o acceso denegado, redirigiendo a /login");
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        navigate("/");
-      } else {
-        setError(err.message || "No se pudieron cargar los usuarios. Intenta de nuevo.");
+
+      // Check if err is an object and has a message property
+      if (err && typeof err === "object" && "message" in err) {
+        const message = String((err as { message?: unknown }).message);
+        if (message.includes("CORS")) {
+          setError("Error de CORS: verifica la configuración del servidor.");
+          return;
+        }
       }
+
+      // Check if err is an AxiosError (has response property)
+      if (
+        err &&
+        typeof err === "object" &&
+        "response" in err &&
+        err.response &&
+        typeof err.response === "object" &&
+        ("status" in err.response)
+      ) {
+        const status = (err.response as { status?: number }).status;
+        if (status === 401 || status === 403) {
+          console.log("UserManagement: Token inválido o acceso denegado, redirigiendo a /login");
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          navigate("/");
+          return;
+        }
+      }
+
+      setError(
+        err &&
+        typeof err === "object" &&
+        "message" in err &&
+        typeof (err as { message?: unknown }).message === "string"
+          ? (err as { message: string }).message
+          : "No se pudieron cargar los usuarios. Intenta de nuevo."
+      );
     } finally {
       setIsLoading(false);
     }
   }
 
   loadUsers();
-}, [isAuthenticated, hasPermission, navigate, user, token]);
-
-    
+}, [isAuthenticated, hasPermission, navigate, user, token]);  
  
 
 
@@ -211,9 +244,10 @@ const handleDeleteUser = async (id: string) => {
       } else {
         throw new Error(result || "No se pudo eliminar el usuario. Intenta de nuevo.");
       }
-    } catch (err: any) {
-      console.error("UserManagement: Error al eliminar usuario", err);
-      setError(err.message || "No se pudo eliminar el usuario. Intenta de nuevo.");
+    } catch (err: unknown) {
+     if(err instanceof AxiosError){
+      console.error("Axios Error al eliminar usuario:", err.response?.status, err.response?.data);
+     }
     }
   }
 }
@@ -260,13 +294,20 @@ const handleSubmit = async (e: React.FormEvent) =>{
         throw new Error("No se pudo crear el usuario. Intenta de nuevo.");
       }
     }
-  } catch (err: any) {
-    console.error("UserManagement: Error al crear/actualizar usuario", err);
-    setError(err.message || "No se pudo crear/actualizar el usuario. Intenta de nuevo.");
-  } finally {
-    setIsLoading(false);
+  } catch (err: unknown) {
+    if (err instanceof AxiosError) {
+      console.error("Axios Error al crear/actualizar usuario:", err.response?.status, err.response?.data);
+      setError(err.response?.data?.message || "Error al crear/actualizar el usuario. Intenta de nuevo.");
+    }
+    else if (err instanceof Error)  {
+      console.error("Error al crear/actualizar usuario:", err.message);
+      setError(err.message || "Error al crear/actualizar el usuario. Intenta de nuevo.");
+    }else {
+      console.error("Error desconocido al crear/actualizar usuario:", err);
+      setError("Error desconocido al crear/actualizar el usuario. Intenta de nuevo.");
+    }
   }
-  setShowModal(false);
+    
 }
 
 const userCounts = {
@@ -282,7 +323,7 @@ const userCounts = {
 
  
 
-  ///////////////test2////
+ 
   if (isloading && users.length === 0) {
     return (
       <div className="text-center p-5">
