@@ -104,7 +104,7 @@ const loginUser = async (email: string, password: string) => {
       setToken(response.accessToken);
       api.defaults.headers.common["Authorization"] = `Bearer ${response.accessToken}`; 
       // console.log("loginUser: axios.defaults.headers.common", axios.defaults.headers.common);
-      navigate("/dashboard");
+      navigate("/home");
     }
   } catch (e) {
     console.error('Login error:', e);

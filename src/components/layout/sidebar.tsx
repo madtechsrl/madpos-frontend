@@ -9,7 +9,7 @@ import { Tooltip } from "react-tooltip"
 // Define menu items with role-based access
 const menuItems = [
   {
-    href: "/dashboard",
+    href: "/home",
     icon: "fa-light fa-shop",
     label: "Vender",
     roles: [ROLES.ADMIN, ROLES.CAJERO, ROLES.ALMACENISTA, ROLES.PROPIETARIO, ROLES.USER],

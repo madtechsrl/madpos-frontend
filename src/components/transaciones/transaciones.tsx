@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { Header } from "../layout/header"
 import { RoleGuard } from "../analitica/role-guard"
 import { useTransactions } from "../../lib/use-transacion"
 import { useAuth } from "../../contexts/auth-context"
@@ -113,7 +112,7 @@ export default function TransactionsPage() {
       currentUserRole={currentUserRole}
     >
       <div className="container py-4">
-        <Header title="Transacciones" />
+        {/* <Header title="Transacciones" /> */}
 
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>

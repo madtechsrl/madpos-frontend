@@ -202,9 +202,7 @@ export default function NewProductPage() {
           currentUserRole={currentUserRole}
         >
 
-  <div className="d-flex" style={{ minHeight: "100vh" }}>
-
-           
+  <div className="d-flex" style={{ minHeight: "100vh" }}>           
      <div className="container py-4">
       <div className="mb-3">
         <button className="btn btn-outline-secondary" onClick={() => navigate("/productos")}> 
@@ -216,8 +214,7 @@ export default function NewProductPage() {
         <div className="flex-grow-1">
           {/* Header */}
           <nav className="navbar navbar-expand-lg navbar-light bg-light border-bottom">
-            <div className="container-fluid">
-            
+            <div className="container-fluid">            
               <div className="d-flex align-items-center">
                 
               

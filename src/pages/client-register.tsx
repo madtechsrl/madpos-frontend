@@ -1,10 +1,10 @@
 import { useAuth } from "../contexts/auth-context"
-import {ProductEditForm }from "../components/productos/product-edit-form"
+import {ClientRegistrationForm} from "../components/clientes/client-registration"
 import Sidebar from "../components/layout/sidebar"
 import { ROLES } from "../types/roles"
 import { Header } from "../components/layout/header"
 
-export default function ProductosPage() {
+export default function ClientRegister() {
   const { hasPermission } = useAuth()
   const isAdmin = hasPermission([ROLES.ADMIN, ROLES.PROPIETARIO])
 
@@ -12,11 +12,11 @@ export default function ProductosPage() {
     <>   
       {isAdmin && ( 
         <div>          
-          <Header title="Editar Productos" />        
+          <Header title="Registro de Clientes" />        
           <div className="d-flex flex-grow-1 overflow-hidden">
             <Sidebar />
             <div className="flex-grow-1  p-4" style={{transition: "margin-left 0.3s ease"}}>
-              <ProductEditForm productId={""}/>                     
+              <ClientRegistrationForm/>                     
             </div>
           </div>
         </div>

@@ -339,15 +339,15 @@ const userCounts = {
   return (
     <div className="container-fluid px-0">
       {!compact && (        
-        <div className="d-flex justify-content-between align-items-center mb-4">
+        <div className="d-flex justify-content-lg-between align-items-center mb-4">
           <div>
-          <h2 className="fs-4 fw-semibold mb-1">Usuarios del Sistema</h2>
+          {/* <h2 className="fs-4 fw-semibold mb-1">Usuarios del Sistema</h2> */}
           <p className="text-secondary">
             Gestiona los usuarios del sistema y sus niveles de acceso. Cada rol tiene diferentes permisos y capacidades.
           </p>
         </div>
 
-          <h2 className="fs-4 fw-semibold mb-1">Gestión de Usuarios</h2>
+          <h2 className="fs-4 fw-semibold mb-1"></h2>
           <button className="btn btn-success d-flex align-items-center gap-2" onClick={handleAddUser} disabled={isloading}>
             <i><FontAwesomeIcon icon={faPlus} /></i>
             <span>Añadir Usuario</span>

@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useProducts } from "../../contexts/product-context"
@@ -154,10 +153,10 @@ export function ProductEditForm({ productId }: Props) {
               <button className="btn btn-link text-dark p-0 me-3" onClick={() => navigate(-1)}>
                 <i className="fas fa-arrow-left"></i>
               </button>
-              <h1 className="h4 mb-0 fw-semibold">Editar producto</h1>
+              {/* <h1 className="h4 mb-0 fw-semibold">Editar producto</h1> */}
             </div>
 
-            <div className="d-flex align-items-center gap-3">
+            {/* <div className="d-flex align-items-center gap-3">
               <button className="btn btn-link text-secondary">
                 <i className="fas fa-question-circle me-1"></i>
                 Ayuda
@@ -176,7 +175,7 @@ export function ProductEditForm({ productId }: Props) {
                 </div>
                 <i className="fas fa-chevron-down text-muted"></i>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

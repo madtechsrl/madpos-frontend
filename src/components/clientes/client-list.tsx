@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
- import { Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 
 // Mock clients data
 const mockClients = [
@@ -34,8 +34,11 @@ const mockClients = [
   },
 ]
 
+
+
 export function ClientsList() {
   const [searchTerm, setSearchTerm] = useState("")
+  const navigate = useNavigate()
 
   const filteredClients = mockClients.filter(
     (client) =>
@@ -44,14 +47,21 @@ export function ClientsList() {
       client.phone.includes(searchTerm),
   )
 
+
+ const handleEditClick=()=>{
+      navigate("/client-registration");
+    }
+
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fs-4 fw-semibold">Gestión de Clientes</h2>
-        <Link to="/clientes/registrar" className="btn btn-success d-flex align-items-center gap-2">
-          <i className="fas fa-plus"></i>
-          <span>Registrar Cliente</span>
-        </Link>
+      <div className="d-flex flex-row  justify-content-between align-items-center mb-4">
+        {/* <h2 className="fs-4 fw-semibold">Gestión de Clientes</h2> */}
+         <button className="btn btn-link text-dark p-0 me-3" onClick={() => navigate(-1)}>
+                <i className="fas fa-arrow-left"></i>
+              </button>
+       <button className="btn btn-primary" onClick={handleEditClick}>
+          <i className="fas fa-plus me-2"></i> Nuevo Cliente
+        </button>
       </div>
 
       <div className="mb-4">

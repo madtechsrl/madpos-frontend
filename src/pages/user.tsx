@@ -13,7 +13,7 @@ export default function UserPage() {
     <>   
       {isAdmin && ( 
         <div>
-          {/* <Header title="Usuarios" />         */}
+          <Header title="Usuarios" />         
           <div className="d-flex flex-grow-1 overflow-hidden">
             <Sidebar />
             <div className="flex-grow-1  p-4" style={{transition: "margin-left 0.3s ease"}}>

@@ -11,7 +11,7 @@ import LoginPage  from "./pages/login"
 
 // Lazy load pages
 // const LoginPage = lazy(() => import("./pages/login"))
-const DashboardLayout = lazy(() => import("./pages/dashboard-layout"))
+// const DashboardLayout = lazy(() => import("./pages/dashboard-layout"))
 const HomePage = lazy(() => import("./pages/home"))
 const ProductsPage = lazy(() => import("./pages/productos-page"))
 const Transaciones = lazy(() => import("./pages/transaciones-page"))
@@ -19,8 +19,9 @@ const AddProduct = lazy(() => import("./pages/add-products"))
 const UsersPage = lazy(() => import("./pages/user"))
 const StatsPage = lazy(() => import("./pages/estadistica-page"))
 const Configuraciones = lazy(() => import("./pages/configuraciones"))
-const ClientRegistrationForm = lazy(() => import("./pages/clients-layout"))
+const ClientsList = lazy(() => import("./pages/clients-layout"))
 const ProductEditForm = lazy(() => import("./pages/edit-product"))
+const ClientRegistrationForm = lazy(() => import("./pages/client-register"))
 
 // const NotFoundPage = lazy(() => import("./pages/not-found"))
 
@@ -35,17 +36,18 @@ function App() {
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<LoginPage />} />   
-               <Route path="/user" element={<UsersPage />} />           
+              <Route path="/user" element={<UsersPage />} />           
               <Route path="/transaciones" element={<Transaciones />} />
               <Route path="/productos" element={<ProductsPage />} />
               <Route path="/pages/add-products" element={<AddProduct />} />
               <Route path="/stats" element={<StatsPage />} />
               <Route path="/configuraciones" element={<Configuraciones />} />
-              <Route path="/clientes" element={<ClientRegistrationForm />} />
-              <Route path="/product-edit-form" element={<ProductEditForm />} />
+              <Route path="/clientes" element={<ClientsList />} />
+              <Route path="/product-edit-form" element={<ProductEditForm />} />             
+              <Route path="/client-registration" element={<ClientRegistrationForm />} />
                 {/* Protected routes */}
-              <Route path="/dashboard" element={<DashboardLayout />}>             
-                <Route index element={<HomePage />} />
+              <Route path="/home" element={<HomePage/>}>             
+              <Route index element={<HomePage />} />
                 {/* <Route path="productos" element={<ProductsPage />} />
                 <Route path="pedidos" element={<OrdersPage />} />
                 <Route path="usuarios" element={<UsersPage />} /> */}
