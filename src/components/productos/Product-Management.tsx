@@ -12,12 +12,13 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { mockProducts, mockCategories } from "../../lib/data";
 import type { Product } from "../../lib/index";
+import { useNavigate } from "react-router-dom";
 
 export default function ProductsPage() {
   const [products] = useState<Product[]>(mockProducts);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
-
+  const navigate = useNavigate();
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -39,6 +40,11 @@ export default function ProductsPage() {
       currency: "DOP",
       minimumFractionDigits: 2,
     }).format(amount);
+
+
+    const handleEditClick=()=>{
+      navigate("/product-edit-form");
+    }
 
   return (
     <div className="container py-4">
@@ -194,7 +200,7 @@ export default function ProductsPage() {
                       <FontAwesomeIcon icon={faEllipsisV} />
                     </button>
                     <ul className="dropdown-menu">
-                      <li><button className="dropdown-item">Editar</button></li>
+                      <li><button className="dropdown-item" onClick={handleEditClick}>Editar</button></li>
                       <li><button className="dropdown-item">Duplicar</button></li>
                       <li><button className="dropdown-item text-danger"><FontAwesomeIcon icon={faTrash} className="me-2" />Eliminar</button></li>
                     </ul>

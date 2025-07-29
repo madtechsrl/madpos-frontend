@@ -19,6 +19,8 @@ const AddProduct = lazy(() => import("./pages/add-products"))
 const UsersPage = lazy(() => import("./pages/user"))
 const StatsPage = lazy(() => import("./pages/estadistica-page"))
 const Configuraciones = lazy(() => import("./pages/configuraciones"))
+const ClientRegistrationForm = lazy(() => import("./pages/clients-layout"))
+const ProductEditForm = lazy(() => import("./pages/edit-product"))
 
 // const NotFoundPage = lazy(() => import("./pages/not-found"))
 
@@ -32,15 +34,17 @@ function App() {
           <Suspense fallback={<Loading />}>
             <Routes>
               {/* Public routes */}
-              <Route path="/" element={<LoginPage />} />
-              <Route path="/user" element={<UsersPage />} />
+              <Route path="/" element={<LoginPage />} />   
+               <Route path="/user" element={<UsersPage />} />           
               <Route path="/transaciones" element={<Transaciones />} />
               <Route path="/productos" element={<ProductsPage />} />
               <Route path="/pages/add-products" element={<AddProduct />} />
               <Route path="/stats" element={<StatsPage />} />
               <Route path="/configuraciones" element={<Configuraciones />} />
+              <Route path="/clientes" element={<ClientRegistrationForm />} />
+              <Route path="/product-edit-form" element={<ProductEditForm />} />
                 {/* Protected routes */}
-              <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route path="/dashboard" element={<DashboardLayout />}>             
                 <Route index element={<HomePage />} />
                 {/* <Route path="productos" element={<ProductsPage />} />
                 <Route path="pedidos" element={<OrdersPage />} />
