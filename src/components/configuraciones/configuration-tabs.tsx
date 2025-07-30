@@ -2,18 +2,19 @@
 
 import { useState } from "react"
 import { GeneralSettings } from "../configuraciones/general-settings"
+import { ReceiptSettings } from "./recibo-setting"
 
 const tabs = [
   { id: "general", label: "GENERAL", active: true },
   { id: "pedidos", label: "PEDIDOS Y VENTAS", active: false },
-  { id: "recibo", label: "RECIBO", active: false },
+  { id: "recibo", label: "RECIBO", active: true },
   { id: "pagos", label: "PAGOS", active: false },
   { id: "entrega", label: "ENTREGA Y RETIRADA", active: false },
   { id: "integraciones", label: "INTEGRACIONES", active: false },
 ]
 
 export function ConfigurationTabs() {
-  const [activeTab, setActiveTab] = useState("general")
+  const [activeTab, setActiveTab] = useState("recibo")
 
   return (
     <div className="container-fluid p-0">
@@ -53,12 +54,15 @@ export function ConfigurationTabs() {
               <p className="text-muted">Configuración de pedidos y ventas en desarrollo</p>
             </div>
           )}
-          {activeTab === "recibo" && (
-            <div className="text-center py-5">
-              <h3>Recibo</h3>
-              <p className="text-muted">Configuración de recibos en desarrollo</p>
-            </div>
-          )}
+       {activeTab === "recibo" && (
+  <>
+    <ReceiptSettings />
+    <div className="text-center py-5">
+      <h3>Recibo</h3>
+      <p className="text-muted">Configuración de recibos en desarrollo</p>
+    </div>
+  </>
+)}
           {activeTab === "pagos" && (
             <div className="text-center py-5">
               <h3>Pagos</h3>
