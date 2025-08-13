@@ -7,11 +7,17 @@ export type Product = {
   id: string
   name: string
   price: number
+  stock?: number
   category: string
+  brand: string
+  warehouse: string
+  model: string
+  sku: string
+  barcode: string
+  description: string
   image?: string
   bgColor?: string
-  textColor?: string
-  stock?: number
+  textColor?: string  
   minStock?: number
 }
 

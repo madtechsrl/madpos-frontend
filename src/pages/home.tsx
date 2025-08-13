@@ -14,11 +14,12 @@ export default function HomePage() {
     <>
     {isAdmin && (
       <div>
-      <Header title="Vender" />
+     
       <div className="d-flex flex-grow-1 overflow-hidden">
         <Sidebar />
         <div className="flex-grow-1  p-4" style={{transition: "margin-left 0.3s ease"}}>
           {/* <HomepageContent /> */}
+           <Header title="Vender" />
           <SearchBar />
           <ProductGrid />
         </div>

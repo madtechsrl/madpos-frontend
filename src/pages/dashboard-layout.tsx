@@ -1,5 +1,3 @@
-"use client"
-
 import { Outlet } from "react-router-dom"
 import { useState, useEffect } from "react"
 import Sidebar from "../components/layout/sidebar"
@@ -39,3 +37,4 @@ export default function DashboardLayout() {
     </div>
   )
 }
+
