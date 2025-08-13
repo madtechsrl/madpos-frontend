@@ -71,7 +71,6 @@ export async function fetchUserById(id: string): Promise<User | null> {
 export async function createUser(user: Omit<User, "id">): Promise<User | null> {
   try {
     const response = await api.post(`${api}/v1/users`, user)
-
     return response.data?.data?.records || null
   } catch (error) {
     console.error("Error creating user:", error)

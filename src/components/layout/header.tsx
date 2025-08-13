@@ -1,17 +1,13 @@
-"use client"
-
 import { useAuth } from "../../contexts/auth-context"
 import { useState } from "react"
 import { ROLES} from "../../types/roles"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faChevronDown, faSignOutAlt } from "@fortawesome/free-solid-svg-icons"
 
-
-
-
 type HeaderProps = {
   title: string
 }
+
 const roleDisplayNames = {
   [ROLES.ADMIN]: "Administrador",
   [ROLES.USER]: "Usuario",
@@ -53,7 +49,9 @@ export function Header({ title }: HeaderProps) {
   }
   
   return (
-    <header className="bg-white shadow-sm p-3 d-flex justify-content-between align-items-center">
+    <header className="bg-white shadow-sm p-3 d-flex justify-content-between align-items-center"
+     style={{position:"sticky", top: 0, zIndex: 1020}}
+    >
       <h1 className="fs-4 fw-bold text-dark mb-0">{title}</h1>
       <div className="d-flex align-items-center gap-3">
         <button className="btn btn-link text-decoration-none text-secondary">

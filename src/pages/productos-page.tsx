@@ -11,11 +11,12 @@ export default function ProductosPage() {
   return (
     <>   
       {isAdmin && ( 
-        <div>          
-          <Header title="Productos" />        
-          <div className="d-flex flex-grow-1 overflow-hidden">
+       
+        <div>                       
+          <div className="d-flex flex-grow-1 overflow-hidden">        
             <Sidebar />
             <div className="flex-grow-1  p-4" style={{transition: "margin-left 0.3s ease"}}>
+               <Header title=""  /> 
               <ProductManagement/>                     
             </div>
           </div>

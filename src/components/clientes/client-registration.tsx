@@ -59,7 +59,7 @@ export function ClientRegistrationForm() {
               </button>
               <h1 className="h4 mb-0 fw-semibold">Registrar cliente</h1>
             </div>
-
+0
             {/* <div className="d-flex align-items-center gap-3">
               <button className="btn btn-link text-secondary">
                 <i className="fas fa-question-circle me-1"></i>
