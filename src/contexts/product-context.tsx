@@ -8,7 +8,7 @@ export type Product = {
   name: string
   price: number
   stock?: number
-  category: string
+  category: {id:string, name: string}
   brand: string
   warehouse: string
   model: string
@@ -62,16 +62,17 @@ export function ProductProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // Filter products based on search query and selected category
+
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.id.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = !selectedCategory || product.category === selectedCategory
+    const matchesCategory = !selectedCategory || product.category.name === selectedCategory
     return matchesSearch && matchesCategory
   })
 
   // Extract unique categories from products
-  const categories = Array.from(new Set(products.map((product) => product.category)))
+  const categories = Array.from(new Set(products.map((product) => product.category.name)))
 
   return (
     <ProductContext.Provider
