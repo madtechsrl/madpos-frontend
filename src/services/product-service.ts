@@ -193,10 +193,6 @@ const checkToken = ()=> {
   console.log("checkToken: Token found", token)
   return token
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> 220e9a68c0ae61f3981ff48b5097fd898cdee21c
 // function getFallbackProducts(): Product[] {
 //   return [
 
@@ -288,10 +284,6 @@ const checkToken = ()=> {
 
 
 //   ]
-<<<<<<< HEAD
-
-=======
->>>>>>> 220e9a68c0ae61f3981ff48b5097fd898cdee21c
 // }
 // Get all products
 export async function fetchProducts(): Promise<Product[]> {
@@ -303,7 +295,7 @@ export async function fetchProducts(): Promise<Product[]> {
         Authorization: `Bearer ${accessToken}`
       }
     })
-    console.log("fetchUsers: Response from", axiosInstance, response.data)
+    console.log("fetchProducts: Response from", axiosInstance, response.data)
 
     const products = response.data?.data?.records || []
 
@@ -319,4 +311,35 @@ export async function fetchProducts(): Promise<Product[]> {
     console.error("Error fetching Products:", error)
     return []
   }
+}
+
+export async function fetchProductsId(id: string): Promise<Product | null> {
+  try {
+    const response = await axiosInstance.get(`/v1/products/${id}`)
+    return response.data?.data?.records || null
+  } catch (error) {
+    console.error(`Error cargando productos con ID ${id}:`, error)
+    return null
+  }
+}
+
+export async function editProductId(id: string): Promise <Product | null>{
+  try {
+    const response = await axiosInstance.put(`/v1/products/${id}`)
+    return response.data?.data?.records || null
+  } catch (error) {
+    console.error(`Error editando producto con ID ${id}:`, error)
+    return null
+  }
+}
+
+export async function deleteProduct(id: string): Promise<boolean> {
+  try {
+    const response = await axiosInstance.delete(`/v1/products/${id}`)
+    return response.data?.data?.records || false
+  } catch (error) {
+    console.error(`Error borrando producto con ID ${id}:`, error)
+    return false
+  }
+  
 }

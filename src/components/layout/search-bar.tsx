@@ -1,4 +1,4 @@
-import { useProducts } from "../../contexts/product-context"
+import { useProducts } from "../../hooks/useProduct"
 import { useState } from "react"
 
 export function SearchBar() {

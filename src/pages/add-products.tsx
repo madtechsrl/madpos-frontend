@@ -11,11 +11,11 @@ export default function ProductosPage() {
   return (
     <>   
       {isAdmin && ( 
-        <div>          
-          <Header title="Añadir Productos" />        
+        <div>                        
           <div className="d-flex flex-grow-1 overflow-hidden">
             <Sidebar />
             <div className="flex-grow-1  p-4" style={{transition: "margin-left 0.3s ease"}}>
+              <Header title="Añadir Productos" />  
               <NewProductPage/>                     
             </div>
           </div>

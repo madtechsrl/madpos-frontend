@@ -1,12 +1,11 @@
-
-
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { createContext, useState, useEffect, type ReactNode } from "react"
 import { fetchProducts } from "../services/product-service"
 
 export type Product = {
   id: string
   name: string
   price: number
+  cost:number
   stock?: number
   category: {id:string, name: string}
   brand: string
@@ -31,6 +30,7 @@ type ProductContextType = {
   setSearchQuery: (query: string) => void
   selectedCategory: string | null
   setSelectedCategory: (category: string | null) => void
+  reloadProducts: () => Promise<void>
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined)
@@ -42,23 +42,44 @@ export function ProductProvider({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
-  // Fetch products from API
-  useEffect(() => {
-    const getProducts = async () => {
-      try {
-        setLoading(true)
-        const data = await fetchProducts()
-        setProducts(data)
-        setError(null)
-      } catch (err) {
-        setError("Failed to fetch products. Please try again later.")
-        console.error("Error fetching products:", err)
-      } finally {
-        setLoading(false)
-      }
-    }
 
-    getProducts()
+  const reloadProducts = async () =>{
+    setLoading(true)
+    try {
+      const data = await fetchProducts()
+      setProducts(data)
+      setError(null)
+    } catch (err) {
+      console.error("Error cargando los productos", err)
+      setError("Fallo cargando productos. Porfavor Tratar de nuevo")      
+    }finally{
+      setLoading(false)
+    }
+  }
+
+
+
+  // Fetch products from API
+  // useEffect(() => {
+  //   const getProducts = async () => {
+  //     try {
+  //       setLoading(true)
+  //       const data = await fetchProducts()
+  //       setProducts(data)
+  //       setError(null)
+  //     } catch (err) {
+  //       setError("Failed to fetch products. Please try again later.")
+  //       console.error("Error fetching products:", err)
+  //     } finally {
+  //       setLoading(false)
+  //     }
+  //   }
+
+  //   getProducts()
+  // }, [])
+
+  useEffect(()=>{
+    reloadProducts()
   }, [])
 
   // Filter products based on search query and selected category
@@ -86,6 +107,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         setSearchQuery,
         selectedCategory,
         setSelectedCategory,
+        reloadProducts,
       }}
     >
       {children}
@@ -93,10 +115,12 @@ export function ProductProvider({ children }: { children: ReactNode }) {
   )
 }
 
-export function useProducts() {
-  const context = useContext(ProductContext)
-  if (context === undefined) {
-    throw new Error("useProducts must be used within a ProductProvider")
-  }
-  return context
-}
+// export function useProducts() {
+//   const context = useContext(ProductContext)
+//   if (context === undefined) {
+//     throw new Error("useProducts must be used within a ProductProvider")
+//   }
+//   return context
+// }
+
+export default ProductContext

@@ -12,10 +12,11 @@ export default function ClientLayout() {
     <>   
       {isAdmin && ( 
         <div>          
-          <Header title="Clientes" />        
+               
           <div className="d-flex flex-grow-1 overflow-hidden">
             <Sidebar />
             <div className="flex-grow-1  p-4" style={{transition: "margin-left 0.3s ease"}}>
+              <Header title="Clientes" />   
               <ClientsList/>                     
             </div>
           </div>

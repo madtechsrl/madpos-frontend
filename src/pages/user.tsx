@@ -12,11 +12,11 @@ export default function UserPage() {
   return (
     <>   
       {isAdmin && ( 
-        <div>
-          <Header title="Usuarios" />         
+        <div>                
           <div className="d-flex flex-grow-1 overflow-hidden">
             <Sidebar />
             <div className="flex-grow-1  p-4" style={{transition: "margin-left 0.3s ease"}}>
+              <Header title="Usuarios" />   
               <UserManagement/>                     
             </div>
           </div>

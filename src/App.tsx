@@ -43,7 +43,7 @@ function App() {
               <Route path="/stats" element={<StatsPage />} />
               <Route path="/configuraciones" element={<Configuraciones />} />
               <Route path="/clientes" element={<ClientsList />} />
-              <Route path="/product-edit-form" element={<ProductEditForm />} />             
+              <Route path="/productos/:productId/editar" element={<ProductEditForm />} />             
               <Route path="/client-registration" element={<ClientRegistrationForm />} />
                 {/* Protected routes */}
               <Route path="/home" element={<HomePage/>}>             

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSearch,
@@ -10,29 +10,32 @@ import {
   faBoxOpen,
   faEllipsisV,
 } from "@fortawesome/free-solid-svg-icons";
-import { mockProducts, mockCategories } from "../../lib/data";
+// import { mockProducts, mockCategories } from "../../lib/data";
 import type { Product } from "../../lib/index";
 import { useNavigate } from "react-router-dom";
+import { useProducts } from "../../hooks/useProduct";
 
 export default function ProductsPage() {
-  const [products] = useState<Product[]>(mockProducts);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const {products, filteredProducts, categories, loading, error, searchQuery, setSelectedCategory, setSearchQuery, selectedCategory, reloadProducts} = useProducts()
+  // const [products] = useState<Product[]>(mockProducts);
+  // const [searchTerm, setSearchTerm] = useState("");
+  // const [selectedCategory, setSelectedCategory] = useState<string>("");
   const navigate = useNavigate();
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.code.includes(searchTerm);
-    const matchesCategory = !selectedCategory || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // const filterProducts = Product.filter((product) => {
+  //   const matchesSearch =
+  //     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     product.code.includes(searchTerm);
+  //   const matchesCategory = !selectedCategory || product.category === selectedCategory;
+  //   return matchesSearch && matchesCategory;
+  // });
 
-  const totalValue = products.reduce((sum, product) => sum + product.price * product.stock, 0);
-  const totalCost = products.reduce((sum, product) => sum + product.cost * product.stock, 0);
+  const totalValue = products.reduce((sum, p) => sum + (p.price || 0) * (p.stock || 0), 0);
+  const totalCost = products.reduce((sum, p) => sum + (p.cost || 0) * (p.stock || 0), 0);
   const estimatedProfit = totalValue - totalCost;
-  const lowStockCount = products.filter((product) => product.stock <= (product.minStock || 5)).length;
+  const lowStockCount = products.filter((p) => (p.stock || 0) <= (p.minStock || 5)).length;
   const outOfStockCount = products.filter((product) => product.stock === 0).length;
-  const inStockCount = products.filter((product) => product.stock > 0).length;
+  const inStockSummary = products.reduce((sum, p)=> sum + ((p.stock || 0)> 0 ? p.stock! : 0), 0)
+  const inStockItems = products.filter((p) => (p.stock || 0) > 0).length;
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat("es-DO", {
@@ -42,9 +45,15 @@ export default function ProductsPage() {
     }).format(amount);
 
 
-    const handleEditClick=()=>{
-      navigate("/product-edit-form");
+    useEffect(()=>{
+      reloadProducts()
+    }, [] )
+
+    const handleEditClick=(productId : string)=>{
+      navigate(`/productos/${productId}/editar`);
     }
+
+    const handleDeleteClick = () =>{}
 
   return (
     <div className="container py-4">
@@ -76,11 +85,17 @@ export default function ProductsPage() {
             <small>Stock bajo</small>
           </div>
         </div>
+          <div className="col-md">
+          <div className="card p-3 d-flex align-items-center">
+            <span className="badge bg-warning me-2">{inStockItems}</span>
+            <small>Cant de Productos</small>
+          </div>
+        </div>
         <div className="col-md">
           <div className="card p-3 d-flex justify-content-between">
             <div>
               <span className="badge bg-danger me-2">{outOfStockCount}</span>
-              <span className="badge bg-success">{inStockCount}</span>
+              <span className="badge bg-success">{inStockSummary}</span>
             </div>
             <small>Sin stock / En stock</small>
           </div>
@@ -97,8 +112,8 @@ export default function ProductsPage() {
             <input
               className="form-control"
               placeholder="Artículo o código"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
@@ -112,14 +127,15 @@ export default function ProductsPage() {
             </button>
             <ul className="dropdown-menu">
               <li>
-                <button className="dropdown-item" onClick={() => setSelectedCategory("")}>
+                <button className="dropdown-item" onClick={() => setSelectedCategory(null)}>
                   Todas las categorías
                 </button>
               </li>
-              {mockCategories.map((cat) => (
-                <li key={cat.id}>
-                  <button className="dropdown-item" onClick={() => setSelectedCategory(cat.name)}>
-                    {cat.name}
+              {categories.map((category) => (
+                <li key={category}>
+                  <button className={`dropdown-item ${selectedCategory === category ? "active" : ""}` }
+                  onClick={() => setSelectedCategory(category)}>
+                    {category}
                   </button>
                 </li>
               ))}
@@ -178,20 +194,20 @@ export default function ProductsPage() {
                     </div>
                     <div>
                       <div className="fw-medium">{product.name}</div>
-                      <div className="text-muted small">{product.code}</div>
+                      <div className="text-muted small">{product.sku}</div>
                     </div>
                   </div>
                 </td>
-                <td>{product.category}</td>
+                <td>{product.category?.name}</td>
                 <td>
-                  <span className={`badge ${product.stock <= (product.minStock || 5) ? 'bg-danger' : 'bg-secondary'}`}>
+                  <span className={`badge ${product.stock! <= (product.minStock || 5) ? 'bg-danger' : 'bg-secondary'}`}>
                     {product.stock}
                   </span>
                 </td>
                 <td>{formatCurrency(product.price)}</td>
                 <td>
                   <div className="form-check form-switch">
-                    <input className="form-check-input" type="checkbox" checked={product.isActive} readOnly />
+                    <input className="form-check-input" type="checkbox" checked={true} readOnly />
                   </div>
                 </td>
                 <td>
@@ -200,8 +216,8 @@ export default function ProductsPage() {
                       <FontAwesomeIcon icon={faEllipsisV} />
                     </button>
                     <ul className="dropdown-menu">
-                      <li><button className="dropdown-item" onClick={handleEditClick}>Editar</button></li>
-                      <li><button className="dropdown-item">Duplicar</button></li>
+                      <li><button className="dropdown-item" onClick={()=>handleEditClick(product.id)}>Editar</button></li>
+                      {/* <li><button className="dropdown-item">Duplicar</button></li> */}
                       <li><button className="dropdown-item text-danger"><FontAwesomeIcon icon={faTrash} className="me-2" />Eliminar</button></li>
                     </ul>
                   </div>

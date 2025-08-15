@@ -1,26 +1,24 @@
-"use client"
-
 import type React from "react"
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { useProducts } from "../../contexts/product-context"
+import { useNavigate, useParams } from "react-router-dom"
+import { useProducts } from "../../hooks/useProduct"
 import { formatCurrency } from "../../lib/utils"
 // import Image from "next/image"
 
-type Props = {
-  productId: string
-}
+// type Props = {
+//   productId: string
+// }
 
-export function ProductEditForm({ productId }: Props) {
+export function ProductEditForm() {
   const navigate = useNavigate()
   const { products } = useProducts()
-
+  const {productId} = useParams<{productId: string}>()
   // Form state
   const [productData, setProductData] = useState({
     id: "",
     name: "",
     price: 0,
-    category: "",
+    category: {id:"", name:""},
     description: "",
     sku: "",
     stock: 0,
@@ -33,22 +31,22 @@ export function ProductEditForm({ productId }: Props) {
     isActive: true,
     taxable: true,
   })
-
+  
   const [imagePreview, setImagePreview] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
 
   // Categories for dropdown
-  const categories = [
-    "Electrónicos",
-    "Software",
-    "Automotriz",
-    "Servicios",
-    "Materiales",
-    "Hogar",
-    "Embalaje",
-    "Alimentación",
-    "Ropa",
-    "Otros",
+  const categories: {id: string; name:string } [] = [
+    {id:"1", name:"Beer"},
+    { id: "2", name: "Brandy" },
+   { id: "3", name: "Champagne" },
+   { id: "4", name: "Gin" },
+   { id: "5", name: "Rum" },
+   { id: "6", name: "Teguila" },
+   { id: "7", name: "Vodka" },
+   { id: "8", name: "Whiskey" },
+  { id: "9", name: "Wine" },
+  { id: "10", name: "Otros" },
   ]
 
   // Color options
@@ -86,6 +84,8 @@ export function ProductEditForm({ productId }: Props) {
     }
     setIsLoading(false)
   }, [productId, products])
+
+
 
   const handleInputChange = (field: string, value: string | number | boolean) => {
     setProductData((prev) => ({
@@ -263,13 +263,18 @@ export function ProductEditForm({ productId }: Props) {
                         <label className="form-label">Categoría</label>
                         <select
                           className="form-select"
-                          value={productData.category}
-                          onChange={(e) => handleInputChange("category", e.target.value)}
+                          value={productData.category.id}
+                          onChange={(e) => {
+                            const selected = categories.find(c => c.id === e.target.value)
+                            if(selected){
+                              handleInputChange("category", e.target.value)
+                            }
+                            }} 
                         >
                           <option value="">Seleccionar categoría</option>
                           {categories.map((category) => (
-                            <option key={category} value={category}>
-                              {category}
+                            <option key={category.id} value={category.id}>
+                              {category.name}
                             </option>
                           ))}
                         </select>

@@ -12,10 +12,11 @@ export default function ProductosPage() {
     <>   
       {isAdmin && ( 
         <div>          
-          <Header title="Configuraciones" />        
+              
           <div className="d-flex flex-grow-1 overflow-hidden">
             <Sidebar />
             <div className="flex-grow-1  p-4" style={{transition: "margin-left 0.3s ease"}}>
+              <Header title="Configuraciones" />    
               <ConfigurationTabs/>                     
             </div>
           </div>

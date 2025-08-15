@@ -1,7 +1,7 @@
 
 import type { User,  } from "../types/User"
 import { ROLES } from "../types/roles"
-import api from "../lib/api"
+import axiosInstance from "../lib/api"
 
 const roleMapping: Record<string, string> = {
   "ADMIN": ROLES.ADMIN,
@@ -10,9 +10,6 @@ const roleMapping: Record<string, string> = {
   "PROPIETARIO": ROLES.PROPIETARIO,
   "ALMACENISTA": ROLES.ALMACENISTA
 }
-
-
-
 
 const checkToken = ()=>{
   const token = localStorage.getItem("token")
@@ -27,13 +24,13 @@ export async function fetchUsers(): Promise<User[]> {
   const accessToken = checkToken()
   try {
    
-    const response = await api.get("/v1/users",{
+    const response = await axiosInstance.get("/v1/users",{
       headers:{
         Authorization: `Bearer ${accessToken}`
       }
     })
 
-    // console.log("fetchUsers: Response from", api, response.data)
+    // console.log("fetchUsers: Response from", axiosInstance, response.data)
 
     const users = response.data?.data?.records || []
 
@@ -58,7 +55,7 @@ export async function fetchUsers(): Promise<User[]> {
 // Get user by ID
 export async function fetchUserById(id: string): Promise<User | null> {
   try {
-    const response = await api.get(`/v1/users/${id}`)
+    const response = await axiosInstance.get(`/v1/users/${id}`)
 
     return response.data?.data?.records || null
   } catch (error) {
@@ -70,7 +67,7 @@ export async function fetchUserById(id: string): Promise<User | null> {
 // Create a new user
 export async function createUser(user: Omit<User, "id">): Promise<User | null> {
   try {
-    const response = await api.post(`${api}/v1/users`, user)
+    const response = await axiosInstance.post(`${axiosInstance}/v1/users`, user)
     return response.data?.data?.records || null
   } catch (error) {
     console.error("Error creating user:", error)
@@ -81,7 +78,7 @@ export async function createUser(user: Omit<User, "id">): Promise<User | null> {
 // Update an existing user
 export async function updateUser(id: string, updates: Partial<User>): Promise<User | null> {
   try {
-    const response = await api.put(`/v1/users/${id}`, updates)
+    const response = await axiosInstance.put(`/v1/users/${id}`, updates)
 
     return response.data?.data?.records || null
 
@@ -94,7 +91,7 @@ export async function updateUser(id: string, updates: Partial<User>): Promise<Us
 // Delete a user
 export async function deleteUser(id: string): Promise<boolean> {
   try {
-    const response = await api.delete(`/v1/users/${id}`)
+    const response = await axiosInstance.delete(`/v1/users/${id}`)
 
     return response.data?.data?.records || false
   } catch (error) {

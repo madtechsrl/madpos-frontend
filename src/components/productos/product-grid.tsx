@@ -1,13 +1,17 @@
-"use client"
-
 import { ProductCard } from "./product-card"
-import { useProducts } from "../../contexts/product-context"
+import { useProducts } from "../../hooks/useProduct"
 import { useNavigate } from "react-router-dom"
+import { useEffect } from "react"
 
 export function ProductGrid() {
-  const { filteredProducts, loading, error } = useProducts()
+  const { filteredProducts, loading, error, reloadProducts } = useProducts()
 
   const navigate = useNavigate()
+
+
+  useEffect(()=>{
+    reloadProducts()
+  }, [])
 
   if (loading) {
     return (

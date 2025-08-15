@@ -16,7 +16,7 @@ type UserContextType = {
 const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [customerName, setCustomerName] = useState("HECMANUEL")
+  const [customerName, setCustomerName] = useState("")
   const [userProfile, setUserProfile] = useState<UserProfile>({
     fullname: "",
     email: "",
@@ -45,3 +45,4 @@ export function useUser() {
   }
   return context
 }
+// export default UserContext
