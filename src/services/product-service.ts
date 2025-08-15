@@ -3,7 +3,7 @@ import axiosInstance from "../lib/api";
 import type { Product } from "../contexts/product-context";
 
 // MockAPI URL - replace with your actual MockAPI endpoint
-// const MOCKAPI_URL = "http://localhost:8184"
+// const MOCKAPI_URL = "http://localhost:8184/v1/products"
 
 // export async function fetchProducts(): Promise<Product[]> {
 //   try {
@@ -32,86 +32,146 @@ import type { Product } from "../contexts/product-context";
 
 // function getFallbackProducts(): Product[] {
 //   return [
-//     {
-//       id: "alp001",
-//       name: "Alphazap",
-//       price: 12341.0,
-//       category: "Electrónicos",
-//       image: "/placeholder.svg?height=100&width=100",
-//       bgColor: "bg-yellow-100",
-//     },
-//     {
-//       id: "car002",
-//       name: "Cardify",
-//       price: 4123.0,
-//       category: "Software",
-//       image: "/placeholder.svg?height=100&width=100",
-//       bgColor: "bg-gray-100",
-//     },
-//     {
-//       id: "fix003",
-//       name: "Fix San",
-//       price: 123124.0,
-//       category: "Automotriz",
-//       image: "/placeholder.svg?height=100&width=100",
-//       bgColor: "bg-gray-100",
-//     },
-//     {
-//       id: "hol004",
-//       name: "Holdla",
-//       price: 123.0,
-//       category: "Servicios",
-//       bgColor: "bg-slate-600",
-//       textColor: "text-white",
-//     },
-//     {
-//       id: "ran005",
-//       name: "Rank",
-//       price: 200.0,
-//       category: "Software",
-//       bgColor: "bg-slate-600",
-//       textColor: "text-white",
-//     },
-//     {
-//       id: "reg006",
-//       name: "Regran",
-//       price: 231.0,
-//       category: "Servicios",
-//       bgColor: "bg-slate-600",
-//       textColor: "text-white",
-//     },
-//     {
-//       id: "sti007",
-//       name: "Stim",
-//       price: 1231.0,
-//       category: "Electrónicos",
-//       bgColor: "bg-slate-600",
-//       textColor: "text-white",
-//     },
-//     {
-//       id: "str008",
-//       name: "String",
-//       price: 234.0,
-//       category: "Materiales",
-//       bgColor: "bg-slate-600",
-//       textColor: "text-white",
-//     },
-//     {
-//       id: "tem009",
-//       name: "Temp",
-//       price: 100.0,
-//       category: "Hogar",
-//       bgColor: "bg-slate-600",
-//       textColor: "text-white",
-//     },
-//     {
-//       id: "wra010",
-//       name: "Wrapsa",
-//       price: 2213.0,
-//       category: "Embalaje",
-//       bgColor: "bg-slate-600",
-//       textColor: "text-white",
-//     },
+    // {
+    //   id: "alp001",
+    //   name: "Alphazap",
+    //   price: 12341.0,
+    //   category: "Electrónicos",
+    //   image: "/placeholder.svg?height=100&width=100",
+    //   bgColor: "bg-yellow-100",
+    //   brand: "",
+    //   warehouse: "",
+    //   model: "",
+    //   sku: "",
+    //   barcode: "",
+    //   description: ""
+    // },
+    // {
+    //   id: "car002",
+    //   name: "Cardify",
+    //   price: 4123.0,
+    //   category: "Software",
+    //   image: "/placeholder.svg?height=100&width=100",
+    //   bgColor: "bg-gray-100",
+    //   brand: "",
+    //   warehouse: "",
+    //   model: "",
+    //   sku: "",
+    //   barcode: "",
+    //   description: ""
+    // },
+    // {
+    //   id: "fix003",
+    //   name: "Fix San",
+    //   price: 123124.0,
+    //   category: "Automotriz",
+    //   image: "/placeholder.svg?height=100&width=100",
+    //   bgColor: "bg-gray-100",
+    //   brand: "",
+    //   warehouse: "",
+    //   model: "",
+    //   sku: "",
+    //   barcode: "",
+    //   description: ""
+    // },
+    // {
+    //   id: "hol004",
+    //   name: "Holdla",
+    //   price: 123.0,
+    //   category: "Servicios",
+    //   bgColor: "bg-slate-600",
+    //   textColor: "text-white",
+    //   brand: "",
+    //   warehouse: "",
+    //   model: "",
+    //   sku: "",
+    //   barcode: "",
+    //   description: ""
+    // },
+    // {
+    //   id: "ran005",
+    //   name: "Rank",
+    //   price: 200.0,
+    //   category: "Software",
+    //   bgColor: "bg-slate-600",
+    //   textColor: "text-white",
+    //   brand: "",
+    //   warehouse: "",
+    //   model: "",
+    //   sku: "",
+    //   barcode: "",
+    //   description: ""
+    // },
+    // {
+    //   id: "reg006",
+    //   name: "Regran",
+    //   price: 231.0,
+    //   category: "Servicios",
+    //   bgColor: "bg-slate-600",
+    //   textColor: "text-white",
+    //   brand: "",
+    //   warehouse: "",
+    //   model: "",
+    //   sku: "",
+    //   barcode: "",
+    //   description: ""
+    // },
+    // {
+    //   id: "sti007",
+    //   name: "Stim",
+    //   price: 1231.0,
+    //   category: "Electrónicos",
+    //   bgColor: "bg-slate-600",
+    //   textColor: "text-white",
+    //   brand: "",
+    //   warehouse: "",
+    //   model: "",
+    //   sku: "",
+    //   barcode: "",
+    //   description: ""
+    // },
+    // {
+    //   id: "str008",
+    //   name: "String",
+    //   price: 234.0,
+    //   category: "Materiales",
+    //   bgColor: "bg-slate-600",
+    //   textColor: "text-white",
+    //   brand: "",
+    //   warehouse: "",
+    //   model: "",
+    //   sku: "",
+    //   barcode: "",
+    //   description: ""
+    // },
+    // {
+    //   id: "tem009",
+    //   name: "Temp",
+    //   price: 100.0,
+    //   category: "Hogar",
+    //   bgColor: "bg-slate-600",
+    //   textColor: "text-white",
+    //   brand: "",
+    //   warehouse: "",
+    //   model: "",
+    //   sku: "",
+    //   barcode: "",
+    //   description: ""
+    // },
+    // {
+    //   id: "wra010",
+    //   name: "Wrapsa",
+    //   price: 2213.0,
+    //   category: "Embalaje",
+    //   bgColor: "bg-slate-600",
+    //   textColor: "text-white",
+    //   brand: "",
+    //   warehouse: "",
+    //   model: "",
+    //   sku: "",
+    //   barcode: "",
+    //   description: ""
+    // },
 //   ]
 // }
 
@@ -133,6 +193,10 @@ const checkToken = ()=> {
   console.log("checkToken: Token found", token)
   return token
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 220e9a68c0ae61f3981ff48b5097fd898cdee21c
 // function getFallbackProducts(): Product[] {
 //   return [
 
@@ -224,7 +288,10 @@ const checkToken = ()=> {
 
 
 //   ]
+<<<<<<< HEAD
 
+=======
+>>>>>>> 220e9a68c0ae61f3981ff48b5097fd898cdee21c
 // }
 // Get all products
 export async function fetchProducts(): Promise<Product[]> {
@@ -236,18 +303,15 @@ export async function fetchProducts(): Promise<Product[]> {
         Authorization: `Bearer ${accessToken}`
       }
     })
-
     console.log("fetchUsers: Response from", axiosInstance, response.data)
 
     const products = response.data?.data?.records || []
-
 
     if(!Array.isArray(products)){
       console.error("fetchProducts: Invalid response format. Expected array, got:", products)     
     }
     const mappedProducts = products.map((product: Product) => ({
-      ...product,
-      
+      ...product,      
     }))
     // console.log("fetchUsers: Mapped Products", mappedProducts)
     return mappedProducts; 

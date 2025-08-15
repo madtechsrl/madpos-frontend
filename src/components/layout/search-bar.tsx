@@ -1,5 +1,3 @@
-"use client"
-
 import { useProducts } from "../../contexts/product-context"
 import { useState } from "react"
 
@@ -34,7 +32,7 @@ export function SearchBar() {
             <i className="fas fa-chevron-down small"></i>
           </button>
           <ul className={`dropdown-menu ${dropdownOpen ? "show" : ""}`}>
-            <li>
+            <li key="all">
               <button
                 className="dropdown-item"
                 onClick={() => {
