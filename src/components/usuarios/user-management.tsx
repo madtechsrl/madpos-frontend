@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/auth-context";
 import { createUser, deleteUser, updateUser } from "../../services/user-service";
 import type { User } from "../../types/User";
-import { ROLES, roleUuidToCode, getRoleConfig, mapUuidToRole } from "../../types/roles";
+import { UserRole,  getRoleConfig, mapUuidToRole } from "../../types/roles";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
@@ -18,21 +18,21 @@ import { AxiosError } from "axios";
 
 
 const rolePermissions = {
-  [roleUuidToCode[ROLES.PROPIETARIO]]: {
+  [UserRole.PROPIETARIO]: {
     label: "Propietario",
     description: "Acceso completo al sistema, incluyendo configuraciones financieras y reportes avanzados.",
-    canManage: [roleUuidToCode[ROLES.CAJERO]],
+    canManage: [UserRole.CAJERO],
     badge: "bg-danger",
     badgeClass: "bg-danger",
   },
-  [roleUuidToCode[ROLES.ADMIN]]: {
+  [UserRole.ADMIN]: {
     label: "Administrador",
     description: "Acceso a la mayoría de funciones administrativas, excepto configuraciones financieras sensibles.",
-    canManage: [roleUuidToCode[ROLES.ADMIN], roleUuidToCode[ROLES.CAJERO], roleUuidToCode[ROLES.PROPIETARIO]],
+    canManage: [UserRole.ADMIN], [UserRole.CAJERO]: [UserRole.PROPIETARIO],
     badge: "bg-primary",
     badgeClass: "bg-primary",
   },
-  [roleUuidToCode[ROLES.CAJERO]]: {
+  [UserRole.CAJERO]: {
     label: "Cajero",
     description: "Acceso limitado a ventas, pedidos y clientes.",
     canManage: [],
@@ -95,7 +95,7 @@ useEffect(() => {
       return;
     }
 
-    if (!hasPermission(ROLES.ADMIN)) {
+    if (!hasPermission(UserRole.ADMIN)) {
       console.log("UserManagement: Usuario sin rol ADMIN", { role: user?.role });
       setError("Acceso denegado: se requiere rol de administrador");
       setIsLoading(false);
@@ -174,10 +174,10 @@ useEffect(() => {
 const filteredUsers = Array.isArray(users) ? users.filter((user) => {
   const matchesRole = 
   activeTab === "all" ||   
-  activeTab === "administradores" && user.role === ROLES.ADMIN ||
-  activeTab === "propietarios" && user.role === ROLES.PROPIETARIO ||
-  activeTab === "cajeros" && user.role === ROLES.CAJERO ||
-  activeTab === "usuarios" && user.role === ROLES.USER;
+  activeTab === "administradores" && user.role === UserRole.ADMIN ||
+  activeTab === "propietarios" && user.role === UserRole.PROPIETARIO ||
+  activeTab === "cajeros" && user.role === UserRole.CAJERO ||
+  activeTab === "usuarios" && user.role === UserRole.USER;
   const matchesSearch =
     user.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -213,7 +213,7 @@ const handleAddUser = () => {
     email: "",
     fullname: "",
     password: "",
-    role: "",
+    role,
     enabled: true,
     createdAt: new Date().toISOString(),
   });
@@ -286,7 +286,7 @@ const handleSubmit = async (e: React.FormEvent) =>{
           currentUser.fullname,
           currentUser.email,
           currentUser.password || "",
-          currentUser.role || "",
+          currentUser.role as UserRole,
           currentUser.enabled,
           
         )
@@ -314,11 +314,11 @@ const userCounts = {
   all: Array.isArray(users) ? users.length : 0,
   active: Array.isArray(users) ? users.filter(user => user.enabled).length : 0,
   inactive: Array.isArray(users) ? users.filter(user => !user.enabled).length : 0,
-  admin: Array.isArray(users) ? users.filter(user => user.role === ROLES.ADMIN).length : 0,
-  cajero: Array.isArray(users) ? users.filter(user => user.role === ROLES.CAJERO).length : 0,
-  almacenista: Array.isArray(users) ? users.filter(user => user.role === ROLES.ALMACENISTA).length : 0,
-  propietario: Array.isArray(users) ? users.filter(user => user.role === ROLES.PROPIETARIO).length : 0,
-  usuario: Array.isArray(users) ? users.filter(user => user.role === ROLES.USER).length : 0,
+  admin: Array.isArray(users) ? users.filter(user => user.role === UserRole.ADMIN).length : 0,
+  cajero: Array.isArray(users) ? users.filter(user => user.role === UserRole.CAJERO).length : 0,
+  almacenista: Array.isArray(users) ? users.filter(user => user.role === UserRole.ALMACENISTA).length : 0,
+  propietario: Array.isArray(users) ? users.filter(user => user.role === UserRole.PROPIETARIO).length : 0,
+  usuario: Array.isArray(users) ? users.filter(user => user.role === UserRole.USER).length : 0,
 };
 
  
@@ -510,7 +510,7 @@ const userCounts = {
       </div>
 
 
-      <h3 className="fs-5 fw-semibold mb-3">Roles y Permisos</h3>
+      <h3 className="fs-5 fw-semibold mb-3">UserRole y Permisos</h3>
       <div className="row">
         {Object.entries(rolePermissions).map(([role, info]) => (
           <div className="col-md-4 mb-3" key={role}>

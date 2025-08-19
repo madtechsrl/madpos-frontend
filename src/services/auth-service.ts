@@ -1,7 +1,8 @@
 import { handleError } from "../lib/handleError";
 import type { User } from "../types/User";
-import { ROLES } from '../types/roles';
 import axiosInstance  from '../lib/api';
+import { getRoleById, ROLES } from "../types/roles";
+
 
 export const fetchProfile = async (): Promise<User> => {
   try {
@@ -15,7 +16,7 @@ export const fetchProfile = async (): Promise<User> => {
       id: data.id,
       email: data.email,
       fullname: data.fullname,
-      role: data.role,
+      role: getRoleById(data.role),
       enabled: data.enabled,
       createdAt: data.createdAt,      
     };
@@ -44,7 +45,7 @@ export const loginAPI = async (email: string, password: string) => {
       id: user.id,
       email: user.email,
       fullname: user.fullname,
-      role: user.role as typeof ROLES[keyof typeof ROLES],
+      role: user.role,
       createdAt: user.createdAt,
       enabled: user.enabled,
     };
@@ -56,6 +57,7 @@ export const loginAPI = async (email: string, password: string) => {
 };
 
 
+
 export const registerAPI = async (
   fullname: string,
   email: string,
@@ -64,11 +66,15 @@ export const registerAPI = async (
   enabled: boolean
 ): Promise<boolean> => {
   try {
+
+    // const roleId = getRoleIdByRole(role: UserRole)
+
     const newUser = {
       fullname,
       email,
       password,
       role,
+      // roleId,
       enabled,
       createdAt: new Date().toISOString(),
     };

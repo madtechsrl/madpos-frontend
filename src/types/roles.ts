@@ -9,7 +9,6 @@ export const ROLES = {
   PROPIETARIO: "7c9e6679-7425-40de-944b-e07fc1f907cb",
 } as const
 
-
 export enum UserRole {
   ADMIN = "ADMIN",
   USER = "USER",
@@ -17,6 +16,39 @@ export enum UserRole {
   ALMACENISTA = "ALMACENISTA",
   PROPIETARIO = "PROPIETARIO",
 }
+
+export enum RoleEnum {
+  ADMIN = "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  USER = "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+  CAJERO = "7c9e6679-7425-40de-944b-e07fc1f907c9",
+  ALMACENISTA = "7c9e6679-7425-40de-944b-e07fc1f907ca",
+  PROPIETARIO = "7c9e6679-7425-40de-944b-e07fc1f907cb",
+}
+
+
+export type UserRoleId =
+  | RoleEnum.ADMIN
+  | RoleEnum.USER
+  | RoleEnum.CAJERO
+  | RoleEnum.ALMACENISTA
+  | RoleEnum.PROPIETARIO;
+
+
+
+  export const getRoleById = (roleId: UserRoleId): UserRole => {
+  const match = Object.entries(ROLES).find(([, value]) => value === roleId)
+  if(!match) throw new Error (`Unknown role id: ${roleId}`);
+  return  match[0] as UserRole;
+}
+
+export const getRoleIdByName = (role: UserRole): UserRoleId => {  
+  return RoleEnum[role]
+}
+
+export function mapRoleToUUID(role: UserRole): string {
+  return RoleEnum[role];
+}
+
 // Mapping from UUID to role code
 export const roleUuidToCode = {
   "f47ac10b-58cc-4372-a567-0e02b2c3d479": "ADMIN",
@@ -26,14 +58,14 @@ export const roleUuidToCode = {
   "7c9e6679-7425-40de-944b-e07fc1f907cb": "PROPIETARIO",
 } as const
 
-// Mapping from role code to UUID
-export const roleCodeToUuid = {
-  ADMIN: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-  USER: "7c9e6679-7425-40de-944b-e07fc1f90ae7",
-  CAJERO: "7c9e6679-7425-40de-944b-e07fc1f907c9",
-  ALMACENISTA: "7c9e6679-7425-40de-944b-e07fc1f907ca",
-  PROPIETARIO: "7c9e6679-7425-40de-944b-e07fc1f907cb",
-} as const
+// // Mapping from role code to UUID
+// export const roleCodeToUuid = {
+//   ADMIN: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+//   USER: "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+//   CAJERO: "7c9e6679-7425-40de-944b-e07fc1f907c9",
+//   ALMACENISTA: "7c9e6679-7425-40de-944b-e07fc1f907ca",
+//   PROPIETARIO: "7c9e6679-7425-40de-944b-e07fc1f907cb",
+// } as const
 
 
 export const getRoleName = (role: UserRole): string => {
@@ -136,9 +168,6 @@ export const roleDisplayNames = {
   [UserRole.USER]: "Usuario",
 } as const
 // Helper functions for role management
-
-
-
 export const badgeClasses = {
   [ROLES.ADMIN]: "bg-success",
   [ROLES.USER]: "bg-secondary",
@@ -272,10 +301,10 @@ export function getRoleConfig(role: UserRole) {
 
 /**
  * Validate if UUID is a valid role
- */
-export function isValidRoleUuid(uuid: string): boolean {
-  return uuid in roleUuidToCode
-}
+//  */
+// export function isValidRoleUuid(uuid: string): boolean {
+//   return uuid in roleUuidToCode
+// }
 
 /**
  * Get all role UUIDs
@@ -307,6 +336,7 @@ export function getRoleStats(users: Array<{ role: UserRole }>): Record<UserRole 
 }
 
 // Export types for TypeScript
-export type RoleCode = keyof typeof roleCodeToUuid
+// export type RoleCode = keyof typeof roleCodeToUuid
 export type RoleUuid = (typeof ROLES)[keyof typeof ROLES]
 export type RoleConfig = (typeof roleConfig)[UserRole]
+ 

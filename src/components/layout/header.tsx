@@ -1,6 +1,6 @@
 import { useAuth } from "../../contexts/auth-context"
 import { useState } from "react"
-import { ROLES} from "../../types/roles"
+import { UserRole} from "../../types/roles"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faChevronDown, faSignOutAlt } from "@fortawesome/free-solid-svg-icons"
 
@@ -9,19 +9,19 @@ type HeaderProps = {
 }
 
 const roleDisplayNames = {
-  [ROLES.ADMIN]: "Administrador",
-  [ROLES.USER]: "Usuario",
-  [ROLES.PROPIETARIO]: "Propietario",
-  [ROLES.CAJERO]: "Cajero",
-  [ROLES.ALMACENISTA]: "Almacenista",
+  [UserRole.ADMIN]: "Administrador",
+  [UserRole.USER]: "Usuario",
+  [UserRole.PROPIETARIO]: "Propietario",
+  [UserRole.CAJERO]: "Cajero",
+  [UserRole.ALMACENISTA]: "Almacenista",
 }
 
 const badgeClasses = {
-  [ROLES.ADMIN]: "bg-success",
-  [ROLES.USER]: "bg-secondary",
-  [ROLES.CAJERO]: "bg-info",
-  [ROLES.ALMACENISTA]: "bg-danger",
-  [ROLES.PROPIETARIO]: "bg-primary",
+  [UserRole.ADMIN]: "bg-success",
+  [UserRole.USER]: "bg-secondary",
+  [UserRole.CAJERO]: "bg-info",
+  [UserRole.ALMACENISTA]: "bg-danger",
+  [UserRole.PROPIETARIO]: "bg-primary",
 }
 
 const isValidRole = (role: unknown): role is keyof typeof roleDisplayNames =>

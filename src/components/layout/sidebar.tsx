@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "../../contexts/auth-context"
-import { ROLES } from "../../types/roles"
+import { UserRole } from "../../types/roles"
 import { Tooltip } from "react-tooltip"
 
 
@@ -12,7 +12,7 @@ const menuItems = [
     href: "/home",
     icon: "fa-light fa-shop",
     label: "Vender",
-    roles: [ROLES.ADMIN, ROLES.CAJERO, ROLES.ALMACENISTA, ROLES.PROPIETARIO, ROLES.USER],
+    UserRole: [UserRole.ADMIN, UserRole.CAJERO, UserRole.ALMACENISTA, UserRole.PROPIETARIO, UserRole.USER],
     highlight: true,
    
   },
@@ -20,73 +20,73 @@ const menuItems = [
   //   href: "/demo",
   //   icon: "fa-shopping-cart",
   //   label: "Demo Pagos",
-  //   roles: [ROLES.ADMIN, ROLES.CAJERO],
+  //   UserRole: [UserRole.ADMIN, UserRole.CAJERO],
   // },
   // {
   //   href: "/pedidos",
   //   icon: "fa-shopping-cart",
   //   label: "Pedidos",
-  //   roles: [userRoles.administrador, userRoles.cajero, userRoles.propietario],
+  //   UserRole: [userUserRole.administrador, userUserRole.cajero, userUserRole.propietario],
   // },
   {
     href: "/productos",
     icon: "fa-light fa-boxes-stacked", 
     label: "Productos",
-    roles: [ROLES.ADMIN, ROLES.CAJERO, ROLES.ALMACENISTA, ROLES.PROPIETARIO, ROLES.USER],
+    UserRole: [UserRole.ADMIN, UserRole.CAJERO, UserRole.ALMACENISTA, UserRole.PROPIETARIO, UserRole.USER],
     tooltip: "Productos",
   },
   // {
   //   href: "/catalogo",
   //   icon: "fa-list",
   //   label: "Catálogo",
-  //   roles: [ROLES.ADMIN, ROLES.CAJERO],
+  //   UserRole: [UserRole.ADMIN, UserRole.CAJERO],
   //   tooltip: "Catálogo",
   // },
   {
     href: "/clientes",
     icon: "fa-users",
     label: "Clientes",
-    roles: [ROLES.ADMIN, ROLES.PROPIETARIO],
+    UserRole: [UserRole.ADMIN, UserRole.PROPIETARIO],
     tooltip: "Clientes",
   },
   {
     href: "/transaciones",
     icon: "fa-exchange-alt",
     label: "Transacciones",
-    roles: [ROLES.ADMIN, ROLES.PROPIETARIO],
+    UserRole: [UserRole.ADMIN, UserRole.PROPIETARIO],
     tooltip: "Transacciones",
   },
   // {
   //   href: "/finanzas",
   //   icon: "fa-dollar-sign",
   //   label: "Finanzas",
-  //   roles: [userRoles.administrador, userRoles.propietario],
+  //   UserRole: [userUserRole.administrador, userUserRole.propietario],
   // },
   {
     href: "/stats",
     icon: "fa-light fa-chart-simple",
     label: "Estadísticas",
-    roles: [ROLES.ADMIN, ROLES.PROPIETARIO],
+    UserRole: [UserRole.ADMIN, UserRole.PROPIETARIO],
     tooltip: "Estadísticas",
   },
   // {
   //   href: "/usuarios",
   //   icon: "fa-user-friends",
   //   label: "Usuarios",
-  //   roles: [userRoles.administrador, userRoles.propietario],
+  //   UserRole: [userUserRole.administrador, userUserRole.propietario],
   // },
   {
     href: "/user",
     icon: "fa-user-cog",
     label: "Gestión Usuarios",
-    roles: [ROLES.ADMIN],
+    UserRole: [UserRole.ADMIN],
     tooltip: "Gestión Usuarios",
   },
   {
     href: "/configuraciones",
     icon: "fa-cog",
     label: "Configuracione",
-    roles: [ROLES.ADMIN],
+    UserRole: [UserRole.ADMIN],
     tooltip: "Configuraciones",
   },
 ]
@@ -98,7 +98,7 @@ export default function Sidebar() {
   const [isMobile, setIsMobile] = useState(false)
 
   // Filter menu items based on user role
-  const filteredMenuItems = menuItems.filter((item) => user && hasPermission(item.roles as unknown as string[]))
+  const filteredMenuItems = menuItems.filter((item) => user && hasPermission(item.UserRole as UserRole[]))
 
   // Handle responsive behavior
   useEffect(() => {
@@ -183,9 +183,9 @@ export default function Sidebar() {
           <div className={`text-center mb-2 px-2 ${expanded ? "d-block" : "d-none"}`}>
             <span
               className={`badge ${
-                user?.role === ROLES.ADMIN
+                user?.role === UserRole.ADMIN
                   ? "bg-danger"
-                  : ([ROLES.CAJERO, ROLES.ALMACENISTA, ROLES.PROPIETARIO] as readonly string[]).includes(user?.role ?? "")
+                  : ([UserRole.CAJERO, UserRole.ALMACENISTA, UserRole.PROPIETARIO] as readonly string[]).includes(user?.role ?? "")
                     ? "bg-primary"
                     : "bg-secondary"
               } text-white`}

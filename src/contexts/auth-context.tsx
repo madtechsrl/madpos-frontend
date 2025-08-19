@@ -1,24 +1,25 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useNavigate } from "react-router-dom"
-import type { User } from "../types/User"
+import type { CreateUserRequest, User } from "../types/User"
+import { getRoleById, getRoleIdByName, } from "../types/roles"
 import { loginAPI } from "../services/auth-service"
 import { createUser } from "../services/user-service"
-import { ROLES } from "../types/roles" 
-import api from "../lib/api";
-
+// import { ROLES } from "../types/roles" 
+import axiosInstance from "../lib/api";
+import { UserRole } from "../types/roles"
 
 
 type AuthContextType = {
-  user: User | null
-  isLoading: boolean
-  isAuthenticated: boolean
-  userRole: typeof ROLES[keyof typeof ROLES] | null
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  userRole: UserRole| null
   token: string | null
   setToken: (token: string | null) => void
   loginUser: (email: string, password: string) => void
-  register: (name: string, email: string, password: string, role: string, enabled: boolean ) => Promise<boolean>
+  register: (name: string, email: string, password: string, role: UserRole, enabled: boolean ) => Promise<boolean>
   logout: () => void
-  hasPermission: (requiredRole: string | string[]) => boolean
+  hasPermission: (requiredRole: UserRole | UserRole[]) => boolean
   getAccessToken: () => string | null
 }
 
@@ -28,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate()
   
   // Check if user is logged in on initial load
@@ -39,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const parserUser = JSON.parse(storeUser);        
       setUser(parserUser);
       setToken(StoredToken);
-      api.defaults.headers.common["Authorization"] = `Bearer ${StoredToken}`;
+      axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${StoredToken}`;
     }
     setIsLoading(false);
   }, []);
@@ -49,22 +50,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fullname: string,
     email: string,
     password: string,
-    role: string,
+    role: UserRole,
     enabled: boolean,
   ): Promise<boolean> => {
     try {
       setIsLoading(true)
 
-      const newUser: Omit<User, "id"> = {
+      // const roleId = user.role ? getRoleIdByRole(user.role) : ROLES.USER
+
+      // const newUser: Omit<User, "id"> = {
+      //   fullname,
+      //   email,
+      //   password,
+      //   role,
+      //   roleId,
+      //   enabled,
+      //   createdAt: new Date().toISOString(),
+      // }
+     
+      const newUser : CreateUserRequest = {
         fullname,
         email,
         password,
         role,
+        roleId: getRoleIdByName(role),
         enabled,
         createdAt: new Date().toISOString(),
       }
 
-      const createdUser = await createUser(newUser)
+      const createdUser = await createUser(newUser)       
       return !!createdUser
     } catch (error) {
       console.error("Registration failed:", error)
@@ -88,21 +102,23 @@ const loginUser = async (email: string, password: string) => {
     //   fullname: token.fullname,
     //   role: token.role,      
     // })    
-    if (response.accessToken) {
-      localStorage.setItem("token", response.accessToken);        
+    if (response.accessToken && response.role) {
+      localStorage.setItem("token", response.accessToken); 
+      const role = getRoleById(getRoleIdByName(response.role))
       const userObj: User = {        
         id: response.id, 
         fullname: response.fullname, 
         email: response.email,
         password: "",
-        role: response.role as typeof ROLES[keyof typeof ROLES],          
+        role,          
         enabled: true,    
         createdAt:""
-      };      
+      };    
+          
       localStorage.setItem("user", JSON.stringify(userObj));       
       setUser(userObj);      
       setToken(response.accessToken);
-      api.defaults.headers.common["Authorization"] = `Bearer ${response.accessToken}`; 
+      axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${response.accessToken}`; 
       // console.log("loginUser: axios.defaults.headers.common", axios.defaults.headers.common);
       navigate("/home");
     }
@@ -118,18 +134,22 @@ const logout = () => {
   localStorage.removeItem("user")
   document.cookie = "auth-token=; path=/; max-age=0"
   document.cookie = "user-role=; path=/; max-age=0"
-  setIsAuthenticated(false)
+  // setIsAuthenticated(false)
   navigate("/")
 }
 
 
   // Helper function to check if user has required role(s)
-  const hasPermission = (requiredRole: string | string[]): boolean => {
+  const hasPermission = (requiredRole: UserRole | UserRole[]): boolean => {
     if (!user?.role) return false
-    if (Array.isArray(requiredRole)) {
-      return requiredRole.includes(user.role)
-    }
-    return user.role === requiredRole
+    // if (Array.isArray(requiredRole)) {
+    //   return requiredRole.includes(user.role)
+    // }
+    // return user.role === requiredRole
+    return Array.isArray(requiredRole)
+    ? requiredRole.includes(user.role)
+    : user.role === requiredRole;
+
   }
 
   return (
@@ -138,7 +158,7 @@ const logout = () => {
         user,
         isLoading,
         isAuthenticated: !!user,
-        userRole: user?.role as typeof ROLES[keyof typeof ROLES] | null,
+        userRole: user?.role ?? null,
         loginUser,
         logout,
         register,

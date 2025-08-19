@@ -3,11 +3,11 @@ import { useAuth } from "../contexts/auth-context"
 import { Header } from "../components/layout/header"
 import UserManagement from "../components/usuarios/user-management"
 import Sidebar from "../components/layout/sidebar"
-import { ROLES } from "../types/roles"
+import { UserRole } from "../types/roles"
 
 export default function UserPage() {
   const { hasPermission } = useAuth()
-  const isAdmin = hasPermission(ROLES.ADMIN)
+  const isAdmin = hasPermission(UserRole.ADMIN)
 
   return (
     <>   
