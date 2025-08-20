@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import  { type UserRole, getRoleName } from "../../types/User"
+import  { UserRole, getRoleName } from "../../types/roles"
 
 
 

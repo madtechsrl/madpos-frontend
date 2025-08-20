@@ -2,12 +2,12 @@
 import { useAuth } from "../contexts/auth-context"
 import Estadistica from "../components/analitica/estadistica"
 import Sidebar from "../components/layout/sidebar"
-import { ROLES } from "../types/roles"
+import { UserRole } from "../types/roles"
 import { Header } from "../components/layout/header"
 
 export default function EstadisticaPage() {
   const { hasPermission } = useAuth()
-  const isAdmin = hasPermission(ROLES.ADMIN)
+  const isAdmin = hasPermission(UserRole.ADMIN)
 
   return (
     <>   

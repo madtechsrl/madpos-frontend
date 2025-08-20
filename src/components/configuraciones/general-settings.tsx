@@ -95,7 +95,7 @@ export function GeneralSettings() {
                 <div className="alert alert-info small">
                   <i className="fas fa-info-circle me-2"></i>
                   Informar una identificación legal es una medida para validar su cuenta, preservar su privacidad y
-                  garantizar la calidad de todos los catálogos de Kyte.{" "}
+                  garantizar la calidad de todos los catálogos de MadTech.{" "}
                   <strong>Los datos de identificación no se mostrarán en su catálogo en línea.</strong>
                 </div>
               </div>
