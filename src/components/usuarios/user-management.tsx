@@ -9,12 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
-// import axios from "axios";
 import axiosInstance from "../../lib/api";
 import { AxiosError } from "axios";
-
-//  const BASE_URL = "http://localhost:8184"
-
 
 
 const rolePermissions = {
@@ -70,7 +66,7 @@ export default function UserManagement({ compact = false }: UserManagementProps)
   // };
   const role = mapUuidToRole(user?.role ?? "")
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const roleConf = getRoleConfig(role)  
+  // const roleConf = getRoleConfig(role)  
 
 
 useEffect(() => {

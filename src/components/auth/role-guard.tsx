@@ -1,10 +1,10 @@
 "use client"
 
-import { useAuth } from "../contexts/auth-context"
+import { useAuth } from "../../contexts/auth-context"
 import { useNavigate } from "react-router-dom"
 import { useEffect, useState, type ReactNode } from "react"
 // import { isPreviewEnvironment } from "../services/auth-service"
-import { type UserRole } from "../types/roles"
+import { UserRole } from "../../types/roles"
 
 type RoleGuardProps = {
   children: ReactNode

@@ -1,12 +1,12 @@
 import { useAuth } from "../contexts/auth-context"
 import {ClientRegistrationForm} from "../components/clientes/client-registration"
 import Sidebar from "../components/layout/sidebar"
-import { ROLES } from "../types/roles"
+import { UserRole } from "../types/roles"
 import { Header } from "../components/layout/header"
 
 export default function ClientRegister() {
   const { hasPermission } = useAuth()
-  const isAdmin = hasPermission([ROLES.ADMIN, ROLES.PROPIETARIO])
+  const isAdmin = hasPermission([UserRole.ADMIN, UserRole.PROPIETARIO])
 
   return (
     <>   

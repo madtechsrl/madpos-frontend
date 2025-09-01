@@ -58,32 +58,24 @@ export const roleUuidToCode = {
   "7c9e6679-7425-40de-944b-e07fc1f907cb": "PROPIETARIO",
 } as const
 
-// // Mapping from role code to UUID
-// export const roleCodeToUuid = {
-//   ADMIN: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-//   USER: "7c9e6679-7425-40de-944b-e07fc1f90ae7",
-//   CAJERO: "7c9e6679-7425-40de-944b-e07fc1f907c9",
-//   ALMACENISTA: "7c9e6679-7425-40de-944b-e07fc1f907ca",
-//   PROPIETARIO: "7c9e6679-7425-40de-944b-e07fc1f907cb",
-// } as const
 
 
-export const getRoleName = (role: UserRole): string => {
-  switch (role) {
-    case UserRole.ADMIN:
-      return "Administrador"
-    case UserRole.PROPIETARIO:
-      return "Propietario"
-    case UserRole.CAJERO:
-      return "Cajero"
-    case UserRole.ALMACENISTA:
-      return "Almacenista"
-    case UserRole.USER:
-      return "Usuario"
-    default:
-      return role
-  }
-}
+// export const getRoleName = (role: UserRole): string => {
+//   switch (role) {
+//     case UserRole.ADMIN:
+//       return "Administrador"
+//     case UserRole.PROPIETARIO:
+//       return "Propietario"
+//     case UserRole.CAJERO:
+//       return "Cajero"
+//     case UserRole.ALMACENISTA:
+//       return "Almacenista"
+//     case UserRole.USER:
+//       return "Usuario"
+//     default:
+//       return role
+//   }
+// }
 // Role configuration with permissions and metadata
 export const roleConfig = {
   [UserRole.PROPIETARIO]: {
@@ -181,10 +173,10 @@ export const badgeClasses = {
 export function mapUuidToRole(uuid: string): UserRole {
   const roleCode = roleUuidToCode[uuid as keyof typeof roleUuidToCode];
 
-  if (!roleCode || !(roleCode in UserRole)) {
-    console.warn(`Unknown role UUID: ${uuid}, defaulting to USER`);
-    return UserRole.USER;
-  }
+  // if (!roleCode || !(roleCode in UserRole)) {
+  //   console.warn(`Unknown role UUID: ${uuid}, defaulting to USER`);
+  //   return UserRole.USER;
+  // }
 
   return UserRole[roleCode as keyof typeof UserRole];
 }
@@ -238,47 +230,7 @@ export function hasPermission(role: UserRole, permission: string): boolean {
   return permissions.includes(permission)
 }
 
-/**
- * Get roles that a user can manage
- */
-export function getManageableRoles(role: UserRole): UserRole[] {
-  return [...(roleConfig[role]?.canManage ?? [])]
-}
 
-/**
- * Check if current role can manage target role
- */
-export function canManageRole(currentRole: UserRole, targetRole: UserRole): boolean {
-  const manageableRoles = getManageableRoles(currentRole)
-  return manageableRoles.includes(targetRole)
-}
-
-/**
- * Get all available roles sorted by priority (highest to lowest)
- */
-export function getAllRolesSorted(): UserRole[] {
-  return Object.keys(roleConfig)
-    .map((role) => role as UserRole)
-    .sort((a, b) => roleConfig[b].priority - roleConfig[a].priority)
-}
-
-/**
- * Get roles available for selection by current user
- */
-export function getSelectableRoles(currentRole: UserRole): UserRole[] {
-  const manageableRoles = getManageableRoles(currentRole)
-
-  // If user can manage roles, they can also assign their own role (except for propietario creating another propietario)
-  if (currentRole !== UserRole.PROPIETARIO) {
-    manageableRoles.push(currentRole)
-  }
-
-  return manageableRoles.sort((a, b) => roleConfig[b].priority - roleConfig[a].priority)
-}
-
-/**
- * Check if role is higher priority than another role
- */
 export function isHigherRole(role1: UserRole, role2: UserRole): boolean {
   return roleConfig[role1].priority > roleConfig[role2].priority
 }
@@ -309,31 +261,12 @@ export function getRoleConfig(role: UserRole) {
 /**
  * Get all role UUIDs
  */
-export function getAllRoleUuids(): string[] {
-  return Object.values(ROLES)
-}
+
 
 /**
  * Get role statistics for display
  */
-export function getRoleStats(users: Array<{ role: UserRole }>): Record<UserRole | "all", number> {
-  const stats = {
-    all: users.length,
-    [UserRole.PROPIETARIO]: 0,
-    [UserRole.ADMIN]: 0,
-    [UserRole.ALMACENISTA]: 0,
-    [UserRole.CAJERO]: 0,
-    [UserRole.USER]: 0,
-  }
 
-  users.forEach((user) => {
-    if (user.role in stats) {
-      stats[user.role]++
-    }
-  })
-
-  return stats
-}
 
 // Export types for TypeScript
 // export type RoleCode = keyof typeof roleCodeToUuid
