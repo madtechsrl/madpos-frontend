@@ -33,7 +33,7 @@ export const loginAPI = async (email: string, password: string) => {
     const loginResponse = await axiosInstance.post("/v1/auth/sign-in", { email, password });
     const accessToken = loginResponse.data?.data?.accessToken || loginResponse.data?.access
      if (!accessToken) {
-      throw new Error("No access token received from server");
+      throw new Error("No access token recibido por el server");
     }
 
     localStorage.setItem("token", accessToken);

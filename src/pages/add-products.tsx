@@ -6,11 +6,11 @@ import { Header } from "../components/layout/header"
 
 export default function ProductosPage() {
   const { hasPermission } = useAuth()
-  const isAdmin = hasPermission([UserRole.ADMIN, UserRole.PROPIETARIO])
+  const isAdmin = hasPermission([UserRole.ADMIN, UserRole.MANAGER])
 
   return (
     <>   
-      {isAdmin && ( 
+      {!isAdmin && ( 
         <div>                        
           <div className="d-flex flex-grow-1 overflow-hidden">
             <Sidebar />

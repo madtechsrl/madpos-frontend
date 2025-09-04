@@ -2,47 +2,46 @@
 import axiosInstance from "../lib/api";
 import type { Product } from "../contexts/product-context";
 
-const checkToken = ()=> {
-  const token = localStorage.getItem("token")
-  if(!token){
-    throw new Error("No token found, cannot fetch users")
-  }
-  // console.log("checkToken: Token found", token)
-  return token
-}
+type ListPayLoad<T> = {records?:T[]; total?: number; page?: number};
+type ApiListResponse<T> = { data?: ListPayLoad<T> };
+type ApiItemResponse<T> = { data?: T | { record?: T } };
+
+
+
 
 // Get all products
 export async function fetchProducts(): Promise<Product[]> {
-  const accessToken = checkToken()
+  
   try {
    
-    const response = await axiosInstance.get("/v1/products",{
-      headers:{
-        Authorization: `Bearer ${accessToken}`
-      }
-    })
+    const response = await axiosInstance.get<ApiListResponse<Product>>("/v1/products")
+     const records = response.data?.data?.records ?? [];
+    
     // console.log("fetchProducts: Response from", axiosInstance, response.data)
 
-    const products = response.data?.data?.records || []
+    // const products = response.data?.data?.records || []
 
-    if(!Array.isArray(products)){
-      console.error("fetchProducts: Invalid response format. Expected array, got:", products)     
+    if(!Array.isArray(records)){
+      console.error("fetchProducts: Invalid response format. Expected array, got:", response.data) 
+      return[]    
     }
-    const mappedProducts = products.map((product: Product) => ({
-      ...product,      
-    }))
+    return records; 
     // console.log("fetchUsers: Mapped Products", mappedProducts)
-    return mappedProducts; 
-  } catch (error) {
+     } catch (error) {
     console.error("Error fetching Products:", error)
-    return []
+    return [];
   }
 }
 
 export async function fetchProductsId(id: string): Promise<Product | null> {
   try {
-    const response = await axiosInstance.get(`/v1/products/${id}`)
-    return response.data?.data?.records || null
+    const response = await axiosInstance.get<ApiItemResponse<Product>>(`/v1/products/${id}`)
+    const data = response.data?.data;
+    if(!data) return null;
+    if(typeof (data as {record?: Product}).record !== "undefined"){
+      return (data as {record?: Product}).record ?? null;
+    }
+    return (data as Product) ?? null;
   } catch (error) {
     console.error(`Error cargando productos con ID ${id}:`, error)
     return null
@@ -51,8 +50,13 @@ export async function fetchProductsId(id: string): Promise<Product | null> {
 
 export async function editProductId(id: string): Promise <Product | null>{
   try {
-    const response = await axiosInstance.put(`/v1/products/${id}`)
-    return response.data?.data?.records || null
+    const response = await axiosInstance.put<ApiItemResponse<Product>>(`/v1/products/${id}`)
+    const data = response.data?.data;
+    if (!data) return null;
+    if (typeof (data as { record?: Product }).record !== "undefined") {
+      return (data as { record?: Product }).record ?? null;
+    }
+    return (data as Product) ?? null;
   } catch (error) {
     console.error(`Error editando producto con ID ${id}:`, error)
     return null
@@ -62,7 +66,7 @@ export async function editProductId(id: string): Promise <Product | null>{
 export async function deleteProduct(id: string): Promise<boolean> {
   try {
     const response = await axiosInstance.delete(`/v1/products/${id}`)
-    return response.data?.data?.records || false
+    return response.status >= 200 && response.status < 300;
   } catch (error) {
     console.error(`Error borrando producto con ID ${id}:`, error)
     return false

@@ -14,21 +14,21 @@ import { AxiosError } from "axios";
 
 
 const rolePermissions = {
-  [UserRole.PROPIETARIO]: {
+  [UserRole.MANAGER]: {
     label: "Propietario",
     description: "Acceso completo al sistema, incluyendo configuraciones financieras y reportes avanzados.",
-    canManage: [UserRole.CAJERO],
+    canManage: [UserRole.CASHIER],
     badge: "bg-danger",
     badgeClass: "bg-danger",
   },
   [UserRole.ADMIN]: {
     label: "Administrador",
     description: "Acceso a la mayoría de funciones administrativas, excepto configuraciones financieras sensibles.",
-    canManage: [UserRole.ADMIN], [UserRole.CAJERO]: [UserRole.PROPIETARIO],
+    canManage: [UserRole.ADMIN], [UserRole.CASHIER]: [UserRole.MANAGER],
     badge: "bg-primary",
     badgeClass: "bg-primary",
   },
-  [UserRole.CAJERO]: {
+  [UserRole.CASHIER]: {
     label: "Cajero",
     description: "Acceso limitado a ventas, pedidos y clientes.",
     canManage: [],
@@ -171,9 +171,8 @@ const filteredUsers = Array.isArray(users) ? users.filter((user) => {
   const matchesRole = 
   activeTab === "all" ||   
   activeTab === "administradores" && user.role === UserRole.ADMIN ||
-  activeTab === "propietarios" && user.role === UserRole.PROPIETARIO ||
-  activeTab === "cajeros" && user.role === UserRole.CAJERO ||
-  activeTab === "usuarios" && user.role === UserRole.USER;
+  activeTab === "propietarios" && user.role === UserRole.MANAGER ||
+  activeTab === "cajeros" && user.role === UserRole.CASHIER; 
   const matchesSearch =
     user.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -311,10 +310,9 @@ const userCounts = {
   active: Array.isArray(users) ? users.filter(user => user.enabled).length : 0,
   inactive: Array.isArray(users) ? users.filter(user => !user.enabled).length : 0,
   admin: Array.isArray(users) ? users.filter(user => user.role === UserRole.ADMIN).length : 0,
-  cajero: Array.isArray(users) ? users.filter(user => user.role === UserRole.CAJERO).length : 0,
-  almacenista: Array.isArray(users) ? users.filter(user => user.role === UserRole.ALMACENISTA).length : 0,
-  propietario: Array.isArray(users) ? users.filter(user => user.role === UserRole.PROPIETARIO).length : 0,
-  usuario: Array.isArray(users) ? users.filter(user => user.role === UserRole.USER).length : 0,
+  cashier: Array.isArray(users) ? users.filter(user => user.role === UserRole.CASHIER).length : 0,
+  manager: Array.isArray(users) ? users.filter(user => user.role === UserRole.MANAGER).length : 0,
+  
 };
 
  
@@ -401,7 +399,7 @@ const userCounts = {
             className={`nav-link ${activeTab === 'propietarios' ? "active" : ""}`}
             onClick={() => setActiveTab('propietarios')}
           >
-            Propietarios <span className="badge bg-light text-dark ms-1">{userCounts.propietario}</span>
+            Propietarios <span className="badge bg-light text-dark ms-1">{userCounts.manager}</span>
           </button>
           </li>
           <li className="nav-item" role="presentation">
@@ -418,14 +416,14 @@ const userCounts = {
             className={`nav-link ${activeTab === 'cajeros' ? "active" : ""}`}
             onClick={() => setActiveTab('cajeros')}
           >
-            Cajeros <span className="badge bg-light text-dark ms-1">{userCounts.cajero}</span>
+            Cajeros <span className="badge bg-light text-dark ms-1">{userCounts.cashier}</span>
           </button>
           <button
             type="button"
             className={`nav-link ${activeTab === 'usuarios' ? "active" : ""}`}
             onClick={() => setActiveTab('usuarios')}
           >
-            Usuarios <span className="badge bg-light text-dark ms-1">{userCounts.usuario}</span>
+            Usuarios <span className="badge bg-light text-dark ms-1">{userCounts.manager}</span>
           </button>
         </div>
       </div>
@@ -562,8 +560,8 @@ const userCounts = {
                     <input
                       type="text"
                       className="form-control"
-                      id="name"
-                      name="name"
+                      id="fullname"
+                      name="fullname"
                       value={currentUser?.fullname}
                       onChange={handleInputChange}
                       required
@@ -594,14 +592,11 @@ const userCounts = {
                       value={currentUser?.role}
                       onChange={handleInputChange}
                       required
-                    >
+                    > 
+                      <option></option>
                       <option value="Cajero">Cajero</option>
                       <option value="Administrator">Administrador</option>
-                      <option value="Propietario">Gerente</option>
-                      <option value="Almacenista">Supervisor</option>
-                      <option value="Usuario">Empleado</option>
-                      <option value="Cliente">Cliente</option>
-                      <option value="Invitado">Invitado</option>
+                      <option value="Propietario">Propietario</option>                                       
                       <option value="Otro">Otro</option>
                     </select>
                   </div>

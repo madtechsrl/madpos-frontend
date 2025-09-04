@@ -2,36 +2,29 @@
 
 // Role UUIDs as provided by the API
 export const ROLES = {
-  ADMIN: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-  USER: "7c9e6679-7425-40de-944b-e07fc1f90ae7",
-  CAJERO: "7c9e6679-7425-40de-944b-e07fc1f907c9",
-  ALMACENISTA: "7c9e6679-7425-40de-944b-e07fc1f907ca",
-  PROPIETARIO: "7c9e6679-7425-40de-944b-e07fc1f907cb",
+ CASHIER : "7c9e6679-7425-40de-944b-e07fc1f907c9",
+ MANAGER : "195dfc25-f5d9-49ed-bed7-82409fe2e7df",
+ ADMIN : "7c9e6679-7425-40de-944b-e07fc1f907cb",
 } as const
 
 export enum UserRole {
   ADMIN = "ADMIN",
-  USER = "USER",
-  CAJERO = "CAJERO",
-  ALMACENISTA = "ALMACENISTA",
-  PROPIETARIO = "PROPIETARIO",
+  MANAGER = "MANAGER",
+  CASHIER = "CASHIER",
 }
 
 export enum RoleEnum {
-  ADMIN = "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-  USER = "7c9e6679-7425-40de-944b-e07fc1f90ae7",
-  CAJERO = "7c9e6679-7425-40de-944b-e07fc1f907c9",
-  ALMACENISTA = "7c9e6679-7425-40de-944b-e07fc1f907ca",
-  PROPIETARIO = "7c9e6679-7425-40de-944b-e07fc1f907cb",
+  ADMIN = "7c9e6679-7425-40de-944b-e07fc1f907cb",
+  MANAGER = "195dfc25-f5d9-49ed-bed7-82409fe2e7df",
+  CASHIER = "7c9e6679-7425-40de-944b-e07fc1f907c9",
+ 
 }
 
 
 export type UserRoleId =
   | RoleEnum.ADMIN
-  | RoleEnum.USER
-  | RoleEnum.CAJERO
-  | RoleEnum.ALMACENISTA
-  | RoleEnum.PROPIETARIO;
+  | RoleEnum.MANAGER
+  | RoleEnum.CASHIER  
 
 
 
@@ -51,11 +44,9 @@ export function mapRoleToUUID(role: UserRole): string {
 
 // Mapping from UUID to role code
 export const roleUuidToCode = {
-  "f47ac10b-58cc-4372-a567-0e02b2c3d479": "ADMIN",
-  "7c9e6679-7425-40de-944b-e07fc1f90ae7": "USER",
-  "7c9e6679-7425-40de-944b-e07fc1f907c9": "CAJERO",
-  "7c9e6679-7425-40de-944b-e07fc1f907ca": "ALMACENISTA",
-  "7c9e6679-7425-40de-944b-e07fc1f907cb": "PROPIETARIO",
+  "7c9e6679-7425-40de-944b-e07fc1f907cb": "ADMIN",
+  "195dfc25-f5d9-49ed-bed7-82409fe2e7df": "MANAGER",
+  "7c9e6679-7425-40de-944b-e07fc1f907c9": "CASHIER",  
 } as const
 
 
@@ -78,8 +69,8 @@ export const roleUuidToCode = {
 // }
 // Role configuration with permissions and metadata
 export const roleConfig = {
-  [UserRole.PROPIETARIO]: {
-    uuid: ROLES.PROPIETARIO,
+  [UserRole.MANAGER]: {
+    uuid: ROLES.MANAGER,
     code: "PROPIETARIO",
     label: "Propietario",
     description: "Acceso completo al sistema, incluyendo configuraciones financieras y reportes avanzados.",
@@ -95,7 +86,7 @@ export const roleConfig = {
       "catalogo",
       "almacen",
     ],
-    canManage: [ UserRole.ALMACENISTA, UserRole.CAJERO, UserRole.USER],
+    canManage: [ UserRole.MANAGER, UserRole.CASHIER, UserRole.ADMIN],
     priority: 4, // Highest priority
   },
   [UserRole.ADMIN]: {
@@ -116,21 +107,12 @@ export const roleConfig = {
       "catalogo",
       "almacen",
     ],
-    canManage: [UserRole.ADMIN, UserRole.ALMACENISTA, UserRole.CAJERO, UserRole.USER],
+    canManage: [UserRole.ADMIN, UserRole.MANAGER, UserRole.CASHIER],
     priority: 5,
   },
-  [UserRole.ALMACENISTA]: {
-    uuid: ROLES.ALMACENISTA,
-    code: "ALMACENISTA",
-    label: "Almacenista",
-    description: "Acceso a gestión de productos, inventario y almacén.",
-    badgeColor: "warning",
-    permissions: ["dashboard", "productos", "pedidos", "almacen", "clientes"],
-    canManage: [],
-    priority: 3,
-  },
-  [UserRole.CAJERO]: {
-    uuid: ROLES.CAJERO,
+
+  [UserRole.CASHIER]: {
+    uuid: ROLES.CASHIER,
     code: "CAJERO",
     label: "Cajero",
     description: "Acceso limitado a ventas, pedidos y clientes.",
@@ -139,33 +121,21 @@ export const roleConfig = {
     canManage: [],
     priority: 2,
   },
-  [UserRole.USER]: {
-    uuid: ROLES.USER,
-    code: "USER",
-    label: "Usuario",
-    description: "Acceso básico al sistema.",
-    badgeColor: "secondary",
-    permissions: ["dashboard"],
-    canManage: [],
-    priority: 1, // Lowest priority
-  },
+  
 } as const
 
 // Add a dedicated object for easy access to display names
 export const roleDisplayNames = {
-  [UserRole.PROPIETARIO]: "Propietario",
-  [UserRole.ADMIN]: "Administrador",
-  [UserRole.ALMACENISTA]: "Almacenista",
-  [UserRole.CAJERO]: "Cajero",
-  [UserRole.USER]: "Usuario",
+  [UserRole.MANAGER]: "Propietario",
+  [UserRole.ADMIN]: "Administrador", 
+  [UserRole.CASHIER]: "Cajero",
+ 
 } as const
 // Helper functions for role management
 export const badgeClasses = {
   [ROLES.ADMIN]: "bg-success",
-  [ROLES.USER]: "bg-secondary",
-  [ROLES.CAJERO]: "bg-info",
-  [ROLES.ALMACENISTA]: "bg-primary",
-  [ROLES.PROPIETARIO]: "bg-danger",
+  [ROLES.MANAGER]: "bg-secondary",
+  [ROLES.CASHIER]: "bg-info",
 } as const
 /**
  * Convert UUID from API to internal UserRole enum
@@ -189,7 +159,7 @@ export function mapRoleToUuid(role: UserRole): string {
   const config = roleConfig[role]
   if (!config) {
     console.warn(`Unknown role: ${role}, defaulting to USER UUID`)
-    return ROLES.USER
+    return ROLES.CASHIER
   }
   return config.uuid
 }

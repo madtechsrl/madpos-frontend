@@ -111,7 +111,7 @@ export default function TransactionsPage() {
 
   return (
     <RoleGuard
-      allowedRoles={[UserRole.ADMIN, UserRole.USER]}
+      allowedRoles={[UserRole.ADMIN, UserRole.CASHIER]}
       currentUserRole={currentUserRole}
     >
       <div className="container py-4">

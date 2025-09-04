@@ -10,18 +10,16 @@ type HeaderProps = {
 
 const roleDisplayNames = {
   [UserRole.ADMIN]: "Administrador",
-  [UserRole.USER]: "Usuario",
-  [UserRole.PROPIETARIO]: "Propietario",
-  [UserRole.CAJERO]: "Cajero",
-  [UserRole.ALMACENISTA]: "Almacenista",
+  [UserRole.CASHIER]: "Usuario",
+  [UserRole.MANAGER]: "Propietario",
+ 
 }
 
 const badgeClasses = {
   [UserRole.ADMIN]: "bg-success",
-  [UserRole.USER]: "bg-secondary",
-  [UserRole.CAJERO]: "bg-info",
-  [UserRole.ALMACENISTA]: "bg-danger",
-  [UserRole.PROPIETARIO]: "bg-primary",
+  [UserRole.CASHIER]: "bg-secondary",
+  [UserRole.MANAGER]: "bg-info",
+ 
 }
 
 const isValidRole = (role: unknown): role is keyof typeof roleDisplayNames =>

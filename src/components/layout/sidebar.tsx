@@ -12,7 +12,7 @@ const menuItems = [
     href: "/home",
     icon: "fa-light fa-shop",
     label: "Vender",
-    UserRole: [UserRole.ADMIN, UserRole.CAJERO, UserRole.ALMACENISTA, UserRole.PROPIETARIO, UserRole.USER],
+    UserRole: [UserRole.ADMIN, UserRole.CASHIER, UserRole.MANAGER],
     highlight: true,
    
   },
@@ -32,7 +32,7 @@ const menuItems = [
     href: "/productos",
     icon: "fa-light fa-boxes-stacked", 
     label: "Productos",
-    UserRole: [UserRole.ADMIN, UserRole.CAJERO, UserRole.ALMACENISTA, UserRole.PROPIETARIO, UserRole.USER],
+    UserRole: [UserRole.ADMIN, UserRole.CASHIER, UserRole.MANAGER],
     tooltip: "Productos",
   },
   // {
@@ -46,14 +46,14 @@ const menuItems = [
     href: "/clientes",
     icon: "fa-users",
     label: "Clientes",
-    UserRole: [UserRole.ADMIN, UserRole.PROPIETARIO],
+    UserRole: [UserRole.ADMIN, UserRole.MANAGER],
     tooltip: "Clientes",
   },
   {
     href: "/transaciones",
     icon: "fa-exchange-alt",
     label: "Transacciones",
-    UserRole: [UserRole.ADMIN, UserRole.PROPIETARIO],
+    UserRole: [UserRole.ADMIN, UserRole.MANAGER],
     tooltip: "Transacciones",
   },
   // {
@@ -66,7 +66,7 @@ const menuItems = [
     href: "/stats",
     icon: "fa-light fa-chart-simple",
     label: "Estadísticas",
-    UserRole: [UserRole.ADMIN, UserRole.PROPIETARIO],
+    UserRole: [UserRole.ADMIN, UserRole.MANAGER],
     tooltip: "Estadísticas",
   },
   // {
@@ -185,7 +185,7 @@ export default function Sidebar() {
               className={`badge ${
                 user?.role === UserRole.ADMIN
                   ? "bg-danger"
-                  : ([UserRole.CAJERO, UserRole.ALMACENISTA, UserRole.PROPIETARIO] as readonly string[]).includes(user?.role ?? "")
+                  : ([UserRole.CASHIER, UserRole.ADMIN, UserRole.MANAGER] as readonly string[]).includes(user?.role ?? "")
                     ? "bg-primary"
                     : "bg-secondary"
               } text-white`}
