@@ -560,14 +560,14 @@ const userCounts = {
               <form onSubmit={handleSubmit}>
                 <div className="modal-body">
                   <div className="mb-3">
-                    <label htmlFor="name" className="form-label">
+                    <label htmlFor="fullname" className="form-label">
                       Nombre completo
                     </label>
                     <input
                       type="text"
                       className="form-control"
                       id="name"
-                      name="name"
+                      name="fullname"
                       value={currentUser?.fullname}
                       onChange={handleInputChange}
                       required
