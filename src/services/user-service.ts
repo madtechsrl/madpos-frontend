@@ -5,10 +5,9 @@ import axiosInstance from "../lib/api"
 
 const roleMapping: Record<string, string> = {
   "ADMIN": ROLES.ADMIN,
-  "CAJERO": ROLES.CAJERO,
-  "USUARIO": ROLES.USER,
-  "PROPIETARIO": ROLES.PROPIETARIO,
-  "ALMACENISTA": ROLES.ALMACENISTA
+  "CAJERO": ROLES.CASHIER,
+  "USUARIO": ROLES.MANAGER,
+ 
 }
 
 const checkToken = ()=>{

@@ -69,14 +69,11 @@ export const getRoleName = (role: UserRole): string => {
   switch (role) {
     case UserRole.ADMIN:
       return "Administrador"
-    case UserRole.PROPIETARIO:
+    case UserRole.MANAGER:
       return "Propietario"
-    case UserRole.CAJERO:
+    case UserRole.CASHIER:
       return "Cajero"
-    case UserRole.ALMACENISTA:
-      return "Almacenista"
-    case UserRole.USER:
-      return "Usuario"
+  
     default:
       return role
   }

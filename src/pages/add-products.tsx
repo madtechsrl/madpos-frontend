@@ -1,16 +1,16 @@
 import { useAuth } from "../contexts/auth-context"
 import NewProductPage from "../components/productos/addProduct"
 import Sidebar from "../components/layout/sidebar"
-import { ROLES } from "../types/roles"
+import {  UserRole } from "../types/roles"
 import { Header } from "../components/layout/header"
 
 export default function ProductosPage() {
   const { hasPermission } = useAuth()
-  const isAdmin = hasPermission([ROLES.ADMIN, ROLES.PROPIETARIO])
+  const isAdmin = hasPermission([UserRole.ADMIN, UserRole.MANAGER])
 
   return (
     <>   
-      {isAdmin && ( 
+      {!isAdmin && ( 
         <div>                        
           <div className="d-flex flex-grow-1 overflow-hidden">
             <Sidebar />

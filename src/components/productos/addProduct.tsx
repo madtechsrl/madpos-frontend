@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { RoleGuard } from "../analitica/role-guard";
-import { type UserRoleId, getRoleById } from "../../types/User";
+import {UserRole, type UserRoleId, getRoleById } from "../../types/roles";
 import { useAuth } from "../../contexts/auth-context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
@@ -198,7 +198,7 @@ export default function NewProductPage() {
 
   return (
      <RoleGuard
-          allowedRoles={["ADMIN", "PROPIETARIO", "ALMACENISTA"]}
+          allowedRoles={[UserRole.ADMIN, UserRole.MANAGER, UserRole.CASHIER]}
           currentUserRole={currentUserRole}
         >
 

@@ -3,18 +3,37 @@ import { useState, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { useProducts } from "../../hooks/useProduct"
 import { formatCurrency } from "../../lib/utils"
-// import Image from "next/image"
+import axiosInstance from "../../lib/api"
 
-// type Props = {
-//   productId: string
-// }
+type Category = {id: string; name: string}
+
+type ProductFormState = {
+  id: string
+  name: string
+  price: number
+  category: Category
+  description: string
+  sku: string
+  stock: number
+  minStock: number
+  cost: number
+  barcode: string
+  image: string
+  bgColor: string
+  textColor: string
+  isActive: boolean
+  taxable: boolean
+}
+
+
+
+
 
 export function ProductEditForm() {
   const navigate = useNavigate()
   const { products } = useProducts()
   const {productId} = useParams<{productId: string}>()
-  // Form state
-  const [productData, setProductData] = useState({
+    const [productData, setProductData] = useState<ProductFormState>({
     id: "",
     name: "",
     price: 0,
@@ -70,9 +89,9 @@ export function ProductEditForm() {
         category: product.category,
         description: "",
         sku: product.id,
-        stock: 100, // Mock data
-        minStock: 10, // Mock data
-        cost: product.price * 0.7, // Mock data
+        stock: 10, 
+        minStock: 10, 
+        cost: product.price,  
         barcode: "",
         image: product.image || "",
         bgColor: product.bgColor || "bg-white",
@@ -118,20 +137,29 @@ export function ProductEditForm() {
     }
   }
 
-  const handleSave = () => {
-    // Here you would typically save the product data
-    console.log("Saving product:", productData)
-    // Navigate back to products list
-    navigate("/productos")
-  }
-
-  const handleDelete = () => {
-    if (window.confirm("¿Estás seguro de que deseas eliminar este producto?")) {
-      // Here you would typically delete the product
-      console.log("Deleting product:", productId)
-      navigate("/productos")
+  const handleSave = async () => {
+    try {
+      const response = await axiosInstance.put(`/v1/products/${productId}`);
+      console.log("Product saved successfully:", response.data);
+      navigate("/productos");
+    } catch (error) {
+      console.error("Error saving product:", error);
+      alert("Failed to save the product. Please try again.");
     }
-  }
+  };
+
+  const handleDelete = async () => {
+    if (window.confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+      try {
+        await axiosInstance.delete(`/v1/products/${productId}`);
+        console.log("Product deleted successfully:", productId);
+        navigate("/productos");
+      } catch (error) {
+        console.error("Error deleting product:", error);
+        alert("Failed to delete the product. Please try again.");
+      }
+    }
+  };
 
   if (isLoading) {
     return (
@@ -296,7 +324,7 @@ export function ProductEditForm() {
 
                 {/* Pricing */}
                 <div className="mb-4">
-                  <h6 className="fw-semibold mb-3">Precios</h6>
+                  <h4 className="fw-semibold mb-">Precios</h4>
 
                   <div className="row">
                     <div className="col-12 col-md-4">
@@ -308,7 +336,7 @@ export function ProductEditForm() {
                             type="number"
                             className="form-control"
                             value={productData.cost}
-                            onChange={(e) => handleInputChange("cost", Number.parseFloat(e.target.value) || 0)}
+                            onChange={(e) => handleInputChange("cost", parseFloat(Number.parseFloat(e.target.value).toFixed(2)) || 0)}
                             step="0.01"
                           />
                         </div>
@@ -354,7 +382,7 @@ export function ProductEditForm() {
 
                 {/* Inventory */}
                 <div className="mb-4">
-                  <h6 className="fw-semibold mb-3">Inventario</h6>
+                  <h4 className="fw-semibold mb-3">Inventario</h4>
 
                   <div className="row">
                     <div className="col-12 col-md-6">

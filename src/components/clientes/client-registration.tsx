@@ -57,9 +57,9 @@ export function ClientRegistrationForm() {
               <button className="btn btn-link text-dark p-0 me-3" onClick={() => navigate(-1)}>
                 <i className="fas fa-arrow-left"></i>
               </button>
-              <h1 className="h4 mb-0 fw-semibold">Registrar cliente</h1>
+              <h1 className="h4 mb-0 fw-semibold"></h1>
             </div>
-0
+
             {/* <div className="d-flex align-items-center gap-3">
               <button className="btn btn-link text-secondary">
                 <i className="fas fa-question-circle me-1"></i>

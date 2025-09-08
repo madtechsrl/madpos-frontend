@@ -1,12 +1,12 @@
 import { useAuth } from "../contexts/auth-context"
 import {ProductEditForm }from "../components/productos/product-edit-form"
 import Sidebar from "../components/layout/sidebar"
-import { ROLES } from "../types/roles"
+import { UserRole } from "../types/roles"
 import { Header } from "../components/layout/header"
 
 export default function ProductosPage() {
   const { hasPermission } = useAuth()
-  const isAdmin = hasPermission([ROLES.ADMIN, ROLES.PROPIETARIO])
+  const isAdmin = hasPermission([UserRole.ADMIN, UserRole.PROPIETARIO])
 
   return (
     <>   
@@ -17,7 +17,7 @@ export default function ProductosPage() {
             <Sidebar />
             <div className="flex-grow-1  p-4" style={{transition: "margin-left 0.3s ease"}}>
               <Header title="Editar Productos" />  
-              <ProductEditForm productId={""}/>                     
+              <ProductEditForm />                     
             </div>
           </div>
         </div>

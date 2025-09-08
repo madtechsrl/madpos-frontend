@@ -9,30 +9,26 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
-// import axios from "axios";
 import axiosInstance from "../../lib/api";
-import { AxiosError } from "axios";
-
-//  const BASE_URL = "http://localhost:8184"
-
+import { AxiosError, isAxiosError } from "axios";
 
 
 const rolePermissions = {
-  [UserRole.PROPIETARIO]: {
+  [UserRole.MANAGER]: {
     label: "Propietario",
     description: "Acceso completo al sistema, incluyendo configuraciones financieras y reportes avanzados.",
-    canManage: [UserRole.CAJERO],
+    canManage: [UserRole.CASHIER],
     badge: "bg-danger",
     badgeClass: "bg-danger",
   },
   [UserRole.ADMIN]: {
     label: "Administrador",
     description: "Acceso a la mayoría de funciones administrativas, excepto configuraciones financieras sensibles.",
-    canManage: [UserRole.ADMIN], [UserRole.CAJERO]: [UserRole.PROPIETARIO],
+    canManage: [UserRole.ADMIN], [UserRole.CASHIER]: [UserRole.MANAGER],
     badge: "bg-primary",
     badgeClass: "bg-primary",
   },
-  [UserRole.CAJERO]: {
+  [UserRole.CASHIER]: {
     label: "Cajero",
     description: "Acceso limitado a ventas, pedidos y clientes.",
     canManage: [],
@@ -52,39 +48,12 @@ export default function UserManagement({ compact = false }: UserManagementProps)
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<RoleTab>("all");
   const [error, setError] = useState<string | null>(null);
   const [isloading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const navigate = useNavigate();
-  // const roleBadgeColors: { [key: string]: string } = {
-  //   ADMIN: "bg-primary",
-  //   CAJERO: "bg-info",
-  //   MANAGER: "bg-success",
-  //   SUPERVISOR: "bg-warning",
-  //   EMPLOYEE: "bg-secondary",
-  //   CUSTOMER: "bg-dark",
-  //   GUEST: "bg-light text-dark",
-  //   OTHER: "bg-secondary",
-  //   // Add more as needed
-  // };
+  const navigate = useNavigate(); 
   const role = mapUuidToRole(user?.role ?? "")
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const roleConf = getRoleConfig(role)  
-
-
-useEffect(() => {
-  if (!token || !isAuthenticated) return;
-
-  axiosInstance.get('/v1/auth/profile')
-    .then(res => setUsers(res.data.data))
-    .catch(err => {
-      console.error("Profile fetch failed", err);
-      // maybe redirect to login or clear token
-    });
-}, [token, isAuthenticated]);
-
-
 
 // Fetch users
 useEffect(() => {
@@ -108,59 +77,24 @@ useEffect(() => {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
-      const fetchedUsers: User[] = response.data?.data?.records || [];
-      // console.log("UserManagement: Usuarios obtenidos", fetchedUsers);
-      // if (fetchedUsers.length > 0) {
-      //   console.log("UserManagement: First user structure", {
-      //     id: fetchedUsers[0].id,
-      //     role: fetchedUsers[0].role,
-      //     fullname: fetchedUsers[0].fullname,
-      //     email: fetchedUsers[0].email,
-      //     enabled: fetchedUsers[0].enabled,
-      //     createdAt: fetchedUsers[0].createdAt,
-      //   });
-      // }
+      const fetchedUsers: User[] = response.data?.data?.records || [];    
       setUsers(fetchedUsers);
       setError(null);
     } catch (err: unknown) {
-      console.error("UserManagement: Error", err);
-
-      // Check if err is an object and has a message property
-      if (err && typeof err === "object" && "message" in err) {
-        const message = String((err as { message?: unknown }).message);
-        if (message.includes("CORS")) {
-          setError("Error de CORS: verifica la configuración del servidor.");
-          return;
-        }
-      }
-
-      // Check if err is an AxiosError (has response property)
-      if (
-        err &&
-        typeof err === "object" &&
-        "response" in err &&
-        err.response &&
-        typeof err.response === "object" &&
-        ("status" in err.response)
-      ) {
-        const status = (err.response as { status?: number }).status;
-        if (status === 401 || status === 403) {
-          console.log("UserManagement: Token inválido o acceso denegado, redirigiendo a /login");
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          navigate("/");
-          return;
-        }
-      }
-
-      setError(
-        err &&
-        typeof err === "object" &&
-        "message" in err &&
-        typeof (err as { message?: unknown }).message === "string"
-          ? (err as { message: string }).message
-          : "No se pudieron cargar los usuarios. Intenta de nuevo."
-      );
+   if (isAxiosError(err)) {
+    const status = err.response?.status;
+    if (status === 401 || status === 403) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      navigate("/");
+      return;
+    }
+    setError(err.response?.data?.message ?? err.message);
+  } else if (err instanceof Error) {
+    setError(err.message);
+  } else {
+    setError("No se pudieron cargar los usuarios. Intenta de nuevo.");
+  }
     } finally {
       setIsLoading(false);
     }
@@ -169,21 +103,27 @@ useEffect(() => {
   loadUsers();
 }, [isAuthenticated, hasPermission, navigate, user, token]);  
  
+type RoleTab = "all" | "administradores" | "propietarios" | "cajeros";
 
 
-const filteredUsers = Array.isArray(users) ? users.filter((user) => {
-  const matchesRole = 
-  activeTab === "all" ||   
-  activeTab === "administradores" && user.role === UserRole.ADMIN ||
-  activeTab === "propietarios" && user.role === UserRole.PROPIETARIO ||
-  activeTab === "cajeros" && user.role === UserRole.CAJERO ||
-  activeTab === "usuarios" && user.role === UserRole.USER;
-  const matchesSearch =
-    user.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase());
-  return matchesRole && matchesSearch;
-}) : [];
+const roleMatchesTab = (roleUuid: string | undefined, tab: RoleTab) => {
+  const code = mapUuidToRole(roleUuid ?? "");
+  if (tab === "administradores") return code === UserRole.ADMIN;
+  if (tab === "propietarios")   return code === UserRole.MANAGER;
+  if (tab === "cajeros")        return code === UserRole.CASHIER;
+  return true; // "all"
+};
 
+
+
+const searchMatches = (u: User, q: string) =>
+  u.fullname.toLowerCase().includes(q.toLowerCase()) ||
+  u.email.toLowerCase().includes(q.toLowerCase());
+
+
+const filteredUsers = Array.isArray(users)
+  ? users.filter(u => roleMatchesTab(u.role as string, activeTab ) && searchMatches(u, searchTerm))
+  : [];
  const displayedUsers = compact ? filteredUsers.slice(0, 5) : filteredUsers;
 
  
@@ -310,15 +250,14 @@ const handleSubmit = async (e: React.FormEvent) =>{
     
 }
 
+const toCode = (uuid?: string)=> mapUuidToRole(uuid ?? "")
+
+
 const userCounts = {
-  all: Array.isArray(users) ? users.length : 0,
-  active: Array.isArray(users) ? users.filter(user => user.enabled).length : 0,
-  inactive: Array.isArray(users) ? users.filter(user => !user.enabled).length : 0,
-  admin: Array.isArray(users) ? users.filter(user => user.role === UserRole.ADMIN).length : 0,
-  cajero: Array.isArray(users) ? users.filter(user => user.role === UserRole.CAJERO).length : 0,
-  almacenista: Array.isArray(users) ? users.filter(user => user.role === UserRole.ALMACENISTA).length : 0,
-  propietario: Array.isArray(users) ? users.filter(user => user.role === UserRole.PROPIETARIO).length : 0,
-  usuario: Array.isArray(users) ? users.filter(user => user.role === UserRole.USER).length : 0,
+  all: users.length,
+  admin:  users.filter(u => toCode(u.role) === UserRole.ADMIN).length,
+  manager: users.filter(u => toCode(u.role) === UserRole.MANAGER).length,
+  cashier: users.filter(u => toCode(u.role) === UserRole.CASHIER).length,
 };
 
  
@@ -405,7 +344,7 @@ const userCounts = {
             className={`nav-link ${activeTab === 'propietarios' ? "active" : ""}`}
             onClick={() => setActiveTab('propietarios')}
           >
-            Propietarios <span className="badge bg-light text-dark ms-1">{userCounts.propietario}</span>
+            Propietarios <span className="badge bg-light text-dark ms-1">{userCounts.manager}</span>
           </button>
           </li>
           <li className="nav-item" role="presentation">
@@ -422,15 +361,9 @@ const userCounts = {
             className={`nav-link ${activeTab === 'cajeros' ? "active" : ""}`}
             onClick={() => setActiveTab('cajeros')}
           >
-            Cajeros <span className="badge bg-light text-dark ms-1">{userCounts.cajero}</span>
+            Cajeros <span className="badge bg-light text-dark ms-1">{userCounts.cashier}</span>
           </button>
-          <button
-            type="button"
-            className={`nav-link ${activeTab === 'usuarios' ? "active" : ""}`}
-            onClick={() => setActiveTab('usuarios')}
-          >
-            Usuarios <span className="badge bg-light text-dark ms-1">{userCounts.usuario}</span>
-          </button>
+       
         </div>
       </div>
 
@@ -564,9 +497,8 @@ const userCounts = {
                       Nombre completo
                     </label>
                     <input
-                      type="text"
-                      className="form-control"
-                      id="name"
+                      type="text"                      
+                      id="fullname"
                       name="fullname"
                       value={currentUser?.fullname}
                       onChange={handleInputChange}
@@ -598,14 +530,11 @@ const userCounts = {
                       value={currentUser?.role}
                       onChange={handleInputChange}
                       required
-                    >
+                    > 
+                      <option></option>
                       <option value="Cajero">Cajero</option>
                       <option value="Administrator">Administrador</option>
-                      <option value="Propietario">Gerente</option>
-                      <option value="Almacenista">Supervisor</option>
-                      <option value="Usuario">Empleado</option>
-                      <option value="Cliente">Cliente</option>
-                      <option value="Invitado">Invitado</option>
+                      <option value="Propietario">Propietario</option>                                       
                       <option value="Otro">Otro</option>
                     </select>
                   </div>
