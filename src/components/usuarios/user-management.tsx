@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/auth-context";
 import { createUser, deleteUser, updateUser } from "../../services/user-service";
 import type { User } from "../../types/User";
-import { UserRole,  getRoleConfig, mapUuidToRole, roleConfig } from "../../types/roles";
+import { UserRole,  getRoleConfig, mapUuidToRole, } from "../../types/roles";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
@@ -55,8 +55,8 @@ export default function UserManagement({ compact = false }: UserManagementProps)
   const navigate = useNavigate(); 
  // para mapeo
  
- const toCode = (uuid?: string)=> mapUuidToRole(uuid ?? "");
- const toUuid = ()
+ const toCode = (uuid?: string)=> mapUuidToRole(uuid ?? "")
+ const toUuid = (code: UserRole) => mapUuidToRole(code)
 
 // Fetch users
 useEffect(() => {
@@ -108,9 +108,8 @@ useEffect(() => {
  
 type RoleTab = "all" | "administradores" | "propietarios" | "cajeros";
 
-
 const roleMatchesTab = (roleUuid: string | undefined, tab: RoleTab) => {
-  const code = mapUuidToRole(roleUuid ?? "");
+  const code = toCode(roleUuid);
   if (tab === "administradores") return code === UserRole.ADMIN;
   if (tab === "propietarios")   return code === UserRole.MANAGER;
   if (tab === "cajeros")        return code === UserRole.CASHIER;
@@ -156,7 +155,7 @@ const handleAddUser = () => {
     email: "",
     fullname: "",
     password: "",
-    role: roleConfig[UserRole.CASHIER].uuid,
+    role: toUuid(UserRole.CASHIER),
     enabled: true,
     createdAt: new Date().toISOString(),
   });
@@ -219,7 +218,7 @@ const handleSubmit = async (e: React.FormEvent) =>{
         fullname: currentUser.fullname,
         email: currentUser.email,
         password: currentUser.password,
-        role: currentUser.role,
+        role: toCode(currentUser.role),
         enabled: currentUser.enabled,
         createdAt: currentUser.createdAt
       })
@@ -256,7 +255,7 @@ const handleSubmit = async (e: React.FormEvent) =>{
     
 }
 
-const toCode = (uuid?: string)=> mapUuidToRole(uuid ?? "")
+
 
 
 const userCounts = {
