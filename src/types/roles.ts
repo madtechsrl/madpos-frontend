@@ -50,24 +50,6 @@ export const roleUuidToCode = {
 } as const
 
 
-
-// export const getRoleName = (role: UserRole): string => {
-//   switch (role) {
-//     case UserRole.ADMIN:
-//       return "Administrador"
-//     case UserRole.PROPIETARIO:
-//       return "Propietario"
-//     case UserRole.CAJERO:
-//       return "Cajero"
-//     case UserRole.ALMACENISTA:
-//       return "Almacenista"
-//     case UserRole.USER:
-//       return "Usuario"
-//     default:
-//       return role
-//   }
-// }
-// Role configuration with permissions and metadata
 export const roleConfig = {
   [UserRole.MANAGER]: {
     uuid: ROLES.MANAGER,
