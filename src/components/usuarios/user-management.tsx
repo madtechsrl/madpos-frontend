@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/auth-context";
 import { createUser, deleteUser, updateUser } from "../../services/user-service";
 import type { User } from "../../types/User";
-import { UserRole,  getRoleConfig, mapUuidToRole } from "../../types/roles";
+import { UserRole,  getRoleConfig, mapUuidToRole, } from "../../types/roles";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
@@ -53,7 +53,10 @@ export default function UserManagement({ compact = false }: UserManagementProps)
   const [isloading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const navigate = useNavigate(); 
-  const role = mapUuidToRole(user?.role ?? "")
+ // para mapeo
+ 
+ const toCode = (uuid?: string)=> mapUuidToRole(uuid ?? "")
+ const toUuid = (code: UserRole) => mapUuidToRole(code)
 
 // Fetch users
 useEffect(() => {
@@ -105,9 +108,8 @@ useEffect(() => {
  
 type RoleTab = "all" | "administradores" | "propietarios" | "cajeros";
 
-
 const roleMatchesTab = (roleUuid: string | undefined, tab: RoleTab) => {
-  const code = mapUuidToRole(roleUuid ?? "");
+  const code = toCode(roleUuid);
   if (tab === "administradores") return code === UserRole.ADMIN;
   if (tab === "propietarios")   return code === UserRole.MANAGER;
   if (tab === "cajeros")        return code === UserRole.CASHIER;
@@ -153,22 +155,22 @@ const handleAddUser = () => {
     email: "",
     fullname: "",
     password: "",
-    role,
+    role: toUuid(UserRole.CASHIER),
     enabled: true,
     createdAt: new Date().toISOString(),
   });
   setShowModal(true);
 };
 
-const handleEditUser = (user: User) =>{
+const handleEditUser = (u: User) =>{
   setCurrentUser({
-    id: user.id,
-    email: user.email,
-    fullname: user.fullname,
+    id: u.id,
+    email: u.email,
+    fullname: u.fullname,
     password: "",
-    role: user.role,
-    enabled: user.enabled,
-    createdAt: user.createdAt,
+    role: u.role,
+    enabled: u.enabled,
+    createdAt: u.createdAt,
   });
   setShowModal(true);
 };
@@ -207,7 +209,7 @@ const handleSubmit = async (e: React.FormEvent) =>{
         ...(currentUser.password ? {password : currentUser.password}: {})
       });
       if(updatedUser){
-        setUsers(users.map((user) => (user.id === currentUser.id ? updatedUser : user)));        
+        setUsers(users.map((u) => (u.id === currentUser.id ? updatedUser : u)));        
       } else {
         throw new Error("No se pudo actualizar el usuario. Intenta de nuevo.");
       }
@@ -216,24 +218,27 @@ const handleSubmit = async (e: React.FormEvent) =>{
         fullname: currentUser.fullname,
         email: currentUser.email,
         password: currentUser.password,
-        role: currentUser.role,
+        role: toCode(currentUser.role),
         enabled: currentUser.enabled,
         createdAt: currentUser.createdAt
       })
-      if (newUser){
+      if (!newUser) throw new Error("No se pudo crear usuario")
         setUsers([...users, newUser])
+        
+        
         await register(
-          currentUser.fullname,
-          currentUser.email,
-          currentUser.password || "",
-          currentUser.role as UserRole,
+          currentUser.fullname ?? "",
+          currentUser.email ?? "",
+          currentUser.password ?? "",
+          mapUuidToRole(currentUser.role as string) ?? "",
           currentUser.enabled,
           
-        )
-      }else{
-        throw new Error("No se pudo crear el usuario. Intenta de nuevo.");
-      }
+        );
+   
     }
+      setShowModal(false);
+      setError(null);
+      
   } catch (err: unknown) {
     if (err instanceof AxiosError) {
       console.error("Axios Error al crear/actualizar usuario:", err.response?.status, err.response?.data);
@@ -250,7 +255,7 @@ const handleSubmit = async (e: React.FormEvent) =>{
     
 }
 
-const toCode = (uuid?: string)=> mapUuidToRole(uuid ?? "")
+
 
 
 const userCounts = {
@@ -384,13 +389,13 @@ const userCounts = {
             </thead>
             <tbody>
               {displayedUsers.length > 0 ? (
-                displayedUsers.map((user) => (
-                  <tr key={user.id}>
-                    <td className="fw-medium">{user.fullname}</td>
-                    <td>{user.email}</td>
+                displayedUsers.map((u) => (
+                  <tr key={u.id}>
+                    <td className="fw-medium">{u.fullname}</td>
+                    <td>{u.email}</td>
                     <td>
-                    <span className={`badge bg-${getRoleConfig(mapUuidToRole(user.role ?? "")).badgeColor}`}>
-                    {getRoleConfig(mapUuidToRole(user.role ?? "")).label}
+                    <span className={`badge bg-${getRoleConfig(mapUuidToRole(u.role ?? "")).badgeColor}`}>
+                    {getRoleConfig(mapUuidToRole(u.role ?? "")).label}
                     </span>
 
                     {/* <span className={`badge bg-${roleConf?.badgeColor ?? "secondary"}`}>
@@ -398,17 +403,17 @@ const userCounts = {
                     </span> */}
 
                     </td>
-                    {!compact && <td className="text-secondary">{user.createdAt || "-"}</td>}
+                    {!compact && <td className="text-secondary">{u.createdAt || "-"}</td>}
                     <td>
-                      <span className={`badge ${user.enabled ? "bg-success" : "bg-danger"}`}>
-                        {user.enabled ? "Activo" : "Inactivo"}
+                      <span className={`badge ${u.enabled ? "bg-success" : "bg-danger"}`}>
+                        {u.enabled ? "Activo" : "Inactivo"}
                       </span>
                     </td>
                     <td className="text-end">
-                      <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleEditUser(user)}>
+                      <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleEditUser(u)}>
                         <i><FontAwesomeIcon icon={faEdit} /></i>
                       </button>
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteUser(user.id)}>
+                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteUser(u.id)}>
                         <i><FontAwesomeIcon icon={faTrash} /></i>
                       </button>
                     </td>
@@ -528,13 +533,16 @@ const userCounts = {
                       id="role"
                       name="role"
                       value={currentUser?.role}
-                      onChange={handleInputChange}
+                      onChange={((e)=>{
+                        if(!currentUser) return;
+                        setCurrentUser({...currentUser, role:e.target.value as unknown as UserRole})
+                      })}
                       required
                     > 
-                      <option></option>
-                      <option value="Cajero">Cajero</option>
-                      <option value="Administrator">Administrador</option>
-                      <option value="Propietario">Propietario</option>                                       
+                      <option value="">Selecione Rol</option>
+                      <option value={UserRole.CASHIER}>Cajero</option>
+                      <option value={UserRole.ADMIN}>Administrador</option>
+                      <option value={UserRole.MANAGER}>Propietario</option>                                       
                       <option value="Otro">Otro</option>
                     </select>
                   </div>
@@ -553,19 +561,19 @@ const userCounts = {
                     />
                   </div>
                   <div className="mb-3">
-                    <label htmlFor="status" className="form-label">
+                    <label htmlFor="enabled" className="form-label">
                       Estado
                     </label>
                     <select
                       className="form-select"
-                      id="status"
-                      name="status"
-                      value={currentUser?.enabled ? "Activo" : "Inactivo"}
+                      id="enabled"
+                      name="enabled"
+                      value={currentUser?.enabled ? "true" : "false"}
                       onChange={handleInputChange}
                       required
                     >
-                      <option value="Activo">Activo</option>
-                      <option value="Inactivo">Inactivo</option>
+                      <option value="true">Activo</option>
+                      <option value="false">Inactivo</option>
                     </select>
                   </div>
                 </div>

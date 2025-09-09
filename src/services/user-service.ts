@@ -1,6 +1,6 @@
 
-import type { User,  } from "../types/User"
-import { ROLES } from "../types/roles"
+import type { User , CreateUserRequest  } from "../types/User"
+import { mapRoleToUuid, ROLES } from "../types/roles"
 import axiosInstance from "../lib/api"
 
 const roleMapping: Record<string, string> = {
@@ -64,14 +64,21 @@ export async function fetchUserById(id: string): Promise<User | null> {
 }
 
 // Create a new user
-export async function createUser(user: Omit<User, "id">): Promise<User | null> {
-  try {
-    const response = await axiosInstance.post(`${axiosInstance}/v1/users`, user)
-    return response.data?.data?.records || null
-  } catch (error) {
-    console.error("Error creating user:", error)
-    return null
-  }
+export async function createUser(input: CreateUserRequest): Promise<User> {
+const payload = {
+  fullname: input.fullname,
+  email: input.email,
+  password: input.password,
+  role: mapRoleToUuid(input.role),
+  enabled:input.enabled,
+  createAt: input.createdAt
+}
+
+const { data } = await axiosInstance.post("/v1/users", payload,{
+  withCredentials: true,
+});
+
+return data?.data as User
 }
 
 // Update an existing user
