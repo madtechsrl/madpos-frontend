@@ -8,7 +8,7 @@ import Sidebar from "../components/layout/sidebar"
 
 export default function HomePage() {
   const { hasPermission } = useAuth()
-  const isAdmin = hasPermission([UserRole.ADMIN, UserRole.PROPIETARIO])
+  const isAdmin = hasPermission([UserRole.ADMIN, UserRole.MANAGER])
 
   return (
     <>

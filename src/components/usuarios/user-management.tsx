@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/auth-context";
 import { createUser, deleteUser, updateUser } from "../../services/user-service";
 import type { User } from "../../types/User";
-import { UserRole,  getRoleConfig, mapUuidToRole, } from "../../types/roles";
+import { UserRole,  getRoleConfig, mapRoleToUuid, mapUuidToRole, } from "../../types/roles";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
@@ -57,6 +57,7 @@ export default function UserManagement({ compact = false }: UserManagementProps)
  
  const toCode = (uuid?: string)=> mapUuidToRole(uuid ?? "")
  const toUuid = (code: UserRole) => mapUuidToRole(code)
+
 
 // Fetch users
 useEffect(() => {
@@ -217,7 +218,7 @@ const handleSubmit = async (e: React.FormEvent) =>{
       const newUser = await createUser({
         fullname: currentUser.fullname,
         email: currentUser.email,
-        password: currentUser.password,
+        password: currentUser.password ,
         role: toCode(currentUser.role),
         enabled: currentUser.enabled,
         createdAt: currentUser.createdAt
@@ -231,7 +232,9 @@ const handleSubmit = async (e: React.FormEvent) =>{
           currentUser.email ?? "",
           currentUser.password ?? "",
           mapUuidToRole(currentUser.role as string) ?? "",
+          mapRoleToUuid(currentUser),
           currentUser.enabled,
+            
           
         );
    

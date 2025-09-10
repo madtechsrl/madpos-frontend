@@ -1,4 +1,4 @@
-import { UserRole, type UserRoleId } from "./roles";
+import { UserRole, type RoleUuid } from "./roles";
 
 export type User = {
   id: string;
@@ -18,7 +18,7 @@ export interface CreateUserRequest {
   email: string
   password: string
   role: UserRole
-  roleId: UserRoleId
+  roleId: RoleUuid
   enabled: boolean
   createdAt: string
 }
@@ -27,13 +27,13 @@ export interface UpdateUserRequest {
   fullname?: string
   email?: string
   role?: UserRole
-  roleId?: UserRoleId
+  roleId?: RoleUuid
   status?: "active" | "inactive"
 }
 
 export interface RolePermissions {
   role: UserRole
-  roleId: UserRoleId
+  roleId: RoleUuid
   fullname: string
   description: string
   permissions: string[]

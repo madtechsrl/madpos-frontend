@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useNavigate } from "react-router-dom"
 import type { CreateUserRequest, User } from "../types/User"
-import { getRoleIdByName, mapUuidToRole,UserRole } from "../types/roles"
+import { mapUuidToRole,UserRole, type RoleUuid } from "../types/roles"
 import { loginAPI, } from "../services/auth-service"
 import { createUser } from "../services/user-service"
 import axiosInstance from "../lib/api";
@@ -24,11 +24,11 @@ type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  userRole: UserRole| null
+  userRole: UserRole | null;
   token: string | null
   setToken: (token: string | null) => void
   loginUser: (email: string, password: string) => void
-  register: (name: string, email: string, password: string, role: UserRole, enabled: boolean ) => Promise<boolean>
+  register: (name: string, email: string, password: string, role: UserRole, roleId:RoleUuid, enabled: boolean ) => Promise<boolean>
   logout: () => void
   hasPermission: (requiredRole: UserRole | UserRole[]) => boolean
   getAccessToken: () => string | null
@@ -69,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string,
     password: string,
     role: UserRole,
+    roleId: RoleUuid,
     enabled: boolean,
   ): Promise<boolean> => {
     try {
@@ -91,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
         role,
-        roleId: getRoleIdByName(role),
+        roleId,        
         enabled,
         createdAt: new Date().toISOString(),
       }
@@ -188,7 +189,7 @@ const logout = () => {
   // }
 
   const hasPermission = (requireRole: UserRole | UserRole[]): boolean => {
-    const current = user?.role;
+    const current = user?.role ? normalizeRoleCode(user.role) : null
     if(!current) return false;
     return Array.isArray(requireRole)
     ? requireRole.includes(current)
@@ -201,7 +202,7 @@ const logout = () => {
         user,
         isLoading,
         isAuthenticated: !!user,
-        userRole: user?.role ?? null,
+        userRole: user?.role ? normalizeRoleCode(user.role): null,
         loginUser,
         logout,
         register,
