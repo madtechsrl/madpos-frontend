@@ -232,7 +232,7 @@ const handleSubmit = async (e: React.FormEvent) =>{
           currentUser.email ?? "",
           currentUser.password ?? "",
           mapUuidToRole(currentUser.role as string) ?? "",
-          mapRoleToUuid(currentUser),
+          mapRoleToUuid,
           currentUser.enabled,
             
           
