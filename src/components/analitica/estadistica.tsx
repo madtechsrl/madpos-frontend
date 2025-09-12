@@ -7,7 +7,7 @@ import { useAnalytics } from "../../lib/use-analitycs";
 import { fetchUsers } from "../../services/user-service";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronLeft, faChevronRight, faUsers, faSync, faCircle } from "@fortawesome/free-solid-svg-icons";
-import { getRoleById, getRoleIdByName, UserRole } from "../../types/roles";
+import { UserRole } from "../../types/roles";
 
 export default function StatsPage() {
   const { user } = useAuth();
@@ -18,7 +18,7 @@ export default function StatsPage() {
   const [selectedUserId, setSelectedUserId] = useState<string>("all");
   // const [selectedPeriod, setSelectedPeriod] = useState<"hour" | "day" | "week" | "month">("hour");
   const [currentDate, setCurrentDate] = useState(new Date());
- const currentUserRole = user?.role ? getRoleById(getRoleIdByName(user.role)) : UserRole.ADMIN;
+ const currentUserRole = user?.role ? user.role : UserRole.ADMIN;
   const {
     analytics,
     topProducts,
@@ -61,7 +61,7 @@ export default function StatsPage() {
 
  if (loading) {
     return (
-      <RoleGuard allowedRoles={[UserRole.ADMIN, UserRole.USER]}
+      <RoleGuard allowedRoles={[UserRole.ADMIN, UserRole.MANAGER]}
       currentUserRole={currentUserRole}
       >
         <div className="d-flex justify-content-center align-items-center p-5">
@@ -78,7 +78,7 @@ export default function StatsPage() {
 
   if (error) {
     return (
-      <RoleGuard allowedRoles={[UserRole.ADMIN, UserRole.USER]}
+      <RoleGuard allowedRoles={[UserRole.ADMIN, UserRole.MANAGER]}
       currentUserRole={currentUserRole}
       >
         <div className="alert alert-danger m-4">
@@ -94,7 +94,7 @@ export default function StatsPage() {
 
   return (
     <RoleGuard
-      allowedRoles={[ UserRole.ADMIN, UserRole.USER]}
+      allowedRoles={[ UserRole.ADMIN, UserRole.MANAGER]}
       currentUserRole={currentUserRole}
       fallbackMessage="No tienes permisos para acceder a esta sección."
     >

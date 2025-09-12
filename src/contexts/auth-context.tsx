@@ -1,36 +1,56 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useNavigate } from "react-router-dom"
 import type { CreateUserRequest, User } from "../types/User"
-import { mapUuidToRole,UserRole, type RoleUuid } from "../types/roles"
+import { mapRoleToUuid, ROLES, type RoleUuid, type RoleKey } from "../types/roles"
 import { loginAPI, } from "../services/auth-service"
 import { createUser } from "../services/user-service"
 import axiosInstance from "../lib/api";
 
 
-// ---- Helpers ----
-/** Acepta string (UUID o "ADMIN" | "MANAGER" | "CASHIER") y devuelve siempre UserRole */
-function normalizeRoleCode(input?: string): UserRole {
-  if (!input) return UserRole.CASHIER; // fallback seguro
-  const upper = input.toUpperCase();
-  // ¿Vino como código?
-  if ((Object.values(UserRole) as string[]).includes(upper)) {
-    return upper as UserRole;
-  }
-  // Si no, asumimos UUID
-  return mapUuidToRole(input);
+// ---------- Helpers de rol (tipados) ----------
+
+const ROLE_UUIDS = Object.values(ROLES) as RoleUuid[];
+const ROLE_KEYS = Object.keys(ROLES) as RoleKey[];
+
+/** Type guard: ¿es uno de los UUID definidos? */
+function isRoleUuid(v: string): v is RoleUuid {
+  return (ROLE_UUIDS as string[]).includes(v);
 }
+
+/** Normaliza cualquier string (“ADMIN” | “MANAGER” | “CASHIER” o UUID) a RoleUuid */
+function normalizeRoleUuid(input?: string): RoleUuid {
+  if (!input) return ROLES.CASHIER; // fallback seguro
+  // mapRoleToUuid acepta código o UUID y devuelve (idealmente) UUID o el mismo string
+  const mapped = mapRoleToUuid(input);
+  // si es un UUID válido de nuestros roles:
+  if (typeof mapped === "string" && isRoleUuid(mapped)) return mapped;
+  // si vino como código válido, úsalo para obtener el UUID:
+  const upper = input.toUpperCase();
+  if ((ROLE_KEYS as string[]).includes(upper)) {
+    return ROLES[upper as RoleKey];
+  }
+  // último recurso: cajero
+  return ROLES.CASHIER;
+}
+
+// ---------- Tipos del contexto ----------
 
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  userRole: UserRole | null;
+  userRole: RoleUuid| null;
   token: string | null
   setToken: (token: string | null) => void
   loginUser: (email: string, password: string) => void
-  register: (name: string, email: string, password: string, role: UserRole, roleId:RoleUuid, enabled: boolean ) => Promise<boolean>
+  register: (
+    fullname: string, 
+    email: string, 
+    password: string, 
+    role: RoleUuid, 
+    enabled: boolean ) => Promise<boolean>
   logout: () => void
-  hasPermission: (requiredRole: UserRole | UserRole[]) => boolean
+  hasPermission: (requiredRole: RoleUuid | RoleUuid[]) => boolean
   getAccessToken: () => string | null
 }
 
@@ -40,61 +60,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  // const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate()
   
   // Check if user is logged in on initial load
   useEffect(() => {
-    const storeUser = localStorage.getItem("user");
-    const StoredToken = localStorage.getItem("token");
-    if (storeUser && StoredToken) {
-      try {
-     const parsed: User = JSON.parse(storeUser)
-     const roleCode: UserRole = parsed.role as UserRole;
-     setUser({...parsed, role: roleCode});
-     setToken(StoredToken);
-     axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${StoredToken}`
-        
-      } catch{
-        localStorage.removeItem("user")
-        localStorage.removeItem("token")
-      }     
-    }
-    setIsLoading(false);
-  }, []);
+    const storedUser = localStorage.getItem("user");
+    const storedToken = localStorage.getItem("token");
+
+    try {
+      if(storedUser && storedToken){
+        const parsed : User = JSON.parse(storedUser)
+        const roleUuid = normalizeRoleUuid(parsed.role as string);
+        setUser({...parsed, role: roleUuid})
+        setToken(storedToken)
+        axiosInstance.defaults.headers.common["Authorization"] = `Bearer${storedToken}`
+      }
+    } catch  {
+      localStorage.removeItem("user")
+      localStorage.removeItem("token")
+    }finally{
+      setIsLoading(false)
+    }  
+    }, []);
 
 
   const register = async (
     fullname: string,
     email: string,
     password: string,
-    role: UserRole,
-    roleId: RoleUuid,
+    role: string,
     enabled: boolean,
   ): Promise<boolean> => {
     try {
       setIsLoading(true)
-
-      // const roleId = user.role ? getRoleIdByRole(user.role) : ROLES.USER
-
-      // const newUser: Omit<User, "id"> = {
-      //   fullname,
-      //   email,
-      //   password,
-      //   role,
-      //   roleId,
-      //   enabled,
-      //   createdAt: new Date().toISOString(),
-      // }
+      
      
       const payload : CreateUserRequest = {
         fullname,
         email,
         password,
-        role,
-        roleId,        
-        enabled,
-        createdAt: new Date().toISOString(),
+        role,               
+        enabled,        
       }
 
       const createdUser = await createUser(payload)       
@@ -130,7 +136,7 @@ const loginUser = async (email: string, password: string): Promise<void> => {
     //   role: token.role,      
     // })  
 
-    const roleCode = normalizeRoleCode(response.role)
+    const roleCode = normalizeRoleUuid(response.role)
     const accessToken = response.accessToken;  
     if (accessToken ) {
       localStorage.setItem("token", accessToken);
@@ -175,21 +181,10 @@ const logout = () => {
 }
 
 
-  // // Helper function to check if user has required role(s)
-  // const hasPermission = (requiredRole: UserRole | UserRole[]): boolean => {
-  //   if (!user?.role) return false
-  //   // if (Array.isArray(requiredRole)) {
-  //   //   return requiredRole.includes(user.role)
-  //   // }
-  //   // return user.role === requiredRole
-  //   return Array.isArray(requiredRole)
-  //   ? requiredRole.includes(current)
-  //   : user.role === requiredRole;
 
-  // }
 
-  const hasPermission = (requireRole: UserRole | UserRole[]): boolean => {
-    const current = user?.role ? normalizeRoleCode(user.role) : null
+  const hasPermission = (requireRole: RoleUuid | RoleUuid[]): boolean => {
+    const current = user?.role ? normalizeRoleUuid(user.role) : null
     if(!current) return false;
     return Array.isArray(requireRole)
     ? requireRole.includes(current)
@@ -202,7 +197,7 @@ const logout = () => {
         user,
         isLoading,
         isAuthenticated: !!user,
-        userRole: user?.role ? normalizeRoleCode(user.role): null,
+        userRole: user?.role ? normalizeRoleUuid(user.role): null,
         loginUser,
         logout,
         register,

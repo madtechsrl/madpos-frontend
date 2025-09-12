@@ -1,6 +1,6 @@
 import { useAuth } from "../../contexts/auth-context"
 import { useState } from "react"
-import { UserRole} from "../../types/roles"
+import { ROLES} from "../../types/roles"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faChevronDown, faSignOutAlt } from "@fortawesome/free-solid-svg-icons"
 
@@ -9,16 +9,16 @@ type HeaderProps = {
 }
 
 const roleDisplayNames = {
-  [UserRole.ADMIN]: "Administrador",
-  [UserRole.CASHIER]: "Usuario",
-  [UserRole.MANAGER]: "Propietario",
+  [ROLES.ADMIN]: "Administrador",
+  [ROLES.CASHIER]: "Usuario",
+  [ROLES.MANAGER]: "Propietario",
  
 }
 
 const badgeClasses = {
-  [UserRole.ADMIN]: "bg-success",
-  [UserRole.CASHIER]: "bg-secondary",
-  [UserRole.MANAGER]: "bg-info",
+  [ROLES.ADMIN]: "bg-success",
+  [ROLES.CASHIER]: "bg-secondary",
+  [ROLES.MANAGER]: "bg-info",
  
 }
 

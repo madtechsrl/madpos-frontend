@@ -1,4 +1,4 @@
-import { UserRole, type RoleUuid } from "./roles";
+import { type RoleUuid, ROLES } from "./roles";
 
 export type User = {
   id: string;
@@ -16,37 +16,35 @@ export type User = {
 export interface CreateUserRequest {
  fullname: string
   email: string
-  password: string
-  role: UserRole
-  roleId: RoleUuid
+  password?: string
+  role: string
   enabled: boolean
-  createdAt: string
+ 
 }
 
 export interface UpdateUserRequest {
   fullname?: string
   email?: string
-  role?: UserRole
+  role?: string
   roleId?: RoleUuid
   status?: "active" | "inactive"
 }
 
 export interface RolePermissions {
-  role: UserRole
-  roleId: RoleUuid
+  role: string  
   fullname: string
   description: string
   permissions: string[]
-  canManage: UserRole[]
+  canManage: string[]
 }
 
-export const getRoleName = (role: UserRole): string => {
+export const getRoleName = (role: RoleUuid): string => {
   switch (role) {
-    case UserRole.ADMIN:
+    case ROLES.ADMIN:
       return "Administrador"
-    case UserRole.MANAGER:
+    case ROLES.MANAGER:
       return "Propietario"
-    case UserRole.CASHIER:
+    case ROLES.CASHIER:
       return "Cajero"
   
     default:

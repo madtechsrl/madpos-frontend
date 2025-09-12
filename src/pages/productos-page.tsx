@@ -1,12 +1,12 @@
 import { useAuth } from "../contexts/auth-context"
 import ProductManagement from "../components/productos/Product-Management"
 import Sidebar from "../components/layout/sidebar"
-import { UserRole } from "../types/roles"
+import { ROLES } from "../types/roles"
 import { Header } from "../components/layout/header"
 
 export default function ProductosPage() {
   const { hasPermission } = useAuth()
-  const isAdmin = hasPermission([UserRole.ADMIN, UserRole.MANAGER, UserRole.CASHIER])
+  const isAdmin = hasPermission([ROLES.ADMIN, ROLES.MANAGER, ROLES.CASHIER])
 
   return (
     <>   

@@ -1,7 +1,8 @@
 
 import type { User , CreateUserRequest  } from "../types/User"
-import { mapRoleToUuid, ROLES } from "../types/roles"
+import {ROLES } from "../types/roles"
 import axiosInstance from "../lib/api"
+import { mapRoleToUuid, mapUuidToRoleName } from "../types/roles"
 
 const roleMapping: Record<string, string> = {
   "ADMIN": ROLES.ADMIN,
@@ -70,15 +71,16 @@ const payload = {
   email: input.email,
   password: input.password,
   role: mapRoleToUuid(input.role),
-  enabled:input.enabled,
-  createAt: input.createdAt
+  enabled: input.enabled ?? true
 }
 
-const { data } = await axiosInstance.post("/v1/users", payload,{
-  withCredentials: true,
-});
+const { data } = await axiosInstance.post("/v1/users", payload);
+const rec = data?.data as User
 
-return data?.data as User
+return {
+  ...rec, 
+  role: rec.role ? mapUuidToRoleName(rec.role) : ""
+       }
 }
 
 // Update an existing user
