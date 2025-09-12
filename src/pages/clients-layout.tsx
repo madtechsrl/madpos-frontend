@@ -1,12 +1,12 @@
 import { useAuth } from "../contexts/auth-context"
 import {ClientsList }from "../components/clientes/client-list"
 import Sidebar from "../components/layout/sidebar"
-import { UserRole } from "../types/roles"
+import { ROLES } from "../types/roles"
 import { Header } from "../components/layout/header"
 
 export default function ClientLayout() {
   const { hasPermission } = useAuth()
-  const isAdmin = hasPermission([UserRole.ADMIN, UserRole.PROPIETARIO])
+  const isAdmin = hasPermission([ROLES.ADMIN, ROLES.MANAGER])
 
   return (
     <>   

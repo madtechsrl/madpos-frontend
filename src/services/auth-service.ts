@@ -1,7 +1,7 @@
 import { handleError } from "../lib/handleError";
 import type { User } from "../types/User";
 import axiosInstance  from '../lib/api';
-import { getRoleById, ROLES } from "../types/roles";
+import { ROLES } from "../types/roles";
 
 
 export const fetchProfile = async (): Promise<User> => {
@@ -16,7 +16,7 @@ export const fetchProfile = async (): Promise<User> => {
       id: data.id,
       email: data.email,
       fullname: data.fullname,
-      role: getRoleById(data.role),
+      role: data.role,
       enabled: data.enabled,
       createdAt: data.createdAt,      
     };

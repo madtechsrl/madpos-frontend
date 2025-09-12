@@ -3,12 +3,12 @@ import { Header } from "../components/layout/header"
 import { CartSidebar } from "../components/ventas/cart-sidebar"
 import { SearchBar } from "../components/layout/search-bar"
 import { ProductGrid } from "../components/productos/product-grid"
-import { UserRole } from "../types/roles"
+import { ROLES } from "../types/roles"
 import Sidebar from "../components/layout/sidebar"
 
 export default function HomePage() {
   const { hasPermission } = useAuth()
-  const isAdmin = hasPermission([UserRole.ADMIN, UserRole.MANAGER])
+  const isAdmin = hasPermission([ROLES.ADMIN, ROLES.MANAGER])
 
   return (
     <>

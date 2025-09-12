@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "../../contexts/auth-context"
-import { UserRole } from "../../types/roles"
+import { ROLES, type RoleUuid } from "../../types/roles"
 import { Tooltip } from "react-tooltip"
 
 
@@ -12,7 +12,7 @@ const menuItems = [
     href: "/home",
     icon: "fa-light fa-shop",
     label: "Vender",
-    UserRole: [UserRole.ADMIN, UserRole.CASHIER, UserRole.MANAGER],
+    ROLES: [ROLES.ADMIN, ROLES.CASHIER, ROLES.MANAGER],
     highlight: true,
    
   },
@@ -20,73 +20,73 @@ const menuItems = [
   //   href: "/demo",
   //   icon: "fa-shopping-cart",
   //   label: "Demo Pagos",
-  //   UserRole: [UserRole.ADMIN, UserRole.CAJERO],
+  //   ROLES: [ROLES.ADMIN, ROLES.CAJERO],
   // },
   // {
   //   href: "/pedidos",
   //   icon: "fa-shopping-cart",
   //   label: "Pedidos",
-  //   UserRole: [userUserRole.administrador, userUserRole.cajero, userUserRole.propietario],
+  //   ROLES: [userROLES.administrador, userROLES.cajero, userROLES.propietario],
   // },
   {
     href: "/productos",
     icon: "fa-light fa-boxes-stacked", 
     label: "Productos",
-    UserRole: [UserRole.ADMIN, UserRole.CASHIER, UserRole.MANAGER],
+    ROLES: [ROLES.ADMIN, ROLES.CASHIER, ROLES.MANAGER],
     tooltip: "Productos",
   },
   // {
   //   href: "/catalogo",
   //   icon: "fa-list",
   //   label: "Catálogo",
-  //   UserRole: [UserRole.ADMIN, UserRole.CAJERO],
+  //   ROLES: [ROLES.ADMIN, ROLES.CAJERO],
   //   tooltip: "Catálogo",
   // },
   {
     href: "/clientes",
     icon: "fa-users",
     label: "Clientes",
-    UserRole: [UserRole.ADMIN, UserRole.MANAGER],
+    ROLES: [ROLES.ADMIN, ROLES.MANAGER],
     tooltip: "Clientes",
   },
   {
     href: "/transaciones",
     icon: "fa-exchange-alt",
     label: "Transacciones",
-    UserRole: [UserRole.ADMIN, UserRole.MANAGER],
+    ROLES: [ROLES.ADMIN, ROLES.MANAGER],
     tooltip: "Transacciones",
   },
   // {
   //   href: "/finanzas",
   //   icon: "fa-dollar-sign",
   //   label: "Finanzas",
-  //   UserRole: [userUserRole.administrador, userUserRole.propietario],
+  //   ROLES: [userROLES.administrador, userROLES.propietario],
   // },
   {
     href: "/stats",
     icon: "fa-light fa-chart-simple",
     label: "Estadísticas",
-    UserRole: [UserRole.ADMIN, UserRole.MANAGER],
+    ROLES: [ROLES.ADMIN, ROLES.MANAGER],
     tooltip: "Estadísticas",
   },
   // {
   //   href: "/usuarios",
   //   icon: "fa-user-friends",
   //   label: "Usuarios",
-  //   UserRole: [userUserRole.administrador, userUserRole.propietario],
+  //   ROLES: [userROLES.administrador, userROLES.propietario],
   // },
   {
     href: "/user",
     icon: "fa-user-cog",
     label: "Gestión Usuarios",
-    UserRole: [UserRole.ADMIN],
+    ROLES: [ROLES.ADMIN],
     tooltip: "Gestión Usuarios",
   },
   {
     href: "/configuraciones",
     icon: "fa-cog",
     label: "Configuracione",
-    UserRole: [UserRole.ADMIN],
+    ROLES: [ROLES.ADMIN],
     tooltip: "Configuraciones",
   },
 ]
@@ -98,7 +98,7 @@ export default function Sidebar() {
   const [isMobile, setIsMobile] = useState(false)
 
   // Filter menu items based on user role
-  const filteredMenuItems = menuItems.filter((item) => user && hasPermission(item.UserRole as UserRole[]))
+  const filteredMenuItems = menuItems.filter((item) => user && hasPermission(item.ROLES as RoleUuid[]))
 
   // Handle responsive behavior
   useEffect(() => {
@@ -183,9 +183,9 @@ export default function Sidebar() {
           <div className={`text-center mb-2 px-2 ${expanded ? "d-block" : "d-none"}`}>
             <span
               className={`badge ${
-                user?.role === UserRole.ADMIN
+                user?.role === ROLES.ADMIN
                   ? "bg-danger"
-                  : ([UserRole.CASHIER, UserRole.ADMIN, UserRole.MANAGER] as readonly string[]).includes(user?.role ?? "")
+                  : ([ROLES.CASHIER, ROLES.ADMIN, ROLES.MANAGER] as readonly string[]).includes(user?.role ?? "")
                     ? "bg-primary"
                     : "bg-secondary"
               } text-white`}

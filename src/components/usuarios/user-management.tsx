@@ -4,39 +4,51 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/auth-context";
 import { createUser, deleteUser, updateUser } from "../../services/user-service";
 import type { User } from "../../types/User";
-import { UserRole,  getRoleConfig, mapRoleToUuid, mapUuidToRole, } from "../../types/roles";
+import { mapRoleToUuid, mapUuidToRoleName, ROLES , type RoleKey, type RoleUuid } from "../../types/roles";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 import axiosInstance from "../../lib/api";
 import { AxiosError, isAxiosError } from "axios";
+const toRoleUuid = (input?: string) => mapRoleToUuid(input ?? "");
+const toRoleKey = (uuid?: string) => (uuid ? mapUuidToRoleName(uuid): "")
 
 
-const rolePermissions = {
-  [UserRole.MANAGER]: {
+type RoleMeta = {
+  label: string;
+  description: string;
+  canManage: RoleKey[];
+  badgeClass: string; // Bootstrap class (bg-primary, etc.)
+};
+const ROLE_META_BY_KEY: Record<RoleKey, RoleMeta> = {
+   MANAGER: {
     label: "Propietario",
-    description: "Acceso completo al sistema, incluyendo configuraciones financieras y reportes avanzados.",
-    canManage: [UserRole.CASHIER],
-    badge: "bg-danger",
+    description:
+      "Acceso completo al sistema, incluyendo configuraciones financieras y reportes avanzados.",
+    canManage: ["CASHIER"],
     badgeClass: "bg-danger",
   },
-  [UserRole.ADMIN]: {
+  ADMIN: {
     label: "Administrador",
-    description: "Acceso a la mayoría de funciones administrativas, excepto configuraciones financieras sensibles.",
-    canManage: [UserRole.ADMIN], [UserRole.CASHIER]: [UserRole.MANAGER],
-    badge: "bg-primary",
+    description:
+      "Acceso a la mayoría de funciones administrativas, excepto configuraciones financieras sensibles.",
+    canManage: ["MANAGER", "CASHIER", "ADMIN"], // ajusta si es necesario
     badgeClass: "bg-primary",
   },
-  [UserRole.CASHIER]: {
+  CASHIER: {
     label: "Cajero",
     description: "Acceso limitado a ventas, pedidos y clientes.",
     canManage: [],
-    badge: "bg-secondary",
     badgeClass: "bg-secondary",
   },
 }
 
+const ROLE_META_BY_UUID: Record<RoleUuid, RoleMeta> = {
+  [ROLES.MANAGER]: ROLE_META_BY_KEY.MANAGER,
+  [ROLES.ADMIN]: ROLE_META_BY_KEY.ADMIN,
+  [ROLES.CASHIER]: ROLE_META_BY_KEY.CASHIER,
+};
 
 interface UserManagementProps {
   compact?: boolean;
@@ -53,12 +65,8 @@ export default function UserManagement({ compact = false }: UserManagementProps)
   const [isloading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const navigate = useNavigate(); 
- // para mapeo
+
  
- const toCode = (uuid?: string)=> mapUuidToRole(uuid ?? "")
- const toUuid = (code: UserRole) => mapUuidToRole(code)
-
-
 // Fetch users
 useEffect(() => {
   async function loadUsers() {
@@ -68,7 +76,7 @@ useEffect(() => {
       return;
     }
 
-    if (!hasPermission(UserRole.ADMIN)) {
+    if (!hasPermission(ROLES.ADMIN)) {
       console.log("UserManagement: Usuario sin rol ADMIN", { role: user?.role });
       setError("Acceso denegado: se requiere rol de administrador");
       setIsLoading(false);
@@ -105,15 +113,15 @@ useEffect(() => {
   }
 
   loadUsers();
-}, [isAuthenticated, hasPermission, navigate, user, token]);  
+}, [isAuthenticated, hasPermission, navigate, token, user]);  
  
 type RoleTab = "all" | "administradores" | "propietarios" | "cajeros";
 
 const roleMatchesTab = (roleUuid: string | undefined, tab: RoleTab) => {
-  const code = toCode(roleUuid);
-  if (tab === "administradores") return code === UserRole.ADMIN;
-  if (tab === "propietarios")   return code === UserRole.MANAGER;
-  if (tab === "cajeros")        return code === UserRole.CASHIER;
+  const code = toRoleUuid(roleUuid);
+  if (tab === "administradores") return code === ROLES.ADMIN;
+  if (tab === "propietarios")   return code === ROLES.MANAGER;
+  if (tab === "cajeros")        return code === ROLES.CASHIER;
   return true; // "all"
 };
 
@@ -136,17 +144,15 @@ const filteredUsers = Array.isArray(users)
   const { name, value } = e.target;
 
   if(name === "enabled"){
-    setCurrentUser({
-      ...currentUser,
-      enabled: value === "true",
-    });
+    setCurrentUser({...currentUser, enabled: value === "true",});
     return;
-  }else{
-    setCurrentUser({
-      ...currentUser,
-      [name]: value,
-    });
-  }  
+  }
+
+  if(name === "role"){
+    setCurrentUser({...currentUser, role: value})
+    return
+  }
+  setCurrentUser({...currentUser, [name]: value})
  };
 
 
@@ -156,7 +162,7 @@ const handleAddUser = () => {
     email: "",
     fullname: "",
     password: "",
-    role: toUuid(UserRole.CASHIER),
+    role: ROLES.CASHIER,
     enabled: true,
     createdAt: new Date().toISOString(),
   });
@@ -169,7 +175,7 @@ const handleEditUser = (u: User) =>{
     email: u.email,
     fullname: u.fullname,
     password: "",
-    role: u.role,
+    role: toRoleUuid(u.role as string),
     enabled: u.enabled,
     createdAt: u.createdAt,
   });
@@ -196,76 +202,53 @@ const handleDeleteUser = async (id: string) => {
 }
 
 
-const handleSubmit = async (e: React.FormEvent) =>{
+const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
-  if(!currentUser){
-    return;
-  }
-  try{
+    if(!currentUser) return;
+  try {
     if(currentUser.id){
-      const updatedUser = await updateUser(currentUser.id,{
-        fullname: currentUser.fullname,
-        email: currentUser.email,
-        role: currentUser.role,
-        ...(currentUser.password ? {password : currentUser.password}: {})
-      });
-      if(updatedUser){
-        setUsers(users.map((u) => (u.id === currentUser.id ? updatedUser : u)));        
-      } else {
-        throw new Error("No se pudo actualizar el usuario. Intenta de nuevo.");
-      }
-    } else {
+      const updatedUser = await updateUser(currentUser.id, {
+      fullname: currentUser.fullname,
+      email: currentUser.email,
+      role: toRoleUuid(currentUser.role as string),
+      ...(currentUser.password ? {password: currentUser.password}: {})
+    });
+
+    if(!updatedUser) throw new Error(" no puedo actualizar el usuario. Intenta de Nuevo")
+      setUsers((prev)=> prev.map((u)=>(u.id === currentUser.id ? updatedUser : u)));
+
+    }else{
+      //Crear usuario
       const newUser = await createUser({
         fullname: currentUser.fullname,
         email: currentUser.email,
-        password: currentUser.password ,
-        role: toCode(currentUser.role),
+        password: currentUser.password,
+        role: toRoleUuid(currentUser.role as string),
         enabled: currentUser.enabled,
-        createdAt: currentUser.createdAt
-      })
-      if (!newUser) throw new Error("No se pudo crear usuario")
-        setUsers([...users, newUser])
-        
-        
-        await register(
-          currentUser.fullname ?? "",
-          currentUser.email ?? "",
-          currentUser.password ?? "",
-          mapUuidToRole(currentUser.role as string) ?? "",
-          mapRoleToUuid,
-          currentUser.enabled,
-            
-          
-        );
-   
-    }
-      setShowModal(false);
-      setError(null);
-      
-  } catch (err: unknown) {
-    if (err instanceof AxiosError) {
-      console.error("Axios Error al crear/actualizar usuario:", err.response?.status, err.response?.data);
-      setError(err.response?.data?.message || "Error al crear/actualizar el usuario. Intenta de nuevo.");
-    }
-    else if (err instanceof Error)  {
-      console.error("Error al crear/actualizar usuario:", err.message);
-      setError(err.message || "Error al crear/actualizar el usuario. Intenta de nuevo.");
-    }else {
-      console.error("Error desconocido al crear/actualizar usuario:", err);
-      setError("Error desconocido al crear/actualizar el usuario. Intenta de nuevo.");
+      });
+      if(!newUser) throw new Error(" no puedo crear usuario")
+      setUsers((prev)=>[...prev, newUser])
+       }    
+  } catch (err) {
+     if (err instanceof AxiosError) {
+        console.error("Axios Error al crear/actualizar usuario:", err.response?.status, err.response?.data);
+        setError(err.response?.data?.message || "Error al crear/actualizar el usuario. Intenta de nuevo.");
+      } else if (err instanceof Error) {
+        console.error("Error al crear/actualizar usuario:", err.message);
+        setError(err.message || "Error al crear/actualizar el usuario. Intenta de nuevo.");
+      } else {
+        console.error("Error desconocido al crear/actualizar usuario:", err);
+        setError("Error desconocido al crear/actualizar el usuario. Intenta de nuevo.");
+      }
     }
   }
-    
-}
-
-
-
+  
 
 const userCounts = {
   all: users.length,
-  admin:  users.filter(u => toCode(u.role) === UserRole.ADMIN).length,
-  manager: users.filter(u => toCode(u.role) === UserRole.MANAGER).length,
-  cashier: users.filter(u => toCode(u.role) === UserRole.CASHIER).length,
+  admin:  users.filter(u => toRoleUuid(u.role) === ROLES.ADMIN).length,
+  manager: users.filter(u => toRoleUuid(u.role) === ROLES.MANAGER).length,
+  cashier: users.filter(u => toRoleUuid(u.role) === ROLES.CASHIER).length,
 };
 
  
@@ -392,36 +375,40 @@ const userCounts = {
             </thead>
             <tbody>
               {displayedUsers.length > 0 ? (
-                displayedUsers.map((u) => (
-                  <tr key={u.id}>
-                    <td className="fw-medium">{u.fullname}</td>
-                    <td>{u.email}</td>
-                    <td>
-                    <span className={`badge bg-${getRoleConfig(mapUuidToRole(u.role ?? "")).badgeColor}`}>
-                    {getRoleConfig(mapUuidToRole(u.role ?? "")).label}
-                    </span>
+                displayedUsers.map((u) => {
+                  const uuid = toRoleUuid(u.role as string);
+                  const meta = ROLE_META_BY_UUID[uuid as RoleUuid];
+                  const label = meta?.label ?? toRoleKey(uuid) ?? "—";
+                  const badgeClass = meta?.badgeClass ?? "bg-secondary";
 
-                    {/* <span className={`badge bg-${roleConf?.badgeColor ?? "secondary"}`}>
-                      {roleConf?.label ?? ` (${user.role ?? "undefined"})`}
-                    </span> */}
-
-                    </td>
-                    {!compact && <td className="text-secondary">{u.createdAt || "-"}</td>}
-                    <td>
-                      <span className={`badge ${u.enabled ? "bg-success" : "bg-danger"}`}>
-                        {u.enabled ? "Activo" : "Inactivo"}
-                      </span>
-                    </td>
-                    <td className="text-end">
-                      <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleEditUser(u)}>
-                        <i><FontAwesomeIcon icon={faEdit} /></i>
-                      </button>
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteUser(u.id)}>
-                        <i><FontAwesomeIcon icon={faTrash} /></i>
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                  return (
+                    <tr key={u.id}>
+                      <td className="fw-medium">{u.fullname}</td>
+                      <td>{u.email}</td>
+                      <td>
+                        <span className={`badge ${badgeClass}`}>{label}</span>
+                      </td>
+                      {!compact && <td className="text-secondary">{u.createdAt || "-"}</td>}
+                      <td>
+                        <span className={`badge ${u.enabled ? "bg-success" : "bg-danger"}`}>
+                          {u.enabled ? "Activo" : "Inactivo"}
+                        </span>
+                      </td>
+                      <td className="text-end">
+                        <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleEditUser(u)}>
+                          <i>
+                            <FontAwesomeIcon icon={faEdit} />
+                          </i>
+                        </button>
+                        <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteUser(u.id)}>
+                          <i>
+                            <FontAwesomeIcon icon={faTrash} />
+                          </i>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={compact ? 5 : 6} className="text-center py-4">
@@ -451,37 +438,42 @@ const userCounts = {
       </div>
 
 
-      <h3 className="fs-5 fw-semibold mb-3">UserRole y Permisos</h3>
+      <h3 className="fs-5 fw-semibold mb-3">ROLES y Permisos</h3>
       <div className="row">
-        {Object.entries(rolePermissions).map(([role, info]) => (
-          <div className="col-md-4 mb-3" key={role}>
-            <div className="card h-100">
-              <div className="card-header d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">{info.label}</h5>
-                <span className={`badge ${info.badge}`}>{role}</span>
-              </div>
-              <div className="card-body">
-                <p className="card-text">{info.description}</p>
-                <h6 className="mt-3 mb-2">Puede gestionar:</h6>
-                <ul className="list-unstyled">
-                  {info.canManage.length > 0 ? (
-                    info.canManage.map((managedRole) => (
-                      <li key={managedRole} className="mb-1">
-                        <i className="fas fa-check-circle text-success me-2"></i>
-                        {rolePermissions[managedRole as keyof typeof rolePermissions]?.label || managedRole}
+        {(Object.keys(ROLE_META_BY_KEY) as RoleKey[]).map((key) => {
+          const meta = ROLE_META_BY_KEY[key];
+          // const uuid = ROLES[key]; // por si quieres mostrarlo
+          return (
+            <div className="col-md-4 mb-3" key={key}>
+              <div className="card h-100">
+                <div className="card-header d-flex justify-content-between align-items-center">
+                  <h5 className="mb-0">{meta.label}</h5>
+                  <span className={`badge ${meta.badgeClass}`}>{key}</span>
+                </div>
+                <div className="card-body">
+                  <p className="card-text">{meta.description}</p>
+                  <h6 className="mt-3 mb-2">Puede gestionar:</h6>
+                  <ul className="list-unstyled">
+                    {meta.canManage.length > 0 ? (
+                      meta.canManage.map((managed) => (
+                        <li key={`${key}-${managed}`} className="mb-1">
+                          <i className="fas fa-check-circle text-success me-2"></i>
+                          {ROLE_META_BY_KEY[managed].label}
+                        </li>
+                      ))
+                    ) : (
+                      <li className="text-muted">
+                        <i className="fas fa-times-circle me-2"></i>
+                        No puede gestionar usuarios
                       </li>
-                    ))
-                  ) : (
-                    <li className="text-muted">
-                      <i className="fas fa-times-circle me-2"></i>
-                      No puede gestionar usuarios
-                    </li>
-                  )}
-                </ul>
+                    )}
+                  </ul>
+                  {/* <div className="text-muted small">UUID: {uuid}</div> */}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* User Modal */}
@@ -535,17 +527,14 @@ const userCounts = {
                       className="form-select"
                       id="role"
                       name="role"
-                      value={currentUser?.role}
-                      onChange={((e)=>{
-                        if(!currentUser) return;
-                        setCurrentUser({...currentUser, role:e.target.value as unknown as UserRole})
-                      })}
+                      value={toRoleUuid(currentUser?.role as string)}
+                      onChange={handleInputChange}
                       required
                     > 
                       <option value="">Selecione Rol</option>
-                      <option value={UserRole.CASHIER}>Cajero</option>
-                      <option value={UserRole.ADMIN}>Administrador</option>
-                      <option value={UserRole.MANAGER}>Propietario</option>                                       
+                      <option value={ROLES.CASHIER}>Cajero</option>
+                      <option value={ROLES.ADMIN}>Administrador</option>
+                      <option value={ROLES.MANAGER}>Propietario</option>                                       
                       <option value="Otro">Otro</option>
                     </select>
                   </div>
@@ -597,7 +586,6 @@ const userCounts = {
   )
   
 
-
-
-
 }
+
+

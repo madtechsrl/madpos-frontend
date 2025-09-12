@@ -3,7 +3,6 @@
 import { useAuth } from "../../contexts/auth-context"
 import { useNavigate } from "react-router-dom"
 import { useEffect, useState, type ReactNode } from "react"
-// import { isPreviewEnvironment } from "../services/auth-service"
 import { UserRole } from "../../types/roles"
 
 type RoleGuardProps = {

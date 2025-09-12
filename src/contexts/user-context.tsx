@@ -1,9 +1,10 @@
-import { createContext, useContext, useState, type ReactNode } from "react"
+import { createContext,  useState,useContext, type ReactNode } from "react"
 
 export type UserProfile = {
   fullname: string
   email: string
-  avatar: string
+  role: string
+
 }
 
 type UserContextType = {
@@ -19,9 +20,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [customerName, setCustomerName] = useState("")
   const [userProfile, setUserProfile] = useState<UserProfile>({
     fullname: "",
-    email: "",
-    avatar: "",
-   
+    email: "", 
+    role:"",  
   })
 
   return (
