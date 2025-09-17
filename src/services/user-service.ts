@@ -54,10 +54,15 @@ export async function fetchUsers(): Promise<User[]> {
 
 // Get user by ID
 export async function fetchUserById(id: string): Promise<User | null> {
+   const accessToken = checkToken()
   try {
-    const response = await axiosInstance.get(`/v1/users/${id}`)
-
+    const response = await axiosInstance.get(`/v1/users/${id}`,{
+      headers:{
+        Authorization: `Bearer ${accessToken}`
+      }
+    })
     return response.data?.data?.records || null
+
   } catch (error) {
     console.error(`Error fetching user with ID ${id}:`, error)
     return null
@@ -85,8 +90,9 @@ return {
 
 // Update an existing user
 export async function updateUser(id: string, updates: Partial<User>): Promise<User | null> {
+  
   try {
-    const response = await axiosInstance.put(`/v1/users/${id}`, updates)
+    const response = await axiosInstance.put(`/v1/users/${id}`, updates,{})
 
     return response.data?.data?.records || null
 
@@ -98,6 +104,7 @@ export async function updateUser(id: string, updates: Partial<User>): Promise<Us
 
 // Delete a user
 export async function deleteUser(id: string): Promise<boolean> {
+   
   try {
     const response = await axiosInstance.delete(`/v1/users/${id}`)
 

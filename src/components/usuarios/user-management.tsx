@@ -11,6 +11,7 @@ import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 import axiosInstance from "../../lib/api";
 import { AxiosError, isAxiosError } from "axios";
+
 const toRoleUuid = (input?: string) => mapRoleToUuid(input ?? "");
 const toRoleKey = (uuid?: string) => (uuid ? mapUuidToRoleName(uuid): "")
 
@@ -55,8 +56,7 @@ interface UserManagementProps {
 }
 
 export default function UserManagement({ compact = false }: UserManagementProps) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { user, isAuthenticated, hasPermission , register, token, setToken} = useAuth();
+  const { user, isAuthenticated, hasPermission , token} = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -165,6 +165,7 @@ const handleAddUser = () => {
     role: ROLES.CASHIER,
     enabled: true,
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toDateString()
   });
   setShowModal(true);
 };
@@ -177,7 +178,8 @@ const handleEditUser = (u: User) =>{
     password: "",
     role: toRoleUuid(u.role as string),
     enabled: u.enabled,
-    createdAt: u.createdAt,
+    createdAt:u.createdAt,
+    updatedAt: u.createdAt,
   });
   setShowModal(true);
 };
@@ -224,7 +226,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         email: currentUser.email,
         password: currentUser.password,
         role: toRoleUuid(currentUser.role as string),
-        enabled: currentUser.enabled,
+        enabled: true,
       });
       if(!newUser) throw new Error(" no puedo crear usuario")
       setUsers((prev)=>[...prev, newUser])

@@ -8,6 +8,7 @@ export type User = {
   role?: string;
   enabled: boolean;
   createdAt: string;
+  updatedAt: string;
   token?: string;
   permissions?: string[];
   accessToken?: string;
@@ -26,7 +27,6 @@ export interface UpdateUserRequest {
   fullname?: string
   email?: string
   role?: string
-  roleId?: RoleUuid
   status?: "active" | "inactive"
 }
 
