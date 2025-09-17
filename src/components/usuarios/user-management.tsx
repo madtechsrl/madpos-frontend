@@ -11,6 +11,9 @@ import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 import axiosInstance from "../../lib/api";
 import { AxiosError, isAxiosError } from "axios";
+import useRefreshToken from "../../hooks/userHook"
+
+
 
 const toRoleUuid = (input?: string) => mapRoleToUuid(input ?? "");
 const toRoleKey = (uuid?: string) => (uuid ? mapUuidToRoleName(uuid): "")
@@ -55,15 +58,33 @@ interface UserManagementProps {
   compact?: boolean;
 }
 
+
+type ModalMode = "anadir" | "editar"
+
+const emptyUser: User ={
+id:"",
+fullname:"",
+email:"",
+password:"",
+role: ROLES.CASHIER,
+enabled: true,
+createdAt: new Date().toISOString(),
+}
+
 export default function UserManagement({ compact = false }: UserManagementProps) {
-  const { user, isAuthenticated, hasPermission , token} = useAuth();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { user, isAuthenticated, hasPermission , register, token, setToken, auth} = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<RoleTab>("all");
   const [error, setError] = useState<string | null>(null);
   const [isloading, setIsLoading] = useState(true);
+  const [modalMode, setModalMode] = useState<ModalMode>("anadir")
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastToken, setLastToken] = useState<string | null>(auth.accessToken);
+  const refresh = useRefreshToken();
   const navigate = useNavigate(); 
 
  
@@ -137,7 +158,25 @@ const filteredUsers = Array.isArray(users)
   : [];
  const displayedUsers = compact ? filteredUsers.slice(0, 5) : filteredUsers;
 
+const openAddModal= ()=>{
+  setModalMode("anadir");
+  setCurrentUser({... emptyUser});
+  setShowModal(true);
+}
  
+ const openEditMotal = (u: User) =>{
+  setModalMode("editar");
+  setCurrentUser({
+    id: u.id,
+    fullname: u.fullname ?? "",
+    email: u.email ?? "",
+    password:"",
+    role: toRoleUuid(u.role as string),
+    enabled: !! u.enabled,
+    createdAt: u.createdAt,
+  })
+  setShowModal(true);
+}
 
  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
   if (!currentUser) return;
@@ -147,7 +186,6 @@ const filteredUsers = Array.isArray(users)
     setCurrentUser({...currentUser, enabled: value === "true",});
     return;
   }
-
   if(name === "role"){
     setCurrentUser({...currentUser, role: value})
     return
@@ -155,6 +193,19 @@ const filteredUsers = Array.isArray(users)
   setCurrentUser({...currentUser, [name]: value})
  };
 
+
+  const handleTestRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      const newToken = await refresh();       // ✅ llamas la función devuelta por el hook
+      setLastToken(newToken);
+      console.log("Nuevo accessToken:", newToken);
+    } catch (e) {
+      console.error("Error al refrescar token:", e);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
 const handleAddUser = () => {
   setCurrentUser({
@@ -170,6 +221,7 @@ const handleAddUser = () => {
   setShowModal(true);
 };
 
+
 const handleEditUser = (u: User) =>{
   setCurrentUser({
     id: u.id,
@@ -183,7 +235,9 @@ const handleEditUser = (u: User) =>{
   });
   setShowModal(true);
 };
-  
+
+
+
 
 const handleDeleteUser = async (id: string) => {
   if(window.confirm("¿Estás seguro de querer eliminar este usuario?")){
@@ -202,6 +256,7 @@ const handleDeleteUser = async (id: string) => {
     }
   }
 }
+
 
 
 const handleSubmit = async (e: React.FormEvent) => {
@@ -280,10 +335,25 @@ const userCounts = {
         </div>
 
           <h2 className="fs-4 fw-semibold mb-1"></h2>
-          <button className="btn btn-success d-flex align-items-center gap-2" onClick={handleAddUser} disabled={isloading}>
+          <button className="btn btn-success d-flex align-items-center gap-2" onClick={openAddModal} disabled={isloading}>
             <i><FontAwesomeIcon icon={faPlus} /></i>
             <span>Añadir Usuario</span>
           </button>
+          <div className="d-flex align-items-center gap-2">
+                <button
+        type="button"
+        className="btn btn-outline-primary"
+        onClick={handleTestRefresh}
+        disabled={isRefreshing}
+      >
+        {isRefreshing ? "Refrescando..." : "Probar refresh token"}
+      </button>
+
+        <code className="text-wrap">
+        Token actual: {lastToken ? lastToken.slice(0, 24) + "..." : "(null)"}
+      </code>
+
+          </div>
         </div>
       )}
 
@@ -397,7 +467,7 @@ const userCounts = {
                         </span>
                       </td>
                       <td className="text-end">
-                        <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleEditUser(u)}>
+                        <button className="btn btn-sm btn-outline-primary me-2" onClick={() => openEditMotal(u)}>
                           <i>
                             <FontAwesomeIcon icon={faEdit} />
                           </i>
@@ -433,14 +503,14 @@ const userCounts = {
         {compact && (
           <div className="p-2 text-end border-top">
             <button className="btn btn-success btn-sm" onClick={handleAddUser}>
-              <i><FontAwesomeIcon icon={faPlus} /></i> Añadir Usuario
+              <i><FontAwesomeIcon icon={faPlus} />Añadir Usuario</i> 
             </button>
           </div>
         )}
       </div>
 
-
-      <h3 className="fs-5 fw-semibold mb-3">ROLES y Permisos</h3>
+          <br />
+      <h3 className="fs-5 fw-semibold mb-3">Roles y Permisos</h3>
       <div className="row">
         {(Object.keys(ROLE_META_BY_KEY) as RoleKey[]).map((key) => {
           const meta = ROLE_META_BY_KEY[key];
@@ -479,12 +549,13 @@ const userCounts = {
       </div>
 
       {/* User Modal */}
-      {showModal && (
-        <div className="modal d-block" tabIndex={-1} style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+             {/* User Modal */}
+      {showModal && modalMode === "anadir" &&  (
+        <div key= {modalMode} className="modal d-block" tabIndex={-1} style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">{currentUser?.id ? "Editar Usuario" : "Añadir Usuario"}</h5>
+                <h5 className="modal-title">Anadir Usuario</h5>
                 <button
                   type="button"
                   className="btn-close"
@@ -499,10 +570,11 @@ const userCounts = {
                       Nombre completo
                     </label>
                     <input
-                      type="text"                      
-                      id="fullname"
+                      type="text"
+                      className="form-control"
+                      id="fullname_add"
                       name="fullname"
-                      value={currentUser?.fullname}
+                      value=""
                       onChange={handleInputChange}
                       required
                     />
@@ -514,9 +586,23 @@ const userCounts = {
                     <input
                       type="email"
                       className="form-control"
-                      id="email"
+                      id="email_add"
                       name="email"
-                      value={currentUser?.email}
+                      value= ""
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="password" className="form-label">                      
+                      Contraseña
+                    </label>
+                    <input
+                      type="password"
+                      className="form-control"
+                      id="password"
+                      name="password"
+                      value= ""
                       onChange={handleInputChange}
                       required
                     />
@@ -527,47 +613,34 @@ const userCounts = {
                     </label>
                     <select
                       className="form-select"
-                      id="role"
+                      id="role_add"
                       name="role"
-                      value={toRoleUuid(currentUser?.role as string)}
+                      value= ""
                       onChange={handleInputChange}
                       required
-                    > 
-                      <option value="">Selecione Rol</option>
-                      <option value={ROLES.CASHIER}>Cajero</option>
-                      <option value={ROLES.ADMIN}>Administrador</option>
-                      <option value={ROLES.MANAGER}>Propietario</option>                                       
-                      <option value="Otro">Otro</option>
+                    >
+                      <option value="">Escoje Rol</option>
+                      <option value="Cajero">Cajero</option>
+                      <option value="Administrator">Administrador</option>
+                      <option value="Propietario">Gerente</option>
+                     
                     </select>
                   </div>
+           
                   <div className="mb-3">
-                    <label htmlFor="password" className="form-label">
-                      {currentUser?.id ? "Contraseña (dejar en blanco para no cambiar)" : "Contraseña"}
-                    </label>
-                    <input
-                      type="password"
-                      className="form-control"
-                      id="password"
-                      name="password"
-                      value={currentUser?.password}
-                      onChange={handleInputChange}
-                      required={!currentUser?.id}
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label htmlFor="enabled" className="form-label">
+                    <label htmlFor="status" className="form-label">
                       Estado
                     </label>
                     <select
                       className="form-select"
-                      id="enabled"
-                      name="enabled"
-                      value={currentUser?.enabled ? "true" : "false"}
+                      id="status"
+                      name="status"
+                      value={currentUser?.enabled ? "Activo" : "Inactivo"}
                       onChange={handleInputChange}
                       required
                     >
-                      <option value="true">Activo</option>
-                      <option value="false">Inactivo</option>
+                      <option value="Activo">Activo</option>
+                      <option value="Inactivo">Inactivo</option>
                     </select>
                   </div>
                 </div>
@@ -575,15 +648,109 @@ const userCounts = {
                   <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
                     Cancelar
                   </button>
-                  <button type="submit" className="btn btn-success">
-                    {currentUser?.id ? "Actualizar" : "Crear"}
-                  </button>
+                  <button type="submit" className="btn btn-success">Crear</button>       
+                 
                 </div>
               </form>
             </div>
           </div>
         </div>
       )}
+
+      {showModal && modalMode === "editar" && currentUser && (
+  <div key={modalMode} className="modal d-block" tabIndex={-1} style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+    <div className="modal-dialog">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title">Editar Usuario</h5>
+          <button type="button" className="btn-close" onClick={() => setShowModal(false)} aria-label="Close" />
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="modal-body">
+            <div className="mb-3">
+              <label htmlFor="fullname_edit" className="form-label">Nombre completo</label>
+              <input
+                type="text"
+                className="form-control"
+                id="fullname_edit"
+                name="fullname"
+                value={currentUser.fullname ?? ""}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="email_edit" className="form-label">Correo electrónico</label>
+              <input
+                type="email"
+                className="form-control"
+                id="email_edit"
+                name="email"
+                value={currentUser.email ?? ""}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="role_edit" className="form-label">Rol</label>
+              <select
+                className="form-select"
+                id="role_edit"
+                name="role"
+                value={toRoleUuid(currentUser.role as string)}
+                onChange={handleInputChange}
+                required
+              >
+                <option value="">Seleccione Rol</option>
+                <option value={ROLES.CASHIER}>Cajero</option>
+                <option value={ROLES.ADMIN}>Administrador</option>
+                <option value={ROLES.MANAGER}>Propietario</option>
+              </select>
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="password_edit" className="form-label">Contraseña (dejar en blanco para no cambiar)</label>
+              <input
+                type="password"
+                className="form-control"
+                id="password_edit"
+                name="password"
+                value={currentUser.password ?? ""}
+                onChange={handleInputChange}
+                required={false}
+                placeholder="Opcional"
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="enabled_edit" className="form-label">Estado</label>
+              <select
+                className="form-select"
+                id="enabled_edit"
+                name="enabled"
+                value={currentUser.enabled ? "true" : "false"}
+                onChange={handleInputChange}
+                required
+              >
+                <option value="true">Activo</option>
+                <option value="false">Inactivo</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="modal-footer">
+            <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
+            <button type="submit" className="btn btn-success">Actualizar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   )
   

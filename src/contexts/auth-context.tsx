@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useNavigate } from "react-router-dom"
 import type { CreateUserRequest, User } from "../types/User"
 import { mapRoleToUuid, ROLES, type RoleUuid, type RoleKey } from "../types/roles"
@@ -41,6 +41,8 @@ type AuthContextType = {
   isAuthenticated: boolean;
   userRole: RoleUuid| null;
   token: string | null
+  auth: AuthState,
+  setAuth: React.Dispatch<React.SetStateAction<AuthState>>
   setToken: (token: string | null) => void
   loginUser: (email: string, password: string) => void
   register: (
@@ -53,11 +55,18 @@ type AuthContextType = {
   hasPermission: (requiredRole: RoleUuid | RoleUuid[]) => boolean
   getAccessToken: () => string | null
 }
+export interface AuthState {
+accessToken: string | null;
+
+}
+
+
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [auth, setAuth] = useState<AuthState>({accessToken: null})
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate()
@@ -194,6 +203,8 @@ const logout = () => {
   return (
     <AuthContext.Provider
       value={{
+        auth,
+        setAuth,
         user,
         isLoading,
         isAuthenticated: !!user,
@@ -202,7 +213,7 @@ const logout = () => {
         logout,
         register,
         hasPermission,
-        token,
+        token: auth.accessToken,
         setToken,
         getAccessToken: () => token,
       }}
