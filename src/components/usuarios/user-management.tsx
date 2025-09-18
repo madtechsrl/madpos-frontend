@@ -61,15 +61,15 @@ interface UserManagementProps {
 
 type ModalMode = "anadir" | "editar"
 
-const emptyUser: User ={
-id:"",
-fullname:"",
-email:"",
-password:"",
-role: ROLES.CASHIER,
-enabled: true,
-createdAt: new Date().toISOString(),
-}
+// const emptyUser: User ={
+// id:"",
+// fullname:"",
+// email:"",
+// password:"",
+// role: ROLES.CASHIER,
+// enabled: true,
+// createdAt: new Date().toISOString(),
+// }
 
 export default function UserManagement({ compact = false }: UserManagementProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -158,25 +158,25 @@ const filteredUsers = Array.isArray(users)
   : [];
  const displayedUsers = compact ? filteredUsers.slice(0, 5) : filteredUsers;
 
-const openAddModal= ()=>{
-  setModalMode("anadir");
-  setCurrentUser({... emptyUser});
-  setShowModal(true);
-}
+// const openAddModal= ()=>{
+//   setModalMode("anadir");
+//   setCurrentUser({... emptyUser});
+//   setShowModal(true);
+// }
  
- const openEditMotal = (u: User) =>{
-  setModalMode("editar");
-  setCurrentUser({
-    id: u.id,
-    fullname: u.fullname ?? "",
-    email: u.email ?? "",
-    password:"",
-    role: toRoleUuid(u.role as string),
-    enabled: !! u.enabled,
-    createdAt: u.createdAt,
-  })
-  setShowModal(true);
-}
+//  const openEditMotal = (u: User) =>{
+//   setModalMode("editar");
+//   setCurrentUser({
+//     id: u.id,
+//     fullname: u.fullname ?? "",
+//     email: u.email ?? "",
+//     password:"",
+//     role: toRoleUuid(u.role as string),
+//     enabled: !! u.enabled,
+//     createdAt: u.createdAt,
+//   })
+//   setShowModal(true);
+// }
 
  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
   if (!currentUser) return;
@@ -335,7 +335,7 @@ const userCounts = {
         </div>
 
           <h2 className="fs-4 fw-semibold mb-1"></h2>
-          <button className="btn btn-success d-flex align-items-center gap-2" onClick={openAddModal} disabled={isloading}>
+          <button className="btn btn-success d-flex align-items-center gap-2" onClick={handleAddUser} disabled={isloading}>
             <i><FontAwesomeIcon icon={faPlus} /></i>
             <span>Añadir Usuario</span>
           </button>
@@ -467,7 +467,7 @@ const userCounts = {
                         </span>
                       </td>
                       <td className="text-end">
-                        <button className="btn btn-sm btn-outline-primary me-2" onClick={() => openEditMotal(u)}>
+                        <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleEditUser(u)}>
                           <i>
                             <FontAwesomeIcon icon={faEdit} />
                           </i>

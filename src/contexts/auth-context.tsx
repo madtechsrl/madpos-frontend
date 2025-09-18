@@ -4,7 +4,8 @@ import type { CreateUserRequest, User } from "../types/User"
 import { mapRoleToUuid, ROLES, type RoleUuid, type RoleKey } from "../types/roles"
 import { loginAPI, } from "../services/auth-service"
 import { createUser } from "../services/user-service"
-import axiosInstance from "../lib/api";
+import axiosInstance, {setAccessTokenRefreshHandler} from "../lib/api";
+
 
 
 // ---------- Helpers de rol (tipados) ----------
@@ -130,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fullname: string;
     role: string;
     createdAt: string;
+    
   }
 
 
@@ -161,6 +163,7 @@ const loginUser = async (email: string, password: string): Promise<void> => {
         role:roleCode,          
         enabled: true,    
         createdAt: response.createdAt ?? "",
+        updatedAt: "",
       };    
           
       localStorage.setItem("user", JSON.stringify(userObj))
@@ -189,7 +192,15 @@ const logout = () => {
   navigate("/")
 }
 
+useEffect(() => {
+  setAccessTokenRefreshHandler((token) => {
+    setAuth((prev) => ({ ...prev, accessToken: token }));
+  });
 
+  return () => {
+    setAccessTokenRefreshHandler(null);
+  };
+}, []);
 
 
   const hasPermission = (requireRole: RoleUuid | RoleUuid[]): boolean => {

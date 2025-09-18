@@ -18,7 +18,8 @@ export const fetchProfile = async (): Promise<User> => {
       fullname: data.fullname,
       role: data.role,
       enabled: data.enabled,
-      createdAt: data.createdAt,      
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,      
     };
   } catch (error) {
     console.error("fetchProfile error:", error);
@@ -32,10 +33,10 @@ export const loginAPI = async (email: string, password: string) => {
   try {
     const loginResponse = await axiosInstance.post("/v1/auth/sign-in", { email, password });
     const accessToken = loginResponse.data?.data?.accessToken || loginResponse.data?.access
+    console.log("accesstoken: ",accessToken);
      if (!accessToken) {
       throw new Error("No access token recibido por el server");
     }
-
     localStorage.setItem("token", accessToken);
     axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
     const user = await fetchProfile();
