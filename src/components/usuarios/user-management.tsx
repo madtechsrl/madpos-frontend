@@ -11,7 +11,6 @@ import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 import axiosInstance from "../../lib/api";
 import { AxiosError, isAxiosError } from "axios";
-import useRefreshToken from "../../hooks/userHook"
 
 
 
@@ -73,7 +72,7 @@ type ModalMode = "anadir" | "editar"
 
 export default function UserManagement({ compact = false }: UserManagementProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { user, isAuthenticated, hasPermission , register, token, setToken, auth} = useAuth();
+  const { user, isAuthenticated, hasPermission , register, token, setToken} = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -82,9 +81,6 @@ export default function UserManagement({ compact = false }: UserManagementProps)
   const [isloading, setIsLoading] = useState(true);
   const [modalMode, setModalMode] = useState<ModalMode>("anadir")
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastToken, setLastToken] = useState<string | null>(auth.accessToken);
-  const refresh = useRefreshToken();
   const navigate = useNavigate(); 
 
  
@@ -194,18 +190,6 @@ const filteredUsers = Array.isArray(users)
  };
 
 
-  const handleTestRefresh = async () => {
-    try {
-      setIsRefreshing(true);
-      const newToken = await refresh();       // ✅ llamas la función devuelta por el hook
-      setLastToken(newToken);
-      console.log("Nuevo accessToken:", newToken);
-    } catch (e) {
-      console.error("Error al refrescar token:", e);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
 
 const handleAddUser = () => {
   setCurrentUser({
@@ -311,16 +295,16 @@ const userCounts = {
  
 
  
-  if (isloading && users.length === 0) {
-    return (
-      <div className="text-center p-5">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-        <p className="mt-2">Cargando usuarios...</p>
-      </div>
-    )
-  }
+  // if (isloading && users.length === 0) {
+  //   return (
+  //     <div className="text-center p-5">
+  //       <div className="spinner-border text-primary" role="status">
+  //         <span className="visually-hidden">Cargando...</span>
+  //       </div>
+  //       <p className="mt-2">Cargando usuarios...</p>
+  //     </div>
+  //   )
+  // }
 
 
   return (
@@ -338,22 +322,7 @@ const userCounts = {
           <button className="btn btn-success d-flex align-items-center gap-2" onClick={handleAddUser} disabled={isloading}>
             <i><FontAwesomeIcon icon={faPlus} /></i>
             <span>Añadir Usuario</span>
-          </button>
-          <div className="d-flex align-items-center gap-2">
-                <button
-        type="button"
-        className="btn btn-outline-primary"
-        onClick={handleTestRefresh}
-        disabled={isRefreshing}
-      >
-        {isRefreshing ? "Refrescando..." : "Probar refresh token"}
-      </button>
-
-        <code className="text-wrap">
-        Token actual: {lastToken ? lastToken.slice(0, 24) + "..." : "(null)"}
-      </code>
-
-          </div>
+          </button>        
         </div>
       )}
 
