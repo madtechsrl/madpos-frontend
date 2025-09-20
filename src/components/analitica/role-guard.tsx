@@ -1,15 +1,15 @@
 "use client"
 
 import type React from "react"
-import  { UserRole, getRoleDisplayName } from "../../types/roles"
+import  { mapUuidToRoleName,  type RoleUuid} from "../../types/roles"
 
 
 
 
 interface RoleGuardProps {
   children: React.ReactNode
-  allowedRoles: UserRole[]
-  currentUserRole: UserRole
+  allowedRoles: RoleUuid[]
+  currentUserRole: RoleUuid
   fallbackMessage?: string
 }
 
@@ -41,10 +41,10 @@ export function RoleGuard({
                 "No tienes permisos para acceder a esta sección. Solo usuarios con roles específicos pueden ver esta información."}
             </div>
             <p className="text-muted mb-2">
-              Tu rol actual: <strong>{getRoleDisplayName(currentUserRole)}</strong>
+              Tu rol actual: <strong>{mapUuidToRoleName(currentUserRole)}</strong>
             </p>
             <p className="text-muted mb-4">
-              Roles permitidos: {allowedRoles.map((role) => getRoleDisplayName(role)).join(", ")}
+              Roles permitidos: {allowedRoles.map((role) => mapUuidToRoleName(role)).join(", ")}
             </p>
             <a href="/dashboard" className="btn btn-primary">
               <i className="fas fa-arrow-left me-2"></i>

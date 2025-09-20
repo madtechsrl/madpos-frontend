@@ -1,215 +1,317 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { useNavigate } from "react-router-dom"
-import type { CreateUserRequest, User } from "../types/User"
-import { mapRoleToUuid, ROLES, type RoleUuid, type RoleKey } from "../types/roles"
-import { loginAPI, } from "../services/auth-service"
-import { createUser } from "../services/user-service"
-import axiosInstance, {setAccessTokenRefreshHandler} from "../lib/api";
+// src/contexts/auth-context.tsx
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  type ReactNode,
+} from "react";
+import { useNavigate } from "react-router-dom";
+import type { CreateUserRequest, User } from "../types/User";
+import { mapRoleToUuid, ROLES, type RoleUuid, type RoleKey } from "../types/roles";
+import { loginAPI } from "../services/auth-service";
+import { createUser } from "../services/user-service";
+import axiosInstance from "../lib/api";
+import {
+  AxiosError,
+  AxiosHeaders,
+  type InternalAxiosRequestConfig,
+  type AxiosResponse,
+} from "axios";
 
-
-
-// ---------- Helpers de rol (tipados) ----------
-
+// ---------- Helpers de rol ----------
 const ROLE_UUIDS = Object.values(ROLES) as RoleUuid[];
 const ROLE_KEYS = Object.keys(ROLES) as RoleKey[];
 
-/** Type guard: ¿es uno de los UUID definidos? */
 function isRoleUuid(v: string): v is RoleUuid {
   return (ROLE_UUIDS as string[]).includes(v);
 }
 
-/** Normaliza cualquier string (“ADMIN” | “MANAGER” | “CASHIER” o UUID) a RoleUuid */
 function normalizeRoleUuid(input?: string): RoleUuid {
-  if (!input) return ROLES.CASHIER; // fallback seguro
-  // mapRoleToUuid acepta código o UUID y devuelve (idealmente) UUID o el mismo string
+  if (!input) return ROLES.CASHIER;
   const mapped = mapRoleToUuid(input);
-  // si es un UUID válido de nuestros roles:
   if (typeof mapped === "string" && isRoleUuid(mapped)) return mapped;
-  // si vino como código válido, úsalo para obtener el UUID:
   const upper = input.toUpperCase();
-  if ((ROLE_KEYS as string[]).includes(upper)) {
-    return ROLES[upper as RoleKey];
-  }
-  // último recurso: cajero
+  if ((ROLE_KEYS as string[]).includes(upper)) return ROLES[upper as RoleKey];
   return ROLES.CASHIER;
 }
 
-// ---------- Tipos del contexto ----------
+// ---------- Tipos ----------
+export interface AuthState {
+  accessToken: string | null;
+}
 
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  userRole: RoleUuid| null;
-  token: string | null
-  auth: AuthState,
-  setAuth: React.Dispatch<React.SetStateAction<AuthState>>
-  setToken: (token: string | null) => void
-  loginUser: (email: string, password: string) => void
+  userRole: RoleUuid | null;
+
+  token: string | null; // alias de compat
+  auth: AuthState;
+  setAuth: React.Dispatch<React.SetStateAction<AuthState>>;
+  setToken: (token: string | null) => void;
+
+  loginUser: (email: string, password: string) => void;
   register: (
-    fullname: string, 
-    email: string, 
-    password: string, 
-    role: RoleUuid, 
-    enabled: boolean ) => Promise<boolean>
-  logout: () => void
-  hasPermission: (requiredRole: RoleUuid | RoleUuid[]) => boolean
-  getAccessToken: () => string | null
+    fullname: string,
+    email: string,
+    password: string,
+    role: RoleUuid,
+    enabled: boolean
+  ) => Promise<boolean>;
+  logout: () => void;
+
+  hasPermission: (requiredRole: RoleUuid | RoleUuid[]) => boolean;
+  getAccessToken: () => string | null;
+};
+
+type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+
+interface RefreshBody {
+  accessToken: string;
 }
-export interface AuthState {
-accessToken: string | null;
-
+interface ApiEnvelope<T> {
+  data: T;
+  message?: string;
+}
+interface ApiErrorResponse {
+  message?: string;
 }
 
-
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+// ---------- Contexto ----------
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [auth, setAuth] = useState<AuthState>({accessToken: null})
-  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [auth, setAuth] = useState<AuthState>({ accessToken: null });
+  const [token, setToken] = useState<string | null>(null); // alias de compat
   const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate()
-  
-  // Check if user is logged in on initial load
+
+  const navigate = useNavigate();
+
+  // Carga inicial
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const storedToken = localStorage.getItem("token");
 
     try {
-      if(storedUser && storedToken){
-        const parsed : User = JSON.parse(storedUser)
+      if (storedUser && storedToken) {
+        const parsed: User = JSON.parse(storedUser);
         const roleUuid = normalizeRoleUuid(parsed.role as string);
-        setUser({...parsed, role: roleUuid})
-        setToken(storedToken)
-        axiosInstance.defaults.headers.common["Authorization"] = `Bearer${storedToken}`
+        setUser({ ...parsed, role: roleUuid });
+        setAuth({ accessToken: storedToken });
+        setToken(storedToken);
       }
-    } catch  {
-      localStorage.removeItem("user")
-      localStorage.removeItem("token")
-    }finally{
-      setIsLoading(false)
-    }  
-    }, []);
+    } catch {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
+  // Logout estable
+  const logout = useCallback((): void => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+    setAuth({ accessToken: null });
+    delete axiosInstance.defaults.headers.common["Authorization"];
+    document.cookie = "auth-token=; path=/; max-age=0";
+    document.cookie = "user-role=; path=/; max-age=0";
+    navigate("/");
+  }, [navigate]);
 
+  // ---- Función interna para REFRESH (no usa useAuth)
+  const refreshAccessToken = useCallback(async (): Promise<string> => {
+    const res = await axiosInstance.get<ApiEnvelope<RefreshBody> | RefreshBody>(
+      "/v1/auth/refresh-token",
+      { withCredentials: true }
+    );
+
+    const payload =
+      (res.data as ApiEnvelope<RefreshBody>)?.data ??
+      (res.data as RefreshBody);
+
+    const newAccessToken = payload?.accessToken;
+    if (!newAccessToken) {
+      throw new Error("No accessToken en respuesta de refresh");
+    }
+
+    setAuth((prev) => ({ ...prev, accessToken: newAccessToken }));
+    localStorage.setItem("token", newAccessToken);
+
+    // También actualizamos defaults para próximas requests
+    (axiosInstance.defaults.headers.common as AxiosHeaders).set(
+      "Authorization",
+      `Bearer ${newAccessToken}`
+    );
+
+    return newAccessToken;
+  }, []);
+
+  // ---- Interceptores in-place (una sola vez)
+  const initializedRef = useRef(false);
+  const refreshPromiseRef = useRef<Promise<string> | null>(null);
+
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    // REQUEST: inyecta Authorization
+    axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+      const t = auth.accessToken ?? localStorage.getItem("token");
+      if (t) {
+        const headers = (config.headers ?? new AxiosHeaders()) as AxiosHeaders;
+        headers.set("Authorization", `Bearer ${t}`);
+        config.headers = headers;
+      }
+      return config;
+    });
+
+    // RESPONSE: refresh en 401 (y parche 500 con mensaje expirado)
+    axiosInstance.interceptors.response.use(
+      (res: AxiosResponse) => res,
+      (error: AxiosError<ApiErrorResponse | string>) => {
+        const handle = async () => {
+          const original = error.config as RetriableConfig | undefined;
+          if (!error.response || !original) throw error;
+
+          const status = error.response.status;
+          const url = (original.url ?? "").toLowerCase();
+
+          const isAuthEndpoint =
+            url.includes("/v1/auth/sign-in") ||
+            url.includes("/v1/auth/sign-out") ||
+            url.includes("/v1/auth/refresh-token");
+
+          const raw = error.response.data;
+          const msg =
+            typeof raw === "string"
+              ? raw.toLowerCase()
+              : (raw?.message ?? "").toLowerCase();
+
+          const isTokenExpired500 =
+            status === 500 &&
+            (msg.includes("jwt expired") ||
+              msg.includes("token expired") ||
+              msg.includes("expired"));
+
+          const isTokenStatus = status === 401 || status === 419 || status === 440 || status === 498;
+
+          const shouldRefresh =
+            !original._retry && !isAuthEndpoint && (isTokenStatus || isTokenExpired500);
+
+          if (!shouldRefresh) throw error;
+
+          original._retry = true;
+
+          try {
+            if (!refreshPromiseRef.current) {
+              refreshPromiseRef.current = (async () => {
+                const newToken = await refreshAccessToken();
+                return newToken;
+              })().finally(() => {
+                refreshPromiseRef.current = null;
+              });
+            }
+
+            const newToken = await refreshPromiseRef.current;
+
+            const retryHeaders = (original.headers ?? new AxiosHeaders()) as AxiosHeaders;
+            retryHeaders.set("Authorization", `Bearer ${newToken}`);
+            original.headers = retryHeaders;
+
+            return axiosInstance(original);
+          } catch (e) {
+            logout();
+            throw e;
+          }
+        };
+
+        return handle();
+      }
+    );
+  }, [auth.accessToken, refreshAccessToken, logout]);
+
+  // Register
   const register = async (
     fullname: string,
     email: string,
     password: string,
-    role: string,
-    enabled: boolean,
+    role: RoleUuid,
+    enabled: boolean
   ): Promise<boolean> => {
     try {
-      setIsLoading(true)
-      
-     
-      const payload : CreateUserRequest = {
-        fullname,
-        email,
-        password,
-        role,               
-        enabled,        
-      }
-
-      const createdUser = await createUser(payload)       
-      return !!createdUser
+      setIsLoading(true);
+      const payload: CreateUserRequest = { fullname, email, password, role, enabled };
+      const createdUser = await createUser(payload);
+      return !!createdUser;
     } catch (error) {
-      console.error("Registration failed:", error)
-      return false
+      console.error("Registration failed:", error);
+      return false;
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-
-  type LoginResponse ={
+  // Login
+  type LoginResponse = {
     accessToken: string;
-    id:string;
-    email:string;
+    id: string;
+    email: string;
     fullname: string;
     role: string;
     createdAt: string;
-    
-  }
+  };
 
+  const loginUser = async (email: string, password: string): Promise<void> => {
+    setIsLoading(true);
+    try {
+      const response = (await loginAPI(email, password)) as LoginResponse;
 
-// Login function
-const loginUser = async (email: string, password: string): Promise<void> => {
-    setIsLoading(true);   
-  try {    
-    // console.log("loginUser: email", { email } );
-    const response = (await loginAPI (email, password)) as LoginResponse;
-    // console.log("loginUser : token data",{
-    //   email: token.email,
-    //   fullname: token.fullname,
-    //   role: token.role,      
-    // })  
+      const roleCode = normalizeRoleUuid(response.role);
+      const accessToken = response.accessToken;
 
-    const roleCode = normalizeRoleUuid(response.role)
-    const accessToken = response.accessToken;  
-    if (accessToken ) {
-      localStorage.setItem("token", accessToken);
-      axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`
-      setToken(accessToken)
-    }
+      if (accessToken) {
+        localStorage.setItem("token", accessToken);
+        setAuth({ accessToken });
+        setToken(accessToken);
+      }
 
-      const userObj: User = {        
-        id: response.id, 
-        fullname: response.fullname, 
+      const userObj: User = {
+        id: response.id,
+        fullname: response.fullname,
         email: response.email,
         password: "",
-        role:roleCode,          
-        enabled: true,    
+        role: roleCode,
+        enabled: true,
         createdAt: response.createdAt ?? "",
-        updatedAt: "",
-      };    
-          
-      localStorage.setItem("user", JSON.stringify(userObj))
-      setUser(userObj);      
-      // setToken(accessToken);
-      // axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${response.accessToken}`; 
-      // console.log("loginUser: axios.defaults.headers.common", axios.defaults.headers.common);
+        updatedAt: response.createdAt ?? "",
+      };
+
+      localStorage.setItem("user", JSON.stringify(userObj));
+      setUser(userObj);
       navigate("/home");
-    }catch (e) {
-    console.error('Login error:', e);
-    setIsLoading(true);
-  }finally{setIsLoading(false)}
-};
-
-
-
-const logout = () => {
-  localStorage.removeItem("token")
-  localStorage.removeItem("user")
-  setUser(null);
-  setUser(null);
-  delete axiosInstance.defaults.headers.common["Authorization"];
-  document.cookie = "auth-token=; path=/; max-age=0"
-  document.cookie = "user-role=; path=/; max-age=0"
-  // setIsAuthenticated(false)
-  navigate("/")
-}
-
-useEffect(() => {
-  setAccessTokenRefreshHandler((token) => {
-    setAuth((prev) => ({ ...prev, accessToken: token }));
-  });
-
-  return () => {
-    setAccessTokenRefreshHandler(null);
+    } catch (e) {
+      console.error("Login error:", e);
+      setIsLoading(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
-}, []);
 
-
+  // Permisos
   const hasPermission = (requireRole: RoleUuid | RoleUuid[]): boolean => {
-    const current = user?.role ? normalizeRoleUuid(user.role) : null
-    if(!current) return false;
+    const current = user?.role ? normalizeRoleUuid(user.role) : null;
+    if (!current) return false;
     return Array.isArray(requireRole)
-    ? requireRole.includes(current)
-    : current === requireRole
-  }
+      ? requireRole.includes(current)
+      : current === requireRole;
+  };
 
   return (
     <AuthContext.Provider
@@ -219,25 +321,23 @@ useEffect(() => {
         user,
         isLoading,
         isAuthenticated: !!user,
-        userRole: user?.role ? normalizeRoleUuid(user.role): null,
+        userRole: user?.role ? normalizeRoleUuid(user.role) : null,
         loginUser,
         logout,
         register,
         hasPermission,
         token: auth.accessToken,
         setToken,
-        getAccessToken: () => token,
+        getAccessToken: () => auth.accessToken,
       }}
     >
       {isLoading ? null : children}
     </AuthContext.Provider>
-  )
+  );
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
-  }
-  return context
+export function useAuth(): AuthContextType {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
+  return ctx;
 }

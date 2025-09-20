@@ -5,14 +5,14 @@ import { useAuth } from "../../contexts/auth-context"
 import {  type Transaction } from "../../types/transacion"
 import { TransactionFiltersComponent } from "./transaction-filters"
 import { TransactionSummaryComponent } from "./transaction-summary"
-import {  UserRole} from "../../types/roles"
+import { ROLES } from "../../types/roles"
 
 
 export default function TransactionsPage() {
   const { user } = useAuth()
   const { transactions, summary, loading, error, filters, updateFilters, updateTransactionStatus } = useTransactions()
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
-  const currentUserRole = user?.role ? user.role : UserRole.ADMIN;
+  const currentUserRole = user?.role ? user.role : ROLES.ADMIN;
 
 
 
@@ -111,7 +111,7 @@ export default function TransactionsPage() {
 
   return (
     <RoleGuard
-      allowedRoles={[UserRole.ADMIN, UserRole.CASHIER]}
+      allowedRoles={[ROLES.ADMIN, ROLES.CASHIER]}
       currentUserRole={currentUserRole}
     >
       <div className="container py-4">
