@@ -1,60 +1,129 @@
-// apiClient.js
-import axios from 'axios';
+// src/lib/api.ts
+import axios, {
+  AxiosError,
+  AxiosHeaders,
+  type InternalAxiosRequestConfig,
+  type AxiosResponse,
+} from "axios";
 
-// Crea una instancia de Axios
-const api = axios.create({
-  baseURL: 'https://tudominio.com/api', // cambia esto por tu backend
-  withCredentials: true, // esto permite enviar cookies automáticamente
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8184";
+
+const axiosInstance = axios.create({
+  baseURL: BASE_URL,
+  withCredentials: true,
 });
 
-// 🔒 Variable para trackear si ya se está intentando refrescar
-let isRefreshing = false;
-let failedQueue = [];
+interface RetryRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
 
-const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
+interface RefreshBody {
+  accessToken: string;
+}
+interface ApiEnvelope<T> {
+  data: T;
+  message?: string;
+}
 
-  failedQueue = [];
+const AUTH_ENDPOINTS = [
+  "/v1/auth/sign-in",
+  "/v1/auth/sign-out",
+  "/v1/auth/refresh-token",
+];
+
+let refreshPromise: Promise<string> | null = null;
+
+// --- Request: inyecta Authorization si hay token
+axiosInstance.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    // asegúrate de no pisar headers previos
+    const headers = (config.headers ?? new AxiosHeaders()) as AxiosHeaders;
+    headers.set("Authorization", `Bearer ${token}`);
+    config.headers = headers;
+   
+  }
+  return config;
+});
+// ⬇️ Define el callback de sincronización en el módulo
+let onAccessTokenRefresh: ((token: string) => void) | null = null;
+// --- Response: intenta refresh en 401/419/440/498
+
+export const setAccessTokenRefreshHandler = (handler: ((token: string) => void) | null) => {
+  onAccessTokenRefresh = handler;
 };
 
-// ⛔️ Interceptor de respuestas
-api.interceptors.response.use(
-  response => response,
-  async error => {
-    const originalRequest = error.config;
-
-    // Si es 401 y no es un intento de refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        // Espera a que se resuelva el refresh
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then(() => api(originalRequest));
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      try {
-        await api.post('/auth/refresh'); // este endpoint debería generar un nuevo token y setearlo en la cookie
-        processQueue(null);
-        return api(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        // Aquí puedes hacer logout o redirigir al login
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
+axiosInstance.interceptors.response.use(
+  (res: AxiosResponse) => res,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetryRequestConfig | undefined;
+    if (!error.response || !originalRequest) {
+      return Promise.reject(error);
     }
 
-    return Promise.reject(error);
+    const status = error.response.status;
+    const url = (originalRequest.url || "").toLowerCase();
+
+    // No refrescar sobre endpoints de auth
+    const isAuthEndpoint = AUTH_ENDPOINTS.some((p) => url.includes(p));
+
+    // Estados típicos de token expirado
+    const shouldTryRefresh =
+      [401, 419, 440, 498].includes(status) &&
+      !originalRequest._retry &&
+      !isAuthEndpoint;
+
+    if (!shouldTryRefresh) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    try {
+      if (!refreshPromise) {
+        refreshPromise = (async (): Promise<string> => {
+          const res = await axiosInstance.get<
+            ApiEnvelope<RefreshBody> | RefreshBody
+          >("/v1/auth/refresh-token", { withCredentials: true });
+
+          // soporta { data: { accessToken } } y { accessToken }
+          const payload =
+            (res.data as ApiEnvelope<RefreshBody>)?.data ??
+            (res.data as RefreshBody);
+
+          const newAccessToken = payload?.accessToken;
+          if (!newAccessToken) {
+            throw new Error("No new access token received");
+          }
+
+          // Persistimos y seteamos default header
+          localStorage.setItem("token", newAccessToken);
+          axiosInstance.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+          if(onAccessTokenRefresh){
+            onAccessTokenRefresh(newAccessToken)
+          }
+          return newAccessToken;
+        })().finally(() => {
+          refreshPromise = null;
+        });
+      }
+
+      const token = await refreshPromise;
+
+      // Reintenta con el token nuevo
+    const retryHeaders = (originalRequest.headers ?? new AxiosHeaders()) as AxiosHeaders;
+    retryHeaders.set("Authorization", `Bearer ${token}`)
+    originalRequest.headers = retryHeaders;
+
+      return axiosInstance(originalRequest);
+    } catch (refreshErr) {
+      console.error("Token refresh failed", refreshErr);
+      // Limpieza + redirección (opcional: aquí podrías llamar a un logout() central)
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/";
+      return Promise.reject(refreshErr);
+    }
   }
 );
 

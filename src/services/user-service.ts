@@ -1,8 +1,9 @@
 
 import type { User , CreateUserRequest  } from "../types/User"
 import {ROLES } from "../types/roles"
-import axiosInstance from "../lib/api"
+import axiosInstance  from "../lib/api"
 import { mapRoleToUuid, mapUuidToRoleName } from "../types/roles"
+import UseAxiosPrivate from "../lib/apiPrivate"
 
 const roleMapping: Record<string, string> = {
   "ADMIN": ROLES.ADMIN,
@@ -10,6 +11,8 @@ const roleMapping: Record<string, string> = {
   "USUARIO": ROLES.MANAGER,
  
 }
+
+
 
 const checkToken = ()=>{
   const token = localStorage.getItem("token")
@@ -21,10 +24,11 @@ const checkToken = ()=>{
 }
 // Get all users
 export async function fetchUsers(): Promise<User[]> {
+  const axiosPrivate = UseAxiosPrivate();
   const accessToken = checkToken()
   try {
    
-    const response = await axiosInstance.get("/v1/users",{
+    const response = await axiosPrivate.get("/v1/users",{
       headers:{
         Authorization: `Bearer ${accessToken}`
       }

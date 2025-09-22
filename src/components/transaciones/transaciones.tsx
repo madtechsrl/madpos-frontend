@@ -5,14 +5,14 @@ import { useAuth } from "../../contexts/auth-context"
 import {  type Transaction } from "../../types/transacion"
 import { TransactionFiltersComponent } from "./transaction-filters"
 import { TransactionSummaryComponent } from "./transaction-summary"
-import { ROLES } from "../../types/roles"
+import { ROLES, type RoleUuid } from "../../types/roles"
 
 
 export default function TransactionsPage() {
   const { user } = useAuth()
   const { transactions, summary, loading, error, filters, updateFilters, updateTransactionStatus } = useTransactions()
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
-  const currentUserRole = user?.role ? user.role : ROLES.ADMIN;
+  const currentUserRole = (user?.role as RoleUuid) ?? ROLES.ADMIN;
 
 
 

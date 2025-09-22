@@ -1,9 +1,10 @@
-"use client"
-
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-// import { useUser } from "../../contexts/user-context"
 import { formatCurrency } from "../../lib/utils"
+import type { CreateClientRequest } from "../../types/Client"
+
+
+
 
 export function ClientRegistrationForm() {
   const navigate = useNavigate()
@@ -11,24 +12,22 @@ export function ClientRegistrationForm() {
 
   // Form state
   const [allowCredit, setAllowCredit] = useState(false)
-  const [clientData, setClientData] = useState({
-    name: "",
-    idNumber: "",
-    observations: "",
+  const [clientData, setClientData] = useState<CreateClientRequest>({
+    firstName: "",
+    lastName: "",   
     email: "",
-    phoneCountry: "CA",
-    phone: "+1 849",
-    landlineCountry: "CA",
-    landline: "+1 849",
+    phone:"",    
     address: "",
-    complement: "",
+    identificationNumber:"",
+    fiscalCode: "",
+    isActive: true,
   })
 
   // Account state
   const [currentBalance] = useState(0)
   const [hasOrders] = useState(false)
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setClientData((prev) => ({
       ...prev,
       [field]: value,
@@ -49,45 +48,14 @@ export function ClientRegistrationForm() {
 
   return (
     <div className="min-vh-100 bg-light">
-      {/* Header */}
-      <div className="bg-white border-bottom">
-        <div className="container-fluid px-4 py-3">
-          <div className="d-flex justify-content-between align-items-center">
-            <div className="d-flex align-items-center">
-              <button className="btn btn-link text-dark p-0 me-3" onClick={() => navigate(-1)}>
-                <i className="fas fa-arrow-left"></i>
-              </button>
-              <h1 className="h4 mb-0 fw-semibold"></h1>
-            </div>
-
-            {/* <div className="d-flex align-items-center gap-3">
-              <button className="btn btn-link text-secondary">
-                <i className="fas fa-question-circle me-1"></i>
-                Ayuda
-              </button>
-
-              <div className="d-flex align-items-center gap-2">
-                <div
-                  className="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
-                  style={{ width: "40px", height: "40px" }}
-                >
-                  MS
-                </div>
-                <div className="d-none d-md-block">
-                  <div className="fw-medium">Msantana</div>
-                  <div className="small text-muted">ing.santana40@hotmai...</div>
-                </div>
-                <i className="fas fa-chevron-down text-muted"></i>
-              </div>
-            </div> */}
-          </div>
-        </div>
-      </div>
-
       {/* Sub Header */}
       <div className="bg-white border-bottom">
         <div className="container-fluid px-4 py-3">
           <div className="d-flex justify-content-between align-items-center">
+             <button className="btn btn-link text-dark p-0 me-3" onClick={() => navigate(-1)}>
+                <i className="fas fa-arrow-left"></i>
+              </button> 
+
             <div className="d-flex align-items-center gap-3">
               <span className="text-muted">Permitir ventas a crédito</span>
               <div className="form-check form-switch">
@@ -134,7 +102,7 @@ export function ClientRegistrationForm() {
                       type="text"
                       className="form-control form-control-lg"
                       placeholder="Nombre"
-                      value={clientData.name}
+                      value={clientData.firstName}
                       onChange={(e) => handleInputChange("name", e.target.value)}
                     />
                   </div>
@@ -144,12 +112,12 @@ export function ClientRegistrationForm() {
                       type="text"
                       className="form-control"
                       placeholder="N° ID"
-                      value={clientData.idNumber}
+                      value={clientData.identificationNumber}
                       onChange={(e) => handleInputChange("idNumber", e.target.value)}
                     />
                   </div>
 
-                  <div className="mb-4">
+                  {/* <div className="mb-4">
                     <textarea
                       className="form-control"
                       rows={3}
@@ -158,7 +126,7 @@ export function ClientRegistrationForm() {
                       onChange={(e) => handleInputChange("observations", e.target.value)}
                       style={{ resize: "none" }}
                     ></textarea>
-                  </div>
+                  </div> */}
                 </div>
 
                 {/* Contact Section */}
@@ -177,45 +145,45 @@ export function ClientRegistrationForm() {
 
                   <div className="mb-3">
                     <label className="form-label small text-muted">Teléfono/Celular</label>
-                    <div className="input-group">
-                      <select
+                    
+                      {/* <select
                         className="form-select"
                         style={{ maxWidth: "80px" }}
-                        value={clientData.phoneCountry}
-                        onChange={(e) => handleInputChange("phoneCountry", e.target.value)}
+                        value={clientData.phone}
+                        onChange={(e) => handleInputChange("phone", e.target.value)}
                       >
                         <option value="CA">🇨🇦</option>
                         <option value="DO">🇩🇴</option>
                         <option value="US">🇺🇸</option>
-                      </select>
+                      </select> */}
                       <input
                         type="tel"
                         className="form-control"
+                        placeholder="Telefono/Celular"
                         value={clientData.phone}
                         onChange={(e) => handleInputChange("phone", e.target.value)}
                       />
-                    </div>
+                    
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label small text-muted">Teléfono</label>
+                    <label className="form-label small text-muted">Status</label>
                     <div className="input-group">
                       <select
                         className="form-select"
-                        style={{ maxWidth: "80px" }}
-                        value={clientData.landlineCountry}
-                        onChange={(e) => handleInputChange("landlineCountry", e.target.value)}
+                        style={{ maxWidth: "100px" }}
+                        value={clientData.isActive ? "Active": "Inactive"}
+                        onChange={(e) => handleInputChange("isActive", e.target.value === "Active")}
                       >
-                        <option value="CA">🇨🇦</option>
-                        <option value="DO">🇩🇴</option>
-                        <option value="US">🇺🇸</option>
+                        <option value="Active">Activo</option>
+                        <option value="Inactive">Inactivo</option>                        
                       </select>
-                      <input
+                      {/* <input
                         type="tel"
                         className="form-control"
                         value={clientData.landline}
                         onChange={(e) => handleInputChange("landline", e.target.value)}
-                      />
+                      /> */}
                     </div>
                   </div>
                 </div>
@@ -238,8 +206,8 @@ export function ClientRegistrationForm() {
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="Complemento"
-                      value={clientData.complement}
+                      placeholder="Codigo Fiscal"
+                      value={clientData.fiscalCode}
                       onChange={(e) => handleInputChange("complement", e.target.value)}
                     />
                   </div>

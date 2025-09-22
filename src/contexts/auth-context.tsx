@@ -3,8 +3,7 @@ import React, {
   createContext,
   useContext,
   useState,
-  useEffect,
-  useRef,
+  useEffect,  
   useCallback,
   type ReactNode,
 } from "react";
@@ -14,12 +13,12 @@ import { mapRoleToUuid, ROLES, type RoleUuid, type RoleKey } from "../types/role
 import { loginAPI } from "../services/auth-service";
 import { createUser } from "../services/user-service";
 import axiosInstance from "../lib/api";
-import {
-  AxiosError,
-  AxiosHeaders,
-  type InternalAxiosRequestConfig,
-  type AxiosResponse,
-} from "axios";
+// import {
+//   AxiosError,
+//   AxiosHeaders,
+//   type InternalAxiosRequestConfig,
+//   type AxiosResponse,
+// } from "axios";
 
 // ---------- Helpers de rol ----------
 const ROLE_UUIDS = Object.values(ROLES) as RoleUuid[];
@@ -48,7 +47,6 @@ type AuthContextType = {
   isLoading: boolean;
   isAuthenticated: boolean;
   userRole: RoleUuid | null;
-
   token: string | null; // alias de compat
   auth: AuthState;
   setAuth: React.Dispatch<React.SetStateAction<AuthState>>;
@@ -68,18 +66,18 @@ type AuthContextType = {
   getAccessToken: () => string | null;
 };
 
-type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+// type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
-interface RefreshBody {
-  accessToken: string;
-}
-interface ApiEnvelope<T> {
-  data: T;
-  message?: string;
-}
-interface ApiErrorResponse {
-  message?: string;
-}
+// interface RefreshBody {
+//   accessToken: string;
+// }
+// interface ApiEnvelope<T> {
+//   data: T;
+//   message?: string;
+// }
+// interface ApiErrorResponse {
+//   message?: string;
+// }
 
 // ---------- Contexto ----------
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -126,116 +124,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [navigate]);
 
   // ---- Función interna para REFRESH (no usa useAuth)
-  const refreshAccessToken = useCallback(async (): Promise<string> => {
-    const res = await axiosInstance.get<ApiEnvelope<RefreshBody> | RefreshBody>(
-      "/v1/auth/refresh-token",
-      { withCredentials: true }
-    );
 
-    const payload =
-      (res.data as ApiEnvelope<RefreshBody>)?.data ??
-      (res.data as RefreshBody);
-
-    const newAccessToken = payload?.accessToken;
-    if (!newAccessToken) {
-      throw new Error("No accessToken en respuesta de refresh");
-    }
-
-    setAuth((prev) => ({ ...prev, accessToken: newAccessToken }));
-    localStorage.setItem("token", newAccessToken);
-
-    // También actualizamos defaults para próximas requests
-    (axiosInstance.defaults.headers.common as AxiosHeaders).set(
-      "Authorization",
-      `Bearer ${newAccessToken}`
-    );
-
-    return newAccessToken;
-  }, []);
 
   // ---- Interceptores in-place (una sola vez)
-  const initializedRef = useRef(false);
-  const refreshPromiseRef = useRef<Promise<string> | null>(null);
+  // const initializedRef = useRef(false);
+  // const refreshPromiseRef = useRef<Promise<string> | null>(null);
 
-  useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
+  // useEffect(() => {
+  //   if (initializedRef.current) return;
+  //   initializedRef.current = true;
 
-    // REQUEST: inyecta Authorization
-    axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-      const t = auth.accessToken ?? localStorage.getItem("token");
-      if (t) {
-        const headers = (config.headers ?? new AxiosHeaders()) as AxiosHeaders;
-        headers.set("Authorization", `Bearer ${t}`);
-        config.headers = headers;
-      }
-      return config;
-    });
+  //      axiosInstance.interceptors.response.use(
+  //     (res: AxiosResponse) => res,
+  //     (error: AxiosError<ApiErrorResponse | string>) => {
+  //       const handle = async () => {
+  //         const original = error.config as RetriableConfig | undefined;
+  //         if (!error.response || !original) throw error;
 
-    // RESPONSE: refresh en 401 (y parche 500 con mensaje expirado)
-    axiosInstance.interceptors.response.use(
-      (res: AxiosResponse) => res,
-      (error: AxiosError<ApiErrorResponse | string>) => {
-        const handle = async () => {
-          const original = error.config as RetriableConfig | undefined;
-          if (!error.response || !original) throw error;
+  //         const status = error.response.status;
+  //         const url = (original.url ?? "").toLowerCase();
 
-          const status = error.response.status;
-          const url = (original.url ?? "").toLowerCase();
+  //         const isAuthEndpoint =
+  //           url.includes("/v1/auth/sign-in") ||
+  //           url.includes("/v1/auth/sign-out") ||
+  //           url.includes("/v1/auth/refresh-token");
 
-          const isAuthEndpoint =
-            url.includes("/v1/auth/sign-in") ||
-            url.includes("/v1/auth/sign-out") ||
-            url.includes("/v1/auth/refresh-token");
+  //         const raw = error.response.data;
+  //         const msg =
+  //           typeof raw === "string"
+  //             ? raw.toLowerCase()
+  //             : (raw?.message ?? "").toLowerCase();
 
-          const raw = error.response.data;
-          const msg =
-            typeof raw === "string"
-              ? raw.toLowerCase()
-              : (raw?.message ?? "").toLowerCase();
+  //         const isTokenExpired500 =
+  //           status === 500 &&
+  //           (msg.includes("jwt expired") ||
+  //             msg.includes("token expired") ||
+  //             msg.includes("expired"));
 
-          const isTokenExpired500 =
-            status === 500 &&
-            (msg.includes("jwt expired") ||
-              msg.includes("token expired") ||
-              msg.includes("expired"));
+  //         const isTokenStatus = status === 401 || status === 419 || status === 440 || status === 498;
 
-          const isTokenStatus = status === 401 || status === 419 || status === 440 || status === 498;
+  //         const shouldRefresh =
+  //           !original._retry && !isAuthEndpoint && (isTokenStatus || isTokenExpired500);
 
-          const shouldRefresh =
-            !original._retry && !isAuthEndpoint && (isTokenStatus || isTokenExpired500);
+  //         if (!shouldRefresh) throw error;
 
-          if (!shouldRefresh) throw error;
+  //         original._retry = true;
 
-          original._retry = true;
+  //         try {
+  //           if (!refreshPromiseRef.current) {
+  //             refreshPromiseRef.current = (async () => {
+  //               const newToken = await refreshAccessToken();
+  //               return newToken;
+  //             })().finally(() => {
+  //               refreshPromiseRef.current = null;
+  //             });
+  //           }
 
-          try {
-            if (!refreshPromiseRef.current) {
-              refreshPromiseRef.current = (async () => {
-                const newToken = await refreshAccessToken();
-                return newToken;
-              })().finally(() => {
-                refreshPromiseRef.current = null;
-              });
-            }
+  //           const newToken = await refreshPromiseRef.current;
 
-            const newToken = await refreshPromiseRef.current;
+  //           const retryHeaders = (original.headers ?? new AxiosHeaders()) as AxiosHeaders;
+  //           retryHeaders.set("Authorization", `Bearer ${newToken}`);
+  //           original.headers = retryHeaders;
 
-            const retryHeaders = (original.headers ?? new AxiosHeaders()) as AxiosHeaders;
-            retryHeaders.set("Authorization", `Bearer ${newToken}`);
-            original.headers = retryHeaders;
+  //           return axiosInstance(original);
+  //         } catch (e) {
+  //           logout();
+  //           throw e;
+  //         }
+  //       };
 
-            return axiosInstance(original);
-          } catch (e) {
-            logout();
-            throw e;
-          }
-        };
-
-        return handle();
-      }
-    );
-  }, [auth.accessToken, refreshAccessToken, logout]);
+  //       return handle();
+  //     }
+  //   );
+  // }, [auth.accessToken, refreshAccessToken, logout]);
 
   // Register
   const register = async (

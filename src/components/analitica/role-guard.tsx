@@ -1,14 +1,10 @@
 "use client"
 
 import type React from "react"
-import  { mapUuidToRoleName,  type RoleUuid} from "../../types/roles"
-
-
-
-
+import  { mapUuidToRoleName,  type RoleUuid,  } from "../../types/roles"
 interface RoleGuardProps {
   children: React.ReactNode
-  allowedRoles: RoleUuid[]
+  allowedRoles:RoleUuid []
   currentUserRole: RoleUuid
   fallbackMessage?: string
 }

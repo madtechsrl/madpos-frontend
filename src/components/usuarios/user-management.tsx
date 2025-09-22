@@ -71,8 +71,7 @@ type ModalMode = "anadir" | "editar"
 // }
 
 export default function UserManagement({ compact = false }: UserManagementProps) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { user, isAuthenticated, hasPermission , register, token, setToken} = useAuth();
+  const { user, isAuthenticated, hasPermission , token,} = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
