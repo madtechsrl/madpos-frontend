@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/auth-context";
-import { createUser, deleteUser, updateUser } from "../../services/user-service";
+import { createUser, deleteUser, fetchUsers, updateUser, type NormalizedUser } from "../../services/user-service";
 import type { User } from "../../types/User";
 import { mapRoleToUuid, mapUuidToRoleName, ROLES , type RoleKey, type RoleUuid } from "../../types/roles";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
-import axiosInstance from "../../lib/api";
 import { AxiosError, isAxiosError } from "axios";
 
 
@@ -53,6 +52,11 @@ const ROLE_META_BY_UUID: Record<RoleUuid, RoleMeta> = {
   [ROLES.CASHIER]: ROLE_META_BY_KEY.CASHIER,
 };
 
+function ensureRoleUuid(value: string): RoleUuid {
+  const all = Object.values(ROLES) as string[];
+  return (all.includes(value) ? value : ROLES.CASHIER) as RoleUuid;
+}
+
 interface UserManagementProps {
   compact?: boolean;
 }
@@ -72,14 +76,14 @@ type ModalMode = "anadir" | "editar"
 
 export default function UserManagement({ compact = false }: UserManagementProps) {
   const { user, isAuthenticated, hasPermission , token,} = useAuth();
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<NormalizedUser[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<RoleTab>("all");
   const [error, setError] = useState<string | null>(null);
   const [isloading, setIsLoading] = useState(true);
   const [modalMode, setModalMode] = useState<ModalMode>("anadir")
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<NormalizedUser | null>(null);
   const navigate = useNavigate(); 
 
  
@@ -101,12 +105,8 @@ useEffect(() => {
 
     try {
       // console.log("UserManagement: Obteniendo usuarios");
-      const response = await axiosInstance.get("/v1/users", {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
-      });
-      const fetchedUsers: User[] = response.data?.data?.records || [];    
-      setUsers(fetchedUsers);
+     const data = await fetchUsers();
+      setUsers(data);
       setError(null);
     } catch (err: unknown) {
    if (isAxiosError(err)) {
@@ -173,51 +173,60 @@ const filteredUsers = Array.isArray(users)
 //   setShowModal(true);
 // }
 
- const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-  if (!currentUser) return;
-  const { name, value } = e.target;
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    if (!currentUser) return;
+    const { name, value } = e.target;
 
-  if(name === "enabled"){
-    setCurrentUser({...currentUser, enabled: value === "true",});
-    return;
-  }
-  if(name === "role"){
-    setCurrentUser({...currentUser, role: value})
-    return
-  }
-  setCurrentUser({...currentUser, [name]: value})
- };
+    if (name === "enabled") {
+      setCurrentUser({ ...currentUser, enabled: value === "true" });
+      return;
+    }
 
+    if (name === "role") {
+      // value proviene del <select>, es string → normalizar a UUID
+      const roleUuid = ensureRoleUuid(value);
+      const roleName = mapUuidToRoleName(roleUuid) || "CASHIER";
+      setCurrentUser({ ...currentUser, role: roleUuid, roleUuid, roleName });
+      return;
+    }
 
-
-const handleAddUser = () => {
-  setCurrentUser({
-    id: "",
-    email: "",
-    fullname: "",
-    password: "",
-    role: ROLES.CASHIER,
-    enabled: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toDateString()
-  });
-  setShowModal(true);
-};
+    setCurrentUser({ ...currentUser, [name]: value } as NormalizedUser);
+  };
 
 
-const handleEditUser = (u: User) =>{
-  setCurrentUser({
-    id: u.id,
-    email: u.email,
-    fullname: u.fullname,
-    password: "",
-    role: toRoleUuid(u.role as string),
-    enabled: u.enabled,
-    createdAt:u.createdAt,
-    updatedAt: u.createdAt,
-  });
-  setShowModal(true);
-};
+
+  const handleAddUser = () => {
+    setModalMode("anadir");
+    setCurrentUser({
+      id: "",
+      email: "",
+      fullname: "",
+      password: "",
+      role: ROLES.CASHIER,
+      roleUuid: ROLES.CASHIER,
+      roleName: "CASHIER",
+      enabled: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    setShowModal(true);
+  };
+
+  const handleEditUser = (u: NormalizedUser) => {
+    setModalMode("editar");
+    setCurrentUser({
+      ...u,
+      // asegura consistencia:
+      role: u.role as RoleUuid,
+      roleUuid: u.role as RoleUuid,
+      roleName: mapUuidToRoleName(u.role as RoleUuid) || "CASHIER",
+      password: "",
+      updatedAt: u.updatedAt ?? u.createdAt,
+    });
+    setShowModal(true);
+  };
 
 
 
@@ -250,7 +259,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       const updatedUser = await updateUser(currentUser.id, {
       fullname: currentUser.fullname,
       email: currentUser.email,
-      role: toRoleUuid(currentUser.role as string),
+      role: currentUser.role as RoleUuid,
       ...(currentUser.password ? {password: currentUser.password}: {})
     });
 
@@ -263,7 +272,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         fullname: currentUser.fullname,
         email: currentUser.email,
         password: currentUser.password,
-        role: toRoleUuid(currentUser.role as string),
+        role: currentUser.role as RoleUuid,
         enabled: true,
       });
       if(!newUser) throw new Error(" no puedo crear usuario")
@@ -517,7 +526,7 @@ const userCounts = {
       </div>
 
       {/* User Modal */}
-             {/* User Modal */}
+          
       {showModal && modalMode === "anadir" &&  (
         <div key= {modalMode} className="modal d-block" tabIndex={-1} style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog">
@@ -540,9 +549,9 @@ const userCounts = {
                     <input
                       type="text"
                       className="form-control"
-                      id="fullname_add"
+                      id="fullname"
                       name="fullname"
-                      value=""
+                      value={currentUser?.fullname}
                       onChange={handleInputChange}
                       required
                     />
@@ -554,9 +563,9 @@ const userCounts = {
                     <input
                       type="email"
                       className="form-control"
-                      id="email_add"
+                      id="email"
                       name="email"
-                      value= ""
+                      value= {currentUser?.email || ""}
                       onChange={handleInputChange}
                       required
                     />
@@ -570,7 +579,7 @@ const userCounts = {
                       className="form-control"
                       id="password"
                       name="password"
-                      value= ""
+                      value= {currentUser?.password || ""}
                       onChange={handleInputChange}
                       required
                     />
@@ -583,14 +592,14 @@ const userCounts = {
                       className="form-select"
                       id="role_add"
                       name="role"
-                      value= ""
+                      value= {currentUser?.role}
                       onChange={handleInputChange}
                       required
                     >
                       <option value="">Escoje Rol</option>
                       <option value="Cajero">Cajero</option>
                       <option value="Administrator">Administrador</option>
-                      <option value="Propietario">Gerente</option>
+                      <option value="Propietario">Manager</option>
                      
                     </select>
                   </div>

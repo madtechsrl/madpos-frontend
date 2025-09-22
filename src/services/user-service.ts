@@ -1,121 +1,123 @@
 
-import type { User , CreateUserRequest  } from "../types/User"
-import {ROLES } from "../types/roles"
+import type { User , CreateUserRequest, UpdateUserRequest  } from "../types/User"
+import {ROLES, type RoleKey, type RoleUuid } from "../types/roles"
 import axiosInstance  from "../lib/api"
 import { mapRoleToUuid, mapUuidToRoleName } from "../types/roles"
 import UseAxiosPrivate from "../lib/apiPrivate"
 
-const roleMapping: Record<string, string> = {
-  "ADMIN": ROLES.ADMIN,
-  "CAJERO": ROLES.CASHIER,
-  "USUARIO": ROLES.MANAGER,
- 
+
+
+
+/** Usuario normalizado para la UI */
+export interface NormalizedUser extends User {
+  roleUuid: RoleUuid;
+  roleName: RoleKey;
+}
+
+/** Normaliza salida (UI → API) */
+function normalizeOutgoingRole(role?: RoleKey | RoleUuid): RoleUuid {
+  if (!role) return ROLES.CASHIER;
+  const out = mapRoleToUuid(role);
+  return (Object.values(ROLES) as string[]).includes(out)
+    ? (out as RoleUuid)
+    : ROLES.CASHIER;
+}
+
+/** Normaliza entrada (API → UI) */
+function normalizeIncomingUser(apiUser: User): NormalizedUser {
+  const roleUuid = (apiUser.role ?? "") as RoleUuid;
+  const roleName = roleUuid ? mapUuidToRoleName(roleUuid) : "";
+
+  return {
+    ...apiUser,
+    role: roleUuid,
+    roleUuid,
+    roleName: roleName || ("CASHIER" as RoleKey),
+  };
 }
 
 
-
-const checkToken = ()=>{
-  const token = localStorage.getItem("token")
-  if(!token){
-    throw new Error("No token found, cannot fetch users")
-  }
-  // console.log("checkToken: Token found", token)
-  return token
-}
+// const checkToken = ()=>{
+//   const token = localStorage.getItem("token")
+//   if(!token){
+//     throw new Error("No token found, cannot fetch users")
+//   }
+//   // console.log("checkToken: Token found", token)
+//   return token
+// }
 // Get all users
-export async function fetchUsers(): Promise<User[]> {
-  const axiosPrivate = UseAxiosPrivate();
-  const accessToken = checkToken()
-  try {
-   
-    const response = await axiosPrivate.get("/v1/users",{
-      headers:{
-        Authorization: `Bearer ${accessToken}`
-      }
-    })
-
-    // console.log("fetchUsers: Response from", axiosInstance, response.data)
-
-    const users = response.data?.data?.records || []
+export async function fetchUsers(): Promise<NormalizedUser[]> {
 
 
-    if(!Array.isArray(users)){
-      console.error("fetchUsers: Invalid response format. Expected array, got:", users)     
-    }
-    const mappedUsers = users.map((user: User) => ({
-      ...user,
-      role: user.role ? roleMapping[user.role.toUpperCase()] : ""
-    }))
-    // console.log("fetchUsers: Mapped users", mappedUsers)
-    return mappedUsers; 
-  } catch (error) {
-    console.error("Error fetching users:", error)
-    return []
-  }
+ try {
+  const { data } = await axiosInstance.get('/v1/users');
+  const users: User[] = data?.data?.records ?? []
+  return users.map(normalizeIncomingUser);
+
+ } catch (error) {
+  console.error("Error fetching user: ", error)
+  return [];  
+ }
 }
-
 
 
 // Get user by ID
 export async function fetchUserById(id: string): Promise<User | null> {
-   const accessToken = checkToken()
+  
   try {
-    const response = await axiosInstance.get(`/v1/users/${id}`,{
-      headers:{
-        Authorization: `Bearer ${accessToken}`
-      }
-    })
-    return response.data?.data?.records || null
-
+    const { data } = await axiosInstance.get(`/v1/users/${id}`);
+    const user: User | undefined = data?.data;
+    return user ? normalizeIncomingUser(user) : null;
   } catch (error) {
     console.error(`Error fetching user with ID ${id}:`, error)
-    return null
+    return null;
   }
 }
 
 // Create a new user
-export async function createUser(input: CreateUserRequest): Promise<User> {
+export async function createUser(input: CreateUserRequest): Promise<NormalizedUser> {
+
 const payload = {
   fullname: input.fullname,
   email: input.email,
   password: input.password,
-  role: mapRoleToUuid(input.role),
+  role: normalizeOutgoingRole(input.role),
   enabled: input.enabled ?? true
 }
 
-const { data } = await axiosInstance.post("/v1/users", payload);
-const rec = data?.data as User
+ const { data } = await axiosInstance.post("/v1/users", payload);
+  const rec: User = data?.data;
+  return normalizeIncomingUser(rec);
 
-return {
-  ...rec, 
-  role: rec.role ? mapUuidToRoleName(rec.role) : ""
-       }
 }
 
 // Update an existing user
-export async function updateUser(id: string, updates: Partial<User>): Promise<User | null> {
-  
+export async function updateUser(id: string, updates: UpdateUserRequest): Promise<NormalizedUser | null> {
+  const axiosPrivate = UseAxiosPrivate();
   try {
-    const response = await axiosInstance.put(`/v1/users/${id}`, updates,{})
+    const body: UpdateUserRequest = { ...updates };
+    if (updates.role) {
+      body.role = normalizeOutgoingRole(updates.role);
+    }
 
-    return response.data?.data?.records || null
-
+    const { data } = await axiosPrivate.put(`/v1/users/${id}`, body);
+    const rec: User | undefined = data?.data;
+    return rec ? normalizeIncomingUser(rec) : null;
   } catch (error) {
-    console.error(`Error updating user with ID ${id}:`, error)
-    return null
+    console.error(`Error updating user with ID ${id}:`, error);
+    return null;
   }
 }
 
 // Delete a user
 export async function deleteUser(id: string): Promise<boolean> {
-   
+  const axiosPrivate = UseAxiosPrivate();
   try {
-    const response = await axiosInstance.delete(`/v1/users/${id}`)
-
-    return response.data?.data?.records || false
+    await axiosPrivate.delete(`/v1/users/${id}`);
+    return true;
   } catch (error) {
-    console.error(`Error deleting user with ID ${id}:`, error)
-    return false
+    console.error(`Error deleting user with ID ${id}:`, error);
+    return false;
   }
 }
 

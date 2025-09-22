@@ -1,4 +1,4 @@
-import { type RoleUuid, ROLES } from "./roles";
+import { type RoleKey, type RoleUuid, ROLES } from "./roles";
 
 export type User = {
   id: string;
@@ -14,23 +14,24 @@ export type User = {
   accessToken?: string;
 }
 
-export interface CreateUserRequest {
+export type CreateUserRequest = {
  fullname: string
   email: string
   password?: string
-  role: string
+  role: RoleUuid | RoleKey
   enabled: boolean
  
 }
 
-export interface UpdateUserRequest {
+export type UpdateUserRequest = Partial <{
   fullname?: string
   email?: string
-  role?: string
+  password?: string
+  role?: RoleUuid | RoleKey
   status?: "active" | "inactive"
-}
+}>;
 
-export interface RolePermissions {
+export type RolePermissions = {
   role: string  
   fullname: string
   description: string
