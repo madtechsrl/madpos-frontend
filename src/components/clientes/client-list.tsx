@@ -1,56 +1,59 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import  { type Client } from "../../types/Client"
+import { useAuth } from "../../contexts/auth-context"
+import { fetchClients } from "../../services/client-service "
 
 // Mock clients data
-const mockClients = [
-  {
-    id: "1",
-    name: "Juan Pérez",
-    email: "juan@example.com",
-    phone: "+1 849 123 4567",
-    balance: 1500.0,
-    orders: 5,
-    lastOrder: "2023-05-15",
-  },
-  {
-    id: "2",
-    name: "María García",
-    email: "maria@example.com",
-    phone: "+1 849 987 6543",
-    balance: -250.0,
-    orders: 3,
-    lastOrder: "2023-05-12",
-  },
-  {
-    id: "3",
-    name: "Carlos Rodríguez",
-    email: "carlos@example.com",
-    phone: "+1 849 555 0123",
-    balance: 0.0,
-    orders: 8,
-    lastOrder: "2023-05-10",
-  },
-]
 
 
 
-export function ClientsList() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const navigate = useNavigate()
-
-  const filteredClients = mockClients.filter(
-    (client) =>
-      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.phone.includes(searchTerm),
-  )
-
-
- const handleEditClick=()=>{
+export default function ClientManagement(){
+  const {user, isAuthenticated, hasPermission, token} = useAuth();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [error, setError]= useState<string | null>(null);
+  const [isloading, setIsLoading] = useState(true);
+  const [currentClient, setCurrentClient]= useState<Client | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1);
+  const navigate = useNavigate();
+  const limit = 10
+  
+  const handleEditClick=()=>{
       navigate("/client-registration");
     }
+
+  useEffect(()=>{
+    const loadClients = async() => {
+      const {clients, totalPages} = await fetchClients(currentPage, limit)
+      setClients(clients)
+      setTotalPages(totalPages)
+    }
+
+    loadClients()
+  },[currentPage]);
+
+  const goToPage = (page: number) =>{
+    if(page >= 1  && page <= totalPages){
+      setCurrentPage(page)
+    }
+  };
+
+
+
+  const searchClients = (c: Client, q:string)=>
+   
+    c.firstName.toLowerCase().includes(q.toLowerCase()) ||
+    c.email.toLowerCase().includes(q.toLowerCase()) ||
+    c.phone?.toLowerCase().includes(q.toLowerCase())
+
+  const filteredClients = Array.isArray(clients)
+  ? clients.filter(c => (c.firstName as string) && searchClients(c, searchTerm))
+   :[]
 
   return (
     <div>
@@ -85,10 +88,9 @@ export function ClientsList() {
             <thead className="table-light">
               <tr>
                 <th scope="col">Cliente</th>
-                <th scope="col">Contacto</th>
-                <th scope="col">Saldo</th>
-                <th scope="col">Pedidos</th>
-                <th scope="col">Último Pedido</th>
+                <th scope="col">Correo</th>
+                <th scope="col">Telefono</th>
+                <th scope="col">Status</th>
                 <th scope="col" className="text-end">
                   Acciones
                 </th>
@@ -103,28 +105,22 @@ export function ClientsList() {
                         className="bg-secondary text-white rounded-circle me-3 d-flex align-items-center justify-content-center"
                         style={{ width: "40px", height: "40px" }}
                       >
-                        {client.name
+                        {client.firstName
                           .split(" ")
                           .map((n) => n[0])
                           .join("")
                           .toUpperCase()}
                       </div>
                       <div>
-                        <div className="fw-medium">{client.name}</div>
-                        <div className="small text-muted">{client.email}</div>
+                        <div className="fw-medium">{client.firstName}</div>
+                        <div className="small text-muted">{client.lastName}</div>
                       </div>
                     </div>
                   </td>
+                  <td className="text-secondary">{client.email}</td>
+                 
                   <td className="text-secondary">{client.phone}</td>
-                  <td>
-                    <span
-                      className={`fw-medium ${client.balance > 0 ? "text-success" : client.balance < 0 ? "text-danger" : "text-muted"}`}
-                    >
-                      RD${client.balance.toFixed(2)}
-                    </span>
-                  </td>
-                  <td className="text-secondary">{client.orders}</td>
-                  <td className="text-secondary">{client.lastOrder}</td>
+                  <td className="text-secondary">{(client.isActive).toString()}</td>
                   <td className="text-end">
                     <button className="btn btn-sm btn-outline-primary me-2">
                       <i className="fas fa-edit"></i>
@@ -140,8 +136,30 @@ export function ClientsList() {
               ))}
             </tbody>
           </table>
-        </div>
+               <div style={{ marginTop: "20px" }}>
+        <button disabled={currentPage === 1} onClick={() => goToPage(currentPage - 1)}>
+          Prev
+        </button>
+        {[...Array(totalPages)].map((_, index) => {
+          const page = index + 1;
+          return (
+            <button
+              key={page}
+              onClick={() => goToPage(page)}
+              disabled={currentPage === page}
+            >
+              {page}
+            </button>
+          );
+        })}
+        <button disabled={currentPage === totalPages} onClick={() => goToPage(currentPage + 1)}>
+          Next
+        </button>
       </div>
     </div>
+
+        </div>
+      </div>
+    
   )
 }

@@ -34,6 +34,14 @@ export interface UpdateClientRequest {
   isActive: boolean; 
 }
 
+export interface PaginatedClientResponse {
+  clients: Client[];
+  totalPages: number;
+  currentPage: number;
+  totalRecords: number;
+  sortBy: string;
+  order: "ASC" | "DESC";
+}
 
 
 

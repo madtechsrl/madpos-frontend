@@ -277,7 +277,9 @@ const handleSubmit = async (e: React.FormEvent) => {
       });
       if(!newUser) throw new Error(" no puedo crear usuario")
       setUsers((prev)=>[...prev, newUser])
-       }    
+       } 
+       setShowModal(false)
+       navigate("/user")   
   } catch (err) {
      if (err instanceof AxiosError) {
         console.error("Axios Error al crear/actualizar usuario:", err.response?.status, err.response?.data);
@@ -597,9 +599,9 @@ const userCounts = {
                       required
                     >
                       <option value="">Escoje Rol</option>
-                      <option value="Cajero">Cajero</option>
-                      <option value="Administrator">Administrador</option>
-                      <option value="Propietario">Manager</option>
+                      <option value={ROLES.CASHIER}>Cajero</option>
+                      <option value={ROLES.ADMIN}>Administrador</option>
+                      <option value={ROLES.MANAGER}>Manager</option>
                      
                     </select>
                   </div>
@@ -612,7 +614,7 @@ const userCounts = {
                       className="form-select"
                       id="status"
                       name="status"
-                      value={currentUser?.enabled ? "Activo" : "Inactivo"}
+                      value={currentUser?.enabled ? "true" : "false"}
                       onChange={handleInputChange}
                       required
                     >

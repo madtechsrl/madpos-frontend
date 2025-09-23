@@ -1,5 +1,5 @@
 import { useAuth } from "../contexts/auth-context"
-import {ClientsList }from "../components/clientes/client-list"
+import ClientManagement from "../components/clientes/client-list"
 import Sidebar from "../components/layout/sidebar"
 import { ROLES } from "../types/roles"
 import { Header } from "../components/layout/header"
@@ -17,7 +17,7 @@ export default function ClientLayout() {
             <Sidebar />
             <div className="flex-grow-1  p-4" style={{transition: "margin-left 0.3s ease"}}>
               <Header title="Clientes" />   
-              <ClientsList/>                     
+              <ClientManagement/>                     
             </div>
           </div>
         </div>
