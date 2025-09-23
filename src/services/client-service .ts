@@ -17,9 +17,11 @@ import UseAxiosPrivate from "../lib/apiPrivate"
 
 
 // Get all users
-export async function fetchClients(): Promise<PaginatedClientResponse> {
+export async function fetchClients(page =1, limit = 10): Promise<PaginatedClientResponse> {
  try {
-  const { data } = await axiosInstance.get("/v1/customers");
+  const { data } = await axiosInstance.get("/v1/customers",{
+    params: {page, limit}
+  });
   return {
     clients: data?.data?.records ?? [],
     totalPages: data?.data?.totalPages ?? 0,
@@ -89,7 +91,7 @@ export async function updateClient(id: string, updates: UpdateClientRequest): Pr
 }
 
 // Delete a user
-export async function deleteUser(id: string): Promise<boolean> {
+export async function deleteClient(id: string): Promise<boolean> {
   const axiosPrivate = UseAxiosPrivate();
   try {
     await axiosPrivate.delete(`/v1/customers/${id}`);

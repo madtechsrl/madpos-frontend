@@ -4,11 +4,9 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import  { type Client } from "../../types/Client"
 import { useAuth } from "../../contexts/auth-context"
-import { fetchClients } from "../../services/client-service "
+import { fetchClients, deleteClient, updateClient } from "../../services/client-service "
 import { ROLES } from "../../types/roles"
-import { faL } from "@fortawesome/free-solid-svg-icons"
-
-// Mock clients data
+import { AxiosError} from "axios";
 
 
 
@@ -23,7 +21,7 @@ export default function ClientManagement(){
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1);
   const navigate = useNavigate();
-  const limit = 10
+  const limit = 20
   
   const handleEditClick=()=>{
       navigate("/client-registration");
@@ -83,14 +81,71 @@ export default function ClientManagement(){
     setCurrentClient({ ...currentClient, [name]: value } as Client);
   };
 
-  const handleEditUser = (c: Client) => {
+  const handleEditClient = (c: Client) => {
     setCurrentClient({
       ...c,
-   
+      firstName:c.firstName,
+      lastName:c.lastName,
+      email: c.email,
+      phone:c.phone,
+      address:c.address,      
+      isActive: true,   
     });
     setShowModal(true);
   };
 
+  const handleDeleteClient = async (id: string) => {
+    if(window.confirm("¿Estás seguro de querer eliminar este usuario?")){
+      try{
+        const result = await deleteClient(id);
+        if(result){
+        setClients(clients.filter(Client => Client.id !== id));
+        setShowModal(false);
+        } else {
+          throw new Error(result || "No se pudo eliminar el usuario. Intenta de nuevo.");
+        }
+      } catch (err: unknown) {
+       if(err instanceof AxiosError){
+        console.error("Axios Error al eliminar usuario:", err.response?.status, err.response?.data);
+       }
+      }
+    }
+  }
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+      if(!currentClient) return;
+    try {
+      if(currentClient.id){
+        const updatedClient = await updateClient(currentClient.id, {
+        firstName: currentClient.firstName,
+        lastName: currentClient.lastName,
+        email: currentClient.email,
+        phone:currentClient.phone,
+        address: currentClient.address,
+        isActive:currentClient.isActive,     
+        
+      });
+  
+      if(!updatedClient) throw new Error(" no puedo actualizar el usuario. Intenta de Nuevo")
+        setClients((prev)=> prev.map((c)=>(c.id === currentClient.id ? updatedClient : c)));
+  
+      }
+    } catch (err) {
+       if (err instanceof AxiosError) {
+          console.error("Axios Error al crear/actualizar usuario:", err.response?.status, err.response?.data);
+          setError(err.response?.data?.message || "Error al crear/actualizar el usuario. Intenta de nuevo.");
+        } else if (err instanceof Error) {
+          console.error("Error al crear/actualizar usuario:", err.message);
+          setError(err.message || "Error al crear/actualizar el usuario. Intenta de nuevo.");
+        } else {
+          console.error("Error desconocido al crear/actualizar usuario:", err);
+          setError("Error desconocido al crear/actualizar el usuario. Intenta de nuevo.");
+        }
+      }
+    }
+    
 
   return (
     <div>
@@ -160,13 +215,13 @@ export default function ClientManagement(){
                   <td className="text-secondary">{(client.isActive).toString()}</td>
                   <td className="text-end">
                     <button className="btn btn-sm btn-outline-primary me-2">
-                      <i className="fas fa-edit"></i>
+                      <i className="fas fa-edit" onClick={()=> handleEditClient(client)}></i>
                     </button>
                     <button className="btn btn-sm btn-outline-success me-2">
                       <i className="fas fa-shopping-cart"></i>
                     </button>
                     <button className="btn btn-sm btn-outline-danger">
-                      <i className="fas fa-trash-alt"></i>
+                      <i className="fas fa-trash-alt" onClick={()=> handleDeleteClient(client.id)}></i>
                     </button>
                   </td>
                 </tr>
@@ -194,9 +249,132 @@ export default function ClientManagement(){
         </button>
       </div>
     </div>
-
         </div>
-      </div>
+
+
+  {showModal  &&  (
+        <div  className="modal d-block" tabIndex={-1} style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Editar Cliente</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowModal(false)}
+                  aria-label="Close"
+                ></button>
+              </div>
+              <form onSubmit={handleSubmit}>
+                <div className="modal-body">
+                  <div className="mb-3">
+                    <label htmlFor="firstName" className="form-label">
+                      Nombre 
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      id="firstName"
+                      name="firstName"
+                      value={currentClient?.firstName}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                    <div className="mb-3">
+                    <label htmlFor="lastName" className="form-label">
+                      Apellido
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      id="lastName"
+                      name="lastName"
+                      value={currentClient?.lastName}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="email" className="form-label">
+                      Correo electrónico
+                    </label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      id="email"
+                      name="email"
+                      value= {currentClient?.email || ""}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="password" className="form-label">                      
+                      Telefono
+                    </label>
+                    <input
+                      type="phone"
+                      className="form-control"
+                      id="phone"
+                      name="Telefono"
+                      value= {currentClient?.phone || ""}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                   <div className="mb-3">
+                    <label htmlFor="address" className="form-label">
+                      Direccion
+                    </label>
+                    <input
+                      type="address"
+                      className="form-control"
+                      id="address"
+                      name="address"
+                      value= {currentClient?.email || ""}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="role" className="form-label">
+                      Rol
+                    </label>
+                    <select
+                      className="form-select"
+                      id="role_add"
+                      name="role"
+                      value= {currentClient?.isActive ? "Activo" : "Inactivo"}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">Escoje Status</option>
+                      <option value="">Activo</option>
+                      <option value="Administrator">Inactivo</option>
+                     
+                    </select>
+                  </div>           
+
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn btn-success"onClick={()=> setShowModal(false)}>Actualizar</button>       
+                 
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+  </div>
+
+
+
     
   )
 }
