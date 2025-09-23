@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom"
 import  { type Client } from "../../types/Client"
 import { useAuth } from "../../contexts/auth-context"
 import { fetchClients } from "../../services/client-service "
+import { ROLES } from "../../types/roles"
+import { faL } from "@fortawesome/free-solid-svg-icons"
 
 // Mock clients data
 
@@ -29,13 +31,25 @@ export default function ClientManagement(){
 
   useEffect(()=>{
     const loadClients = async() => {
+      if(!isAuthenticated){
+        navigate("/")
+        return
+      }
       const {clients, totalPages} = await fetchClients(currentPage, limit)
       setClients(clients)
       setTotalPages(totalPages)
+      setError(null)
+    }
+
+    if(!hasPermission(ROLES.ADMIN)){
+      console.log("Usuario sin Rol admin o manager")
+      setError("Acceso denegado: requiere rol Admin o Manager")
+      setIsLoading(false)
+      return
     }
 
     loadClients()
-  },[currentPage]);
+  },[currentPage, hasPermission, navigate,isAuthenticated,token, user]);
 
   const goToPage = (page: number) =>{
     if(page >= 1  && page <= totalPages){
@@ -54,6 +68,29 @@ export default function ClientManagement(){
   const filteredClients = Array.isArray(clients)
   ? clients.filter(c => (c.firstName as string) && searchClients(c, searchTerm))
    :[]
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    if (!currentClient) return;
+    const { name, value } = e.target;
+
+    if (name === "isActive") {
+      setCurrentClient({ ...currentClient, isActive: value === "true" });
+      return;
+    }  
+
+    setCurrentClient({ ...currentClient, [name]: value } as Client);
+  };
+
+  const handleEditUser = (c: Client) => {
+    setCurrentClient({
+      ...c,
+   
+    });
+    setShowModal(true);
+  };
+
 
   return (
     <div>
