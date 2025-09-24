@@ -1,28 +1,48 @@
-"use client"
-
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import  { type Client } from "../../types/Client"
 import { useAuth } from "../../contexts/auth-context"
 import { fetchClients, deleteClient, updateClient } from "../../services/client-service "
 import { ROLES } from "../../types/roles"
-import { AxiosError} from "axios";
+import { AxiosError} from "axios"
+import ReactPaginate from "react-paginate"
 
 
+interface ClientManagementProps {
+  compact?: boolean;
+   onClientSelect?: (client: Client) => void
+}
 
-export default function ClientManagement(){
+export default function ClientManagement({compact = false}:ClientManagementProps){
   const {user, isAuthenticated, hasPermission, token} = useAuth();
-  const [clients, setClients] = useState<Client[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);  
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [error, setError]= useState<string | null>(null);
-  const [isloading, setIsLoading] = useState(true);
+  const [isloading, setIsLoading] = useState(true); 
   const [currentClient, setCurrentClient]= useState<Client | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1);
+
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages]= useState(0);
+
   const navigate = useNavigate();
-  const limit = 20
+  const limit =10
   
+
+  // Filter clients based on search query
+  const filteredClients = useMemo(() => {
+    if (!searchTerm.trim()) return clients
+     
+    return clients.filter(
+      (client) =>
+        client.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        client.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        client.phone?.includes(searchTerm) ||
+        client.address?.toLowerCase().includes(searchTerm.toLowerCase()) ,
+    )   
+  }, [clients, searchTerm])
+
   const handleEditClick=()=>{
       navigate("/client-registration");
     }
@@ -31,41 +51,38 @@ export default function ClientManagement(){
     const loadClients = async() => {
       if(!isAuthenticated){
         navigate("/")
-        return
+        return;
       }
-      const {clients, totalPages} = await fetchClients(currentPage, limit)
-      setClients(clients)
-      setTotalPages(totalPages)
-      setError(null)
-    }
 
-    if(!hasPermission(ROLES.ADMIN)){
+       if(!hasPermission(ROLES.ADMIN)){
       console.log("Usuario sin Rol admin o manager")
       setError("Acceso denegado: requiere rol Admin o Manager")
       setIsLoading(false)
       return
     }
+    
+      try {
+        const response = await fetchClients(currentPage, limit)      
+      setClients(response.clients)
+      setTotalPages(response.totalPages)
+      setError(null)
+      console.log("Cargando clientes para página:", currentPage);
+      } catch (err) {
+        console.error("Error en cargar clientes", err);
+        setError("Error al cargas clientes")
+      }finally{
+        setIsLoading(false);
+      }
+    }
+
 
     loadClients()
-  },[currentPage, hasPermission, navigate,isAuthenticated,token, user]);
+  },[currentPage, isAuthenticated, hasPermission, navigate, token, user ]);
 
-  const goToPage = (page: number) =>{
-    if(page >= 1  && page <= totalPages){
-      setCurrentPage(page)
-    }
+ const handlePageClick = (selectedItem: { selected: number }) => {
+  console.log("Página seleccionada:", selectedItem.selected);
+    setCurrentPage(selectedItem.selected);
   };
-
-
-
-  const searchClients = (c: Client, q:string)=>
-   
-    c.firstName.toLowerCase().includes(q.toLowerCase()) ||
-    c.email.toLowerCase().includes(q.toLowerCase()) ||
-    c.phone?.toLowerCase().includes(q.toLowerCase())
-
-  const filteredClients = Array.isArray(clients)
-  ? clients.filter(c => (c.firstName as string) && searchClients(c, searchTerm))
-   :[]
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -147,19 +164,47 @@ export default function ClientManagement(){
     }
     
 
+
+      if (isloading && clients.length === 0) {
+    return (
+      <div className="text-center p-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+        <p className="mt-2">Cargando usuarios...</p>
+      </div>
+    )
+  }
+
+
   return (
     <div>
-      <div className="d-flex flex-row  justify-content-between align-items-center mb-4">
+      <div className="d-flex flex-row  justify-content-between align-items-center mb-4 py-3">
         {/* <h2 className="fs-4 fw-semibold">Gestión de Clientes</h2> */}
          <button className="btn btn-link text-dark p-0 me-3" onClick={() => navigate(-1)}>
                 <i className="fas fa-arrow-left"></i>
               </button>
-       <button className="btn btn-primary" onClick={handleEditClick}>
+       <button className="btn btn-success p-2"  onClick={handleEditClick}>
           <i className="fas fa-plus me-2"></i> Nuevo Cliente
         </button>
       </div>
 
-      <div className="mb-4">
+      {error && (
+        <div className="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+          <i className="fas fa-exclamation-triangle me-2"></i>
+          {error}
+          <button
+            type="button"
+            className="btn-close"
+            data-bs-dismiss="alert"
+            aria-label="Close"
+            onClick={() => setError(null)}
+          ></button>
+        </div>
+      )}
+
+    {!compact && (
+<div className="mb-4">
         <div className="input-group">
           <span className="input-group-text bg-white">
             <i className="fas fa-search"></i>
@@ -169,18 +214,26 @@ export default function ClientManagement(){
             placeholder="Buscar clientes..."
             className="form-control"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+            setSearchTerm(e.target.value)
+            setCurrentPage(0);
+            
+            }}
           />
         </div>
       </div>
+    )}
+      
 
       <div className="card shadow-sm">
         <div className="table-responsive">
           <table className="table table-hover mb-0">
             <thead className="table-light">
               <tr>
+                <th scope="id">ID Cliente</th>
                 <th scope="col">Cliente</th>
                 <th scope="col">Correo</th>
+                <th scope="col">Direccion</th>
                 <th scope="col">Telefono</th>
                 <th scope="col">Status</th>
                 <th scope="col" className="text-end">
@@ -191,6 +244,7 @@ export default function ClientManagement(){
             <tbody>
               {filteredClients.map((client) => (
                 <tr key={client.id}>
+                  <td className="small">{client.id}</td>
                   <td>
                     <div className="d-flex align-items-center">
                       <div
@@ -209,10 +263,11 @@ export default function ClientManagement(){
                       </div>
                     </div>
                   </td>
-                  <td className="text-secondary">{client.email}</td>
+                   <td className="text-secondary">{client.email}</td>
+                  <td className="text-secondary">{client.address}</td>
                  
                   <td className="text-secondary">{client.phone}</td>
-                  <td className="text-secondary">{(client.isActive).toString()}</td>
+                  <td className="text-secondary">{client.isActive ? "Activo": "Inactivo"}</td>
                   <td className="text-end">
                     <button className="btn btn-sm btn-outline-primary me-2">
                       <i className="fas fa-edit" onClick={()=> handleEditClient(client)}></i>
@@ -228,30 +283,34 @@ export default function ClientManagement(){
               ))}
             </tbody>
           </table>
-               <div style={{ marginTop: "20px" }}>
-        <button disabled={currentPage === 1} onClick={() => goToPage(currentPage - 1)}>
-          Prev
-        </button>
-        {[...Array(totalPages)].map((_, index) => {
-          const page = index + 1;
-          return (
-            <button
-              key={page}
-              onClick={() => goToPage(page)}
-              disabled={currentPage === page}
-            >
-              {page}
-            </button>
-          );
-        })}
-        <button disabled={currentPage === totalPages} onClick={() => goToPage(currentPage + 1)}>
-          Next
-        </button>
-      </div>
+
+           <ReactPaginate
+        previousLabel={"Prev"}
+        nextLabel={"Next"}
+        breakLabel={"…"}
+        pageCount={totalPages}
+        marginPagesDisplayed={2}
+        pageRangeDisplayed={3}
+        onPageChange={handlePageClick}
+        containerClassName={"pagination justify-content-center"}  // clases de bootstrap u otras que uses
+        pageClassName={"page-item"}
+        pageLinkClassName={"page-link"}
+        previousClassName={"page-item"}
+        nextClassName={"page-item"}
+        previousLinkClassName={"page-link"}
+        nextLinkClassName={"page-link"}
+        breakClassName={"page-item disabled"}
+        breakLinkClassName={"page-link"}
+        activeClassName={"active"}
+        forcePage={currentPage}  // para mantener el estado activo
+      />
+    
     </div>
+   
         </div>
 
 
+{/*modal*/}
   {showModal  &&  (
         <div  className="modal d-block" tabIndex={-1} style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog">
@@ -369,12 +428,7 @@ export default function ClientManagement(){
           </div>
         </div>
       )}
-
-
   </div>
-
-
-
     
   )
 }

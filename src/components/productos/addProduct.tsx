@@ -2,22 +2,22 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { RoleGuard } from "../analitica/role-guard";
-import {UserRole, mapUuidToRole  } from "../../types/roles";
+import {ROLES, type RoleUuid   } from "../../types/roles";
 import { useAuth } from "../../contexts/auth-context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
 
-function normalizeRoleCode(input?: string): UserRole {
-  if (!input) return UserRole.CASHIER; // fallback seguro
-  const upper = input.toUpperCase();
-  // ¿Vino como código?
-  if ((Object.values(UserRole) as string[]).includes(upper)) {
-    return upper as UserRole;
-  }
-  // Si no, asumimos UUID
-  return mapUuidToRole(input);
-}
+// function normalizeRoleCode(input?: string): UserRole {
+//   if (!input) return ROLES.CASHIER; // fallback seguro
+//   const upper = input.toUpperCase();
+//   // ¿Vino como código?
+//   if ((Object.values(UserRole) as string[]).includes(upper)) {
+//     return upper as UserRole;
+//   }
+//   // Si no, asumimos UUID
+//   return mapUuidToRole(input);
+// }
 
 interface FormData {
   // Basic Info
@@ -52,7 +52,7 @@ interface FormData {
 
 export default function NewProductPage() {
   const { user } = useAuth(); // Assuming useAuth is defined in your context
-  const currentUserRole = user?.role ? normalizeRoleCode(user.role) : null; // Replace with actual role from context or props
+  const currentUserRole = (user?.role as RoleUuid) ?? ROLES.ADMIN; // Replace with actual role from context or props
   const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
    productName: "",
@@ -211,8 +211,8 @@ export default function NewProductPage() {
 
   return (
      <RoleGuard
-          allowedRoles={[UserRole.ADMIN, UserRole.MANAGER, UserRole.CASHIER]}
-          currentUserRole={currentUserRole ?? UserRole.ADMIN}
+          allowedRoles={[ROLES.ADMIN, ROLES.MANAGER, ROLES.CASHIER]}
+          currentUserRole={currentUserRole}
         >
 
   <div className="d-flex" style={{ minHeight: "100vh" }}>           

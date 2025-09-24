@@ -9,6 +9,12 @@ import NotFoundPage from "./not-found"
 import LoginPage  from "./pages/login"
 
 
+
+
+
+
+
+
 // Lazy load pages
 // const LoginPage = lazy(() => import("./pages/login"))
 // const DashboardLayout = lazy(() => import("./pages/dashboard-layout"))
@@ -29,7 +35,7 @@ function App() {
  
   return (
     <Router>
-      <AuthProvider>
+      <AuthProvider>       
         <UserProvider>
         <AppProvider>
           <Suspense fallback={<Loading />}>
@@ -59,6 +65,7 @@ function App() {
           </Suspense>
         </AppProvider>
         </UserProvider>
+       
       </AuthProvider>
     </Router>
   )

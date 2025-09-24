@@ -4,6 +4,7 @@ import axiosInstance  from "../lib/api"
 import UseAxiosPrivate from "../lib/apiPrivate"
 
 
+
 // const checkToken = ()=>{
 //   const token = localStorage.getItem("token")
 //   if(!token){
@@ -17,11 +18,15 @@ import UseAxiosPrivate from "../lib/apiPrivate"
 
 
 // Get all users
-export async function fetchClients(page =1, limit = 10): Promise<PaginatedClientResponse> {
+export async function fetchClients(page:number, limit:number): Promise<PaginatedClientResponse> {
  try {
-  const { data } = await axiosInstance.get("/v1/customers",{
-    params: {page, limit}
-  });
+  const queryParams : string[] = [];  
+  if(page !== undefined)queryParams.push(`page=${page}`);
+  if(limit !== undefined)queryParams.push(`limit=${limit}`);
+  const queryString = queryParams.length > 0 ? `${queryParams.join("&")}` : "";
+
+  console.log("fetching", `/v1/customers?${queryString}`)
+  const { data } = await axiosInstance.get(`/v1/customers?${queryString}`);
   return {
     clients: data?.data?.records ?? [],
     totalPages: data?.data?.totalPages ?? 0,
