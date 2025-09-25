@@ -191,7 +191,6 @@ const filteredUsers = Array.isArray(users)
       setCurrentUser({ ...currentUser, role: roleUuid, roleUuid, roleName });
       return;
     }
-
     setCurrentUser({ ...currentUser, [name]: value } as NormalizedUser);
   };
 
@@ -347,6 +346,8 @@ const userCounts = {
           ></button>
         </div>
       )}
+
+      
 
       {!compact && (
         <div className="row mb-4">

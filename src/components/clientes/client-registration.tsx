@@ -1,18 +1,24 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { formatCurrency } from "../../lib/utils"
-import type { CreateClientRequest } from "../../types/Client"
+import type { Client,  CreateClientRequest } from "../../types/Client"
+import { useAuth } from "../../contexts/auth-context"
+import { ROLES } from "../../types/roles"
+import { createClient } from "../../services/client-service"
+
+interface ClientManagementProps {
+  compact?: boolean;
+}
 
 
-
-
-export function ClientRegistrationForm() {
+export function ClientRegistrationForm({compact = false}: ClientManagementProps) {
   const navigate = useNavigate()
-//   const { customerName } = useUser()
-
-  // Form state
+  const {user, isAuthenticated, hasPermission} = useAuth()
+  const [clients, setClients] = useState<Client[]>([])
+  const [savedClient, setSavedClients] = useState<Client | null>(null)
   const [allowCredit, setAllowCredit] = useState(false)
-  const [clientData, setClientData] = useState<CreateClientRequest>({
+  const [error, setError]= useState<string | null>(null)
+  const [currentClient, setCurrentClient]= useState<CreateClientRequest>({
     firstName: "",
     lastName: "",   
     email: "",
@@ -21,25 +27,80 @@ export function ClientRegistrationForm() {
     identificationNumber:"",
     fiscalCode: "",
     isActive: true,
-  })
+  });
+  
 
   // Account state
   const [currentBalance] = useState(0)
   const [hasOrders] = useState(false)
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setClientData((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
-  }
 
-  const handleSave = () => {
-    // Here you would typically save the client data
-    console.log("Saving client:", clientData)
-    // Navigate back to clients list
-    navigate("/clientes")
-  }
+  useEffect(()=>{
+    if(!hasPermission([ROLES.ADMIN, ROLES.MANAGER])){
+      console.log("Usuario sin rol admin o manager",{role:user?.role})
+       setError("Acceso denegado: se requiere rol de administrador");
+      
+    }
+  },[hasPermission, user, isAuthenticated])
+
+   const handleInputChange = (
+     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+   ) => {
+     if (!currentClient) return;
+     const { name, value } = e.target;
+ 
+     if (name === "isActive") {
+       setCurrentClient({ ...currentClient, isActive: value === "true" });
+       }else{
+        setCurrentClient({ ...currentClient, [name]: value } as Client);
+        } 
+ 
+     
+   };
+
+
+ 
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("🔄 Submitting form");
+      if(!currentClient) return;
+      console.warn("⚠️ currentClient is null");
+      try {
+        const newClient = await createClient(currentClient);
+        console.log("✅ Client created:", newClient);
+        if(!newClient) throw new Error(" no puedo crear Cliente")
+        setClients((prev)=>[...prev, newClient])
+        setSavedClients(newClient);
+
+        setCurrentClient({         
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: "",
+          address: "",
+          identificationNumber: "",
+          fiscalCode: "",
+          isActive: true,
+        })
+        // if(newClient){
+        //   navigate("/clientes")
+        // }else{
+        //   throw new Error("No se pudo Crear Cliente");
+        // }
+
+      } catch (error : any) {
+        if(error.response?.status === 409){
+            setError("Hubo un error al crear al cliente.")
+        }else{
+          setError("Error inesperado al crear cliente")
+        }        
+        
+      }
+  } 
+
+
 
   const handleNewOrder = () => {
     // Navigate to create new order for this client
@@ -78,6 +139,44 @@ export function ClientRegistrationForm() {
         </div>
       </div>
 
+      {error && (
+        <div className="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+          <i className="fas fa-exclamation-triangle me-2"></i>
+          {error}
+          <button
+            type="button"
+            className="btn-close"
+            data-bs-dismiss="alert"
+            aria-label="Close"
+            onClick={() => setError(null)}
+          ></button>
+        </div>
+      )}
+
+
+        {/* Tarjeta de cliente guardado */}
+                {savedClient && (
+                  <div className="card mt-4 border-success shadow">
+                    <div className="card-body">
+                      <h5 className="card-title text-success">
+                        Cliente creado exitosamente
+                      </h5>
+                      <p><strong>ID Cliente:</strong> {savedClient.id}</p>
+                      <p>
+                        <strong>Nombre:</strong> {savedClient.firstName}{" "}
+                        {savedClient.lastName}
+                      </p>
+                      <p>
+                        <strong>Email:</strong>{" "}
+                        {savedClient.email || "No proporcionado"}
+                      </p>
+                      <p>
+                        <strong>Estado:</strong>{" "}
+                        {savedClient.isActive ? "Activo" : "Inactivo"}
+                      </p>
+                    </div>
+                  </div>
+                )}
       {/* Main Content */}
       <div className="container-fluid px-4 py-4">
         <div className="row">
@@ -97,25 +196,36 @@ export function ClientRegistrationForm() {
 
                 {/* Basic Information */}
                 <div className="mb-4">
-                  <div className="mb-3">
-                    <input
-                      type="text"
-                      className="form-control form-control-lg"
-                      placeholder="Nombre"
-                      value={clientData.firstName}
-                      onChange={(e) => handleInputChange("name", e.target.value)}
-                    />
-                  </div>
-
-                  <div className="mb-3">
+                  <h6 className="fw-semibold mb-3">Informacion General</h6>
+                     {/* <div className="mb-3">
                     <input
                       type="text"
                       className="form-control"
                       placeholder="N° ID"
-                      value={clientData.identificationNumber}
-                      onChange={(e) => handleInputChange("idNumber", e.target.value)}
+                      value={currentClient?.identificationNumber}
+                      onChange={handleInputChange}
                     />
-                  </div>
+                  </div> */}
+                  <div className="mb-3">
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="firstName"
+                      placeholder="Nombre"
+                      value={currentClient?.firstName}
+                      onChange={handleInputChange}
+                    />
+                  </div>   
+                   <div className="mb-3">
+                    <input
+                      type="text"                      
+                      className="form-control"
+                      name="lastName"
+                      placeholder="Apellido"
+                      value={currentClient?.lastName}
+                      onChange={handleInputChange}
+                    />
+                  </div>             
 
                   {/* <div className="mb-4">
                     <textarea
@@ -137,9 +247,10 @@ export function ClientRegistrationForm() {
                     <input
                       type="email"
                       className="form-control"
+                      name="email"
                       placeholder="Email"
-                      value={clientData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
+                      value={currentClient?.email}
+                      onChange={handleInputChange}
                     />
                   </div>
 
@@ -159,34 +270,15 @@ export function ClientRegistrationForm() {
                       <input
                         type="tel"
                         className="form-control"
+                        name="phone"
                         placeholder="Telefono/Celular"
-                        value={clientData.phone}
-                        onChange={(e) => handleInputChange("phone", e.target.value)}
+                        value={currentClient?.phone}
+                        onChange={handleInputChange}
                       />
                     
                   </div>
 
-                  <div className="mb-3">
-                    <label className="form-label small text-muted">Status</label>
-                    <div className="input-group">
-                      <select
-                        className="form-select"
-                        style={{ maxWidth: "100px" }}
-                        value={clientData.isActive ? "Active": "Inactive"}
-                        onChange={(e) => handleInputChange("isActive", e.target.value === "Active")}
-                      >
-                        <option value="Active">Activo</option>
-                        <option value="Inactive">Inactivo</option>                        
-                      </select>
-                      {/* <input
-                        type="tel"
-                        className="form-control"
-                        value={clientData.landline}
-                        onChange={(e) => handleInputChange("landline", e.target.value)}
-                      /> */}
-                    </div>
-                  </div>
-                </div>
+               
 
                 {/* Address Section */}
                 <div className="mb-4">
@@ -196,26 +288,60 @@ export function ClientRegistrationForm() {
                     <input
                       type="text"
                       className="form-control"
+                      name="address"
                       placeholder="Dirección"
-                      value={clientData.address}
-                      onChange={(e) => handleInputChange("address", e.target.value)}
+                      value={currentClient?.address}
+                      onChange={handleInputChange}
                     />
                   </div>
 
                   <div className="mb-3">
+                     <h6 className="fw-semibold mb-3">Codigo Fiscal</h6>
                     <input
                       type="text"
                       className="form-control"
+                      name="fiscalCode"
                       placeholder="Codigo Fiscal"
-                      value={clientData.fiscalCode}
-                      onChange={(e) => handleInputChange("complement", e.target.value)}
+                      value={currentClient?.fiscalCode}
+                      onChange={handleInputChange}
                     />
+                  </div>
+                <div className="mb-3">
+                     <h6 className="fw-semibold mb-3">No. Identificacion</h6>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="identificationNumber"
+                      placeholder="Codigo de Identificacion"
+                      value={currentClient?.identificationNumber}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+
+
+                </div>
+                
+
+                   <div className="mb-4">
+                    <label className="form-label small text-muted">Status</label>
+                    <div className="input-group">
+                      <select
+                        className="form-select form-select-sm"
+                        name="isActive"
+                        style={{ maxWidth: "100px" }}
+                        value={currentClient?.isActive ? "true": "false"}
+                        onChange={handleInputChange}
+                      >
+                        <option value="true">Activo</option>
+                        <option value="false">Inactivo</option>                        
+                      </select>                    
+                    </div>
                   </div>
                 </div>
 
                 {/* Save Button */}
                 <div className="d-grid">
-                  <button className="btn btn-success btn-lg" onClick={handleSave}>
+                  <button className="btn btn-success btn-lg" onClick={handleSubmit}>
                     Guardar Cliente
                   </button>
                 </div>

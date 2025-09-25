@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
-import  { type Client } from "../../types/Client"
+import  { type Client, type UpdateClientRequest } from "../../types/Client"
 import { useAuth } from "../../contexts/auth-context"
-import { fetchClients, deleteClient, updateClient } from "../../services/client-service "
+import { fetchClients, deleteClient, updateClient } from "../../services/client-service"
 import { ROLES } from "../../types/roles"
 import { AxiosError} from "axios"
 import ReactPaginate from "react-paginate"
@@ -20,7 +20,7 @@ export default function ClientManagement({compact = false}:ClientManagementProps
   const [showModal, setShowModal] = useState(false);
   const [error, setError]= useState<string | null>(null);
   const [isloading, setIsLoading] = useState(true); 
-  const [currentClient, setCurrentClient]= useState<Client | null>(null)
+  const [currentClient, setCurrentClient]= useState<UpdateClientRequest | null>(null)
 
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages]= useState(0);
@@ -35,6 +35,7 @@ export default function ClientManagement({compact = false}:ClientManagementProps
      
     return clients.filter(
       (client) =>
+        client.id.toLowerCase().includes(searchTerm.toLowerCase())||
         client.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         client.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -66,7 +67,7 @@ export default function ClientManagement({compact = false}:ClientManagementProps
       setClients(response.clients)
       setTotalPages(response.totalPages)
       setError(null)
-      console.log("Cargando clientes para página:", currentPage);
+      // console.log("Cargando clientes para página:", currentPage);
       } catch (err) {
         console.error("Error en cargar clientes", err);
         setError("Error al cargas clientes")
@@ -80,7 +81,7 @@ export default function ClientManagement({compact = false}:ClientManagementProps
   },[currentPage, isAuthenticated, hasPermission, navigate, token, user ]);
 
  const handlePageClick = (selectedItem: { selected: number }) => {
-  console.log("Página seleccionada:", selectedItem.selected);
+  // console.log("Página seleccionada:", selectedItem.selected);
     setCurrentPage(selectedItem.selected);
   };
 
@@ -92,8 +93,9 @@ export default function ClientManagement({compact = false}:ClientManagementProps
 
     if (name === "isActive") {
       setCurrentClient({ ...currentClient, isActive: value === "true" });
-      return;
-    }  
+      }else{
+        setCurrentClient({ ...currentClient, isActive: value === "false" });
+      }  
 
     setCurrentClient({ ...currentClient, [name]: value } as Client);
   };
@@ -106,9 +108,9 @@ export default function ClientManagement({compact = false}:ClientManagementProps
       email: c.email,
       phone:c.phone,
       address:c.address,      
-      isActive: true,   
+      isActive: c.isActive,   
     });
-    setShowModal(true);
+    setShowModal(true) ;
   };
 
   const handleDeleteClient = async (id: string) => {
@@ -136,14 +138,17 @@ export default function ClientManagement({compact = false}:ClientManagementProps
     try {
       if(currentClient.id){
         const updatedClient = await updateClient(currentClient.id, {
+        id: currentClient.id,
         firstName: currentClient.firstName,
         lastName: currentClient.lastName,
         email: currentClient.email,
         phone:currentClient.phone,
         address: currentClient.address,
-        isActive:currentClient.isActive,     
+        isActive:currentClient.isActive,            
         
-      });
+      }    
+    );
+    setShowModal(false);
   
       if(!updatedClient) throw new Error(" no puedo actualizar el usuario. Intenta de Nuevo")
         setClients((prev)=> prev.map((c)=>(c.id === currentClient.id ? updatedClient : c)));
@@ -185,7 +190,7 @@ export default function ClientManagement({compact = false}:ClientManagementProps
                 <i className="fas fa-arrow-left"></i>
               </button>
        <button className="btn btn-success p-2"  onClick={handleEditClick}>
-          <i className="fas fa-plus me-2"></i> Nuevo Cliente
+          <i className="fas fa-plus me-2"/> Nuevo Cliente
         </button>
       </div>
 
@@ -235,8 +240,10 @@ export default function ClientManagement({compact = false}:ClientManagementProps
                 <th scope="col">Correo</th>
                 <th scope="col">Direccion</th>
                 <th scope="col">Telefono</th>
+                <th scope="col">Codigo ID</th>
+                <th scope="col">Codigo Fiscal</th>
                 <th scope="col">Status</th>
-                <th scope="col" className="text-end">
+                <th scope="col" className="text-center">
                   Acciones
                 </th>
               </tr>
@@ -244,7 +251,22 @@ export default function ClientManagement({compact = false}:ClientManagementProps
             <tbody>
               {filteredClients.map((client) => (
                 <tr key={client.id}>
-                  <td className="small">{client.id}</td>
+                  <td>
+                      <div className="d-flex align-items-center">
+                    <div
+                        className="me-2 d-flex align-items-center justify-content-center"
+                        style={{ width: "80px", height: "40px" }}
+                      >
+                        {client.id
+                          .split("-")
+                          .slice(0, 3)[0]
+                          // .map((n) => n[0])                          
+                          .toUpperCase()}
+                      </div>
+                  {/* <td className="small">{client.id}</td> */}
+                  </div>
+                  </td>         
+                  
                   <td>
                     <div className="d-flex align-items-center">
                       <div
@@ -267,6 +289,8 @@ export default function ClientManagement({compact = false}:ClientManagementProps
                   <td className="text-secondary">{client.address}</td>
                  
                   <td className="text-secondary">{client.phone}</td>
+                   <td className="text-secondary">{client.identificationNumber}</td>
+                    <td className="text-secondary">{client.fiscalCode}</td>
                   <td className="text-secondary">{client.isActive ? "Activo": "Inactivo"}</td>
                   <td className="text-end">
                     <button className="btn btn-sm btn-outline-primary me-2">
@@ -283,8 +307,8 @@ export default function ClientManagement({compact = false}:ClientManagementProps
               ))}
             </tbody>
           </table>
-
-           <ReactPaginate
+          <div className="flex-row align-items-center py-2">
+        <ReactPaginate
         previousLabel={"Prev"}
         nextLabel={"Next"}
         breakLabel={"…"}
@@ -304,6 +328,7 @@ export default function ClientManagement({compact = false}:ClientManagementProps
         activeClassName={"active"}
         forcePage={currentPage}  // para mantener el estado activo
       />
+      </div>     
     
     </div>
    
@@ -391,7 +416,35 @@ export default function ClientManagement({compact = false}:ClientManagementProps
                       className="form-control"
                       id="address"
                       name="address"
-                      value= {currentClient?.email || ""}
+                      value= {currentClient?.address || ""}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                   <div className="mb-3">
+                    <label htmlFor="address" className="form-label">
+                      No. Identificacion
+                    </label>
+                    <input
+                      type="address"
+                      className="form-control"
+                      id="identificationNumber"
+                      name="identificationNumber"
+                      value= {currentClient?.identificationNumber || ""}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="address" className="form-label">
+                      No. Identificacion
+                    </label>
+                    <input
+                      type="address"
+                      className="form-control"
+                      id="fiscalCode"
+                      name="fiscalCode"
+                      value= {currentClient?.fiscalCode  || ""}
                       onChange={handleInputChange}
                       required
                     />
@@ -404,23 +457,23 @@ export default function ClientManagement({compact = false}:ClientManagementProps
                       className="form-select"
                       id="role_add"
                       name="role"
-                      value= {currentClient?.isActive ? "Activo" : "Inactivo"}
+                      value= {currentClient?.isActive ? "true" : "false"}
                       onChange={handleInputChange}
                       required
                     >
                       <option value="">Escoje Status</option>
-                      <option value="">Activo</option>
-                      <option value="Administrator">Inactivo</option>
+                      <option value="true">Activo</option>
+                      <option value="false">Inactivo</option>
                      
                     </select>
                   </div>           
 
                 </div>
                 <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
+                  <button type="button" className="btn btn-secondary" onClick={()=> setShowModal(false)}>
                     Cancelar
                   </button>
-                  <button type="submit" className="btn btn-success"onClick={()=> setShowModal(false)}>Actualizar</button>       
+                  <button type="submit" className="btn btn-success">Actualizar</button>       
                  
                 </div>
               </form>

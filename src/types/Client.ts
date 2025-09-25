@@ -8,7 +8,8 @@ export type Client = {
   address?:string;
   identificationNumber?: string;
   fiscalCode?: string;
-  isActive: boolean;
+  isActive?: boolean;
+  createAt: string;
   
 }
 
@@ -20,10 +21,11 @@ export interface CreateClientRequest {
   address?:string;
   identificationNumber?: string;
   fiscalCode?: string;
-  isActive: boolean; 
+  isActive?: boolean; 
 }
 
 export interface UpdateClientRequest {
+  id: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -31,7 +33,7 @@ export interface UpdateClientRequest {
   address?:string;
   identificationNumber?: string;
   fiscalCode?: string;
-  isActive: boolean; 
+  isActive?: boolean; 
 }
 
 export interface PaginatedClientResponse {

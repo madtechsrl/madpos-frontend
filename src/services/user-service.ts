@@ -3,7 +3,6 @@ import type { User , CreateUserRequest, UpdateUserRequest  } from "../types/User
 import {ROLES, type RoleKey, type RoleUuid } from "../types/roles"
 import axiosInstance  from "../lib/api"
 import { mapRoleToUuid, mapUuidToRoleName } from "../types/roles"
-import UseAxiosPrivate from "../lib/apiPrivate"
 
 
 
@@ -93,14 +92,14 @@ const payload = {
 
 // Update an existing user
 export async function updateUser(id: string, updates: UpdateUserRequest): Promise<NormalizedUser | null> {
-  const axiosPrivate = UseAxiosPrivate();
+  
   try {
     const body: UpdateUserRequest = { ...updates };
     if (updates.role) {
       body.role = normalizeOutgoingRole(updates.role);
     }
 
-    const { data } = await axiosPrivate.put(`/v1/users/${id}`, body);
+    const { data } = await axiosInstance.put(`/v1/users/${id}`, body);
     const rec: User | undefined = data?.data;
     return rec ? normalizeIncomingUser(rec) : null;
   } catch (error) {
@@ -111,9 +110,9 @@ export async function updateUser(id: string, updates: UpdateUserRequest): Promis
 
 // Delete a user
 export async function deleteUser(id: string): Promise<boolean> {
-  const axiosPrivate = UseAxiosPrivate();
+ 
   try {
-    await axiosPrivate.delete(`/v1/users/${id}`);
+    await axiosInstance.delete(`/v1/users/${id}`);
     return true;
   } catch (error) {
     console.error(`Error deleting user with ID ${id}:`, error);
