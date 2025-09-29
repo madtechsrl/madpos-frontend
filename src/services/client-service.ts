@@ -1,7 +1,6 @@
 
 import type { Client , CreateClientRequest, UpdateClientRequest, PaginatedClientResponse  } from "../types/Client"
 import axiosInstance  from "../lib/api"
-import UseAxiosPrivate from "../lib/apiPrivate"
 
 
 
@@ -13,6 +12,8 @@ import UseAxiosPrivate from "../lib/apiPrivate"
 //   // console.log("checkToken: Token found", token)
 //   return token
 // }
+
+
 // Get all users
 export async function fetchClients(page:number, limit:number): Promise<PaginatedClientResponse> {
  try {
@@ -84,20 +85,14 @@ try {
   throw error;
 }
 
-  
- 
-
-
-
 }
 
 // Update an existing user
 export async function updateClient(id: string, updates: UpdateClientRequest): Promise<Client | null> {
-  const axiosPrivate = UseAxiosPrivate();
   try {
     const body: UpdateClientRequest = { ...updates };
   
-    const { data } = await axiosPrivate.put(`/v1/customers/${id}`, body);
+    const { data } = await axiosInstance.put(`/v1/customers/${id}`, body);
     const rec: Client | undefined = data?.data;
     return rec ? (rec) : null;
   } catch (error) {
@@ -108,9 +103,8 @@ export async function updateClient(id: string, updates: UpdateClientRequest): Pr
 
 // Delete a user
 export async function deleteClient(id: string): Promise<boolean> {
-  const axiosPrivate = UseAxiosPrivate();
   try {
-    await axiosPrivate.delete(`/v1/customers/${id}`);
+    await axiosInstance.delete(`/v1/customers/${id}`);
     return true;
   } catch (error) {
     console.error(`Error deleting user with ID ${id}:`, error);

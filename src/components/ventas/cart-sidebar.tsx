@@ -6,20 +6,20 @@ import { PaymentMethods } from "../pagos/payment-methods"
 import { useCart } from "../../contexts/cart-context"
 import { useUser } from "../../contexts/user-context"
 import { formatCurrency } from "../../lib/utils"
+import type { Client } from "../../types/Client"
 
 const TAX_RATE = 0.18
 
 export function CartSidebar() {
   const { cart, clearCart, cartTotal, isCartOpen, setIsCartOpen, addPaymentRecord } = useCart()
-  const { customerName } = useUser()
+  const { customerName, setCustomerName } = useUser()
   const [showPaymentOptions, setShowPaymentOptions] = useState(false)
   const [paymentComplete, setPaymentComplete] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null)
-  // const [applyDiscount, setApplyDiscount] = useState(false)
+  const [clients, setClient]= useState([])
   const [discountInput, setDiscountInput] = useState("0")
   const [applyTax, setApplyTax] = useState(false)
-
-
+  
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
   const rawDiscount = Number(discountInput)
   const discountRate = isNaN(rawDiscount) ? 0 : Math.min(Math.max(rawDiscount, 0), 100) / 100  
@@ -31,6 +31,17 @@ export function CartSidebar() {
   const processCheckout = () => {
     if (cart.length === 0) return
     setShowPaymentOptions(true)
+  }
+
+
+  const handleClientSelect = (client:Client | null)=>{
+    setClient(client)
+    if(client){
+      setCustomerName(client.firstName)
+      
+    }else{
+      setCustomerName("Cliente General")
+    }
   }
 
   const handlePaymentComplete = (method: string) => {
