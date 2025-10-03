@@ -1,55 +1,59 @@
 "use client"
 
+
 import { useState } from "react"
 import { CartItem } from "../ventas/cart-item"
+import { CartSummary } from "../ventas/cart-summary"
+import { CartDiscountControls } from "../pagos/cart-discount-methods"
 import { PaymentMethods } from "../pagos/payment-methods"
+import { ClientSelector } from "../clientes/client-selector"
 import { useCart } from "../../contexts/cart-context"
 import { useUser } from "../../contexts/user-context"
+import { useCartCalculations } from "../../hooks/useCartCalculation"
 import { formatCurrency } from "../../lib/utils"
 import type { Client } from "../../types/Client"
 
 const TAX_RATE = 0.18
 
 export function CartSidebar() {
-  const { cart, clearCart, cartTotal, isCartOpen, setIsCartOpen, addPaymentRecord } = useCart()
+    const { state, clearCart, setClient } = useCart()
   const { customerName, setCustomerName } = useUser()
+  const [isCartOpen, setIsCartOpen] = useState(true)
   const [showPaymentOptions, setShowPaymentOptions] = useState(false)
+  const [showClientModal, setShowClientModal] = useState(false)
   const [paymentComplete, setPaymentComplete] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null)
-  const [clients, setClient]= useState([])
   const [discountInput, setDiscountInput] = useState("0")
-  const [applyTax, setApplyTax] = useState(false)
-  
-  const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
-  const rawDiscount = Number(discountInput)
-  const discountRate = isNaN(rawDiscount) ? 0 : Math.min(Math.max(rawDiscount, 0), 100) / 100  
-  const discountAmount = subtotal * (discountRate)
-  const taxAmount = applyTax ? (subtotal - discountAmount) * TAX_RATE : 0
-  const total = subtotal - discountAmount + taxAmount 
-  
+  const [applyTax, setApplyTax] = useState(false)  
   // Process checkout
-  const processCheckout = () => {
-    if (cart.length === 0) return
-    setShowPaymentOptions(true)
-  }
+
 
 
   const handleClientSelect = (client:Client | null)=>{
     setClient(client)
     if(client){
-      setCustomerName(client.firstName)
-      
+      setCustomerName(client.name)      
     }else{
       setCustomerName("Cliente General")
     }
+    setShowClientModal(false)
+  }
+
+
+  const handleClearClient = ()=>{
+        setClient(null)
+        setCustomerName("Cliente General");   
+  }
+
+    // Handle checkout process
+  const processCheckout = () => {
+    if (state.items.length === 0) return
+    setShowPaymentOptions(true)
   }
 
   const handlePaymentComplete = (method: string) => {
     setPaymentMethod(method)
     setPaymentComplete(true)
-
-    // Record the payment
-    addPaymentRecord(method)
 
     // Reset after 3 seconds
     setTimeout(() => {
@@ -60,6 +64,9 @@ export function CartSidebar() {
     }, 3000)
   }
 
+  const handleBackToCart = () => {
+    setShowPaymentOptions(false)
+  }
   return (
     <div className="bg-white border-start d-flex flex-column" style={{ width: "350px" }}>
       <div className="p-2 border-bottom d-flex justify-content-between align-items-center" style={{width:"250px"}}>

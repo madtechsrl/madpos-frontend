@@ -1,16 +1,21 @@
 
 export type Client = {
   id: string;
-  firstName: string;
+  name: string;
   lastName: string;
   email: string;
   phone?:string;
   address?:string;
+  creditLimit: number;
+  currentBalance: number;
+  status: "Activo" | "Inactivo" | "Suspendido"
   identificationNumber?: string;
   fiscalCode?: string;
   isActive?: boolean;
   createAt: string;
-  
+  lastPurchase?:string;
+  totalPurchases:number
+  notes?: string  
 }
 
 export interface CreateClientRequest {
@@ -26,7 +31,7 @@ export interface CreateClientRequest {
 
 export interface UpdateClientRequest {
   id: string;
-  firstName: string;
+  name: string;
   lastName: string;
   email: string;
   phone?:string;

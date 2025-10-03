@@ -4,15 +4,6 @@ import axiosInstance  from "../lib/api"
 
 
 
-// const checkToken = ()=>{
-//   const token = localStorage.getItem("token")
-//   if(!token){
-//     throw new Error("No token found, cannot fetch users")
-//   }
-//   // console.log("checkToken: Token found", token)
-//   return token
-// }
-
 
 // Get all users
 export async function fetchClients(page:number, limit:number): Promise<PaginatedClientResponse> {
@@ -112,6 +103,19 @@ export async function deleteClient(id: string): Promise<boolean> {
   }
 }
 
+export async function searchClients(query: string): Promise<Client []> {
+  try {
+    if(!query.trim()) return []
 
+    const {data}= await axiosInstance.get(`/v1/customers?search=${encodeURIComponent(query)}`);
+
+    const clients: Client[] = data?.data?.records ?? [];
+    return clients
+  } catch (error) {
+    console.error("Error consiguiendo Clients", error);
+    return [];
+  }
+  
+}
 
 

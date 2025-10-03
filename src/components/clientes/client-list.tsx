@@ -36,7 +36,7 @@ export default function ClientManagement({compact = false}:ClientManagementProps
     return clients.filter(
       (client) =>
         client.id.toLowerCase().includes(searchTerm.toLowerCase())||
-        client.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         client.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         client.phone?.includes(searchTerm) ||
@@ -103,7 +103,7 @@ export default function ClientManagement({compact = false}:ClientManagementProps
   const handleEditClient = (c: Client) => {
     setCurrentClient({
       ...c,
-      firstName:c.firstName,
+      name:c.name,
       lastName:c.lastName,
       email: c.email,
       phone:c.phone,
@@ -139,7 +139,7 @@ export default function ClientManagement({compact = false}:ClientManagementProps
       if(currentClient.id){
         const updatedClient = await updateClient(currentClient.id, {
         id: currentClient.id,
-        firstName: currentClient.firstName,
+        name: currentClient.name,
         lastName: currentClient.lastName,
         email: currentClient.email,
         phone:currentClient.phone,
@@ -273,14 +273,14 @@ export default function ClientManagement({compact = false}:ClientManagementProps
                         className="bg-secondary text-white rounded-circle me-3 d-flex align-items-center justify-content-center"
                         style={{ width: "40px", height: "40px" }}
                       >
-                        {client.firstName
+                        {client.name
                           .split(" ")
                           .map((n) => n[0])
                           .join("")
                           .toUpperCase()}
                       </div>
                       <div>
-                        <div className="fw-medium">{client.firstName}</div>
+                        <div className="fw-medium">{client.name}</div>
                         <div className="small text-muted">{client.lastName}</div>
                       </div>
                     </div>
@@ -360,7 +360,7 @@ export default function ClientManagement({compact = false}:ClientManagementProps
                       className="form-control"
                       id="firstName"
                       name="firstName"
-                      value={currentClient?.firstName}
+                      value={currentClient?.name}
                       onChange={handleInputChange}
                       required
                     />
