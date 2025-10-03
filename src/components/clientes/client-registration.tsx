@@ -83,13 +83,11 @@ export  function ClientRegistrationForm({compact = false}: ClientManagementProps
           identificationNumber: "",
           fiscalCode: "",
           isActive: true,
-        })
-        // if(newClient){
-        //   navigate("/clientes")
-        // }else{
-        //   throw new Error("No se pudo Crear Cliente");
-        // }
-
+        })       
+         setTimeout(()=>{
+           navigate("/clientes")
+         }, 2000)
+          
       } catch (error : any) {
         if(error.response?.status === 409){
             setError("Hubo un error al crear al cliente.")
