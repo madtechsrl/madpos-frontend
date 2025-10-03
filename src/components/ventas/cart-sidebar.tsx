@@ -78,16 +78,13 @@ export function CartSidebar() {
     setShowPaymentOptions(false)
   }
 
-  const handleBackToCart = () => {
-    setShowPaymentOptions(false)
-  }
   return (
     <>
       <div className="bg-white border-start d-flex flex-column" style={{ width: CART_WIDTH }}>
         {/* Header */}
         <div className="p-3 border-bottom">
           <div className="d-flex justify-content-between align-items-center mb-2">
-            <div className="small fw-medium">{state.selectedClient ? state.selectedClient.name : customerName}</div>
+            <div className="small fw-medium">{state.selectedClient ? state.selectedClient.firstName : customerName}</div>
             <button className="btn btn-sm text-secondary border-0 p-0" onClick={() => setIsCartOpen(!isCartOpen)}>
               {isCartOpen ? <i className="fas fa-times"></i> : <i className="fas fa-shopping-cart"></i>}
             </button>
@@ -139,7 +136,7 @@ export function CartSidebar() {
                 <p className="text-secondary">
                   Pago de {formatCurrency(total)} procesado con {paymentMethod}.
                 </p>
-                {state.selectedClient && <p className="text-muted small">Cliente: {state.selectedClient.name}</p>}
+                {state.selectedClient && <p className="text-muted small">Cliente: {state.selectedClient.firstName}</p>}
               </div>
             ) : state.items.length > 0 ? (
               // Cart with Items
