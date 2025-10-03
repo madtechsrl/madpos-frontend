@@ -14,35 +14,37 @@ export function ClientSelector({ selectedClient, onClientSelect, onNewClient }: 
   const [clients, setClients] = useState<Client[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(false)
-  const [currentPage, setCurrentPage] = useState(0)
-  const limit =10
-
-
+  const [page, setPage] = useState(0)
+  const limit = 10
   // Generic client option
-const genericClient: Client = {
-  id: "generic",
-  name: "Cliente General",
-  lastName: "General",
-  email: "general@tienda.com",
-  phone: "N/A",
-  address: "",
-  creditLimit: 0,
-  currentBalance: 0,
-  status: "Activo",
-  createAt: new Date().toISOString(),
-  totalPurchases: 0,
-  notes: "Cliente genérico para ventas sin cliente específico",
+  const genericClient: Client  ={
+    id: "",
+    firstName: "",
+    lastName: "",
+    email: "generico@tienda.com",
+    phone: "N/A",
+    address:"",
+    creditLimit: 0,
+    currentBalance: 0,
+    status: "Activo" as const,
+    identificationNumber: 0,
+    fiscalCode: 0,
+    isActive: true,
+    createAt: new Date().toISOString(),
+    lastPurchase:0,
+    totalPurchases:0,
+    notes: "Cliente genérico para ventas sin cliente específico"  
 }
-
+  
 
   useEffect(() => {
-    fetchClients(currentPage, limit)
-  }, [currentPage, limit])
+    loadClients()
+  }, [])
 
   const loadClients = async () => {
     try {
       setLoading(true)
-      const data = await fetchClients(currentPage, limit)
+      const data = await fetchClients(page, limit)
       setClients(data.clients)
     } catch (err) {
       console.error("Error loading clients:", err)
@@ -77,7 +79,7 @@ const genericClient: Client = {
   // Filter clients and add generic client to the list
   const filteredClients = clients.filter(
     (client) =>
-      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.phone?.includes(searchQuery),
   )
@@ -85,7 +87,7 @@ const genericClient: Client = {
   // Add generic client if it matches search or if no search
   const shouldShowGeneric =
     !searchQuery ||
-    genericClient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    genericClient.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     "general".includes(searchQuery.toLowerCase()) ||
     "generico".includes(searchQuery.toLowerCase())
 
@@ -143,6 +145,7 @@ const genericClient: Client = {
           const isGeneric = client.id === "generic"
           const isSelected = selectedClient?.id === client.id || (!selectedClient && isGeneric)
 
+
           return (
             <div key={client.id} className="col-12 mb-3">
               <div
@@ -157,12 +160,12 @@ const genericClient: Client = {
                         className={`${isGeneric ? "bg-secondary" : "bg-primary"} text-white rounded-circle d-flex align-items-center justify-content-center`}
                         style={{ width: "40px", height: "40px" }}
                       >
-                        {isGeneric ? <i className="fas fa-users"></i> : client.name.charAt(0).toUpperCase()}
+                        {isGeneric ? <i className="fas fa-users"></i> : client.firstName.charAt(0).toUpperCase()}
                       </div>
                     </div>
                     <div className="flex-grow-1">
                       <h6 className="mb-1">
-                        {client.name}
+                        {client.firstName}
                         {isGeneric && <span className="badge bg-info ms-2">Por defecto</span>}
                       </h6>
                       <div className="text-muted small">{client.email}</div>

@@ -1,7 +1,5 @@
-"use client"
-
 import { createContext, useContext, useReducer, type ReactNode } from "react"
-import type { Client } from "/services/client-service"
+import type { Client } from "../types/Client"
 
 export interface CartItem {
   id: string
@@ -10,6 +8,21 @@ export interface CartItem {
   quantity: number
   image?: string
 }
+
+// type Product = {
+//   id: string
+//   name: string
+//   price: number
+//   image?: string
+// }
+
+// type PaymentRecord = {
+//   id: string
+//   date: string
+//   total: number
+//   method: string
+//   items: CartItem[]
+// }
 
 interface CartState {
   items: CartItem[]
@@ -38,7 +51,6 @@ const initialState: CartState = {
   discount: 0,
   tax: 0,
 }
-
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "ADD_ITEM": {
@@ -120,7 +132,10 @@ const CartContext = createContext<{
   items: CartItem[]
   total: number
   selectedClient: Client | null
+
 } | null>(null)
+
+
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, initialState)

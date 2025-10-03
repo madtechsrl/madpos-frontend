@@ -103,19 +103,21 @@ export async function deleteClient(id: string): Promise<boolean> {
   }
 }
 
-export async function searchClients(query: string): Promise<Client []> {
+export async function searchClients(query: string): Promise<Client[]> {
   try {
-    if(!query.trim()) return []
+    const params: Record<string, string> = {};
+    if (query) {
+      params["search"] = query;   // or whatever your API expects, e.g. `q`, `filter`, `name`, etc.
+    }
 
-    const {data}= await axiosInstance.get(`/v1/customers?search=${encodeURIComponent(query)}`);
-
-    const clients: Client[] = data?.data?.records ?? [];
-    return clients
+    const { data } = await axiosInstance.get("/v1/customers", { params });
+    // Assuming your API returns something like:
+    // { data: { records: Client[] } }
+    const clients: Client[] = data?.data?.records ?? []; 
+    return clients;
   } catch (error) {
-    console.error("Error consiguiendo Clients", error);
+    console.error("Error searching clients:", error);
     return [];
   }
-  
 }
-
 
