@@ -10,7 +10,6 @@ interface ClientManagementProps {
   compact?: boolean;
 }
 
-
 export  function ClientRegistrationForm({compact = false}: ClientManagementProps) {
   const navigate = useNavigate()
   const {user, isAuthenticated, hasPermission} = useAuth()
@@ -24,8 +23,8 @@ export  function ClientRegistrationForm({compact = false}: ClientManagementProps
     email: "",
     phone:"",    
     address: "",
-    identificationNumber:"",
-    fiscalCode: "",
+    identificationNumber:0,
+    fiscalCode: 0,
     isActive: true,
   });
   
@@ -80,8 +79,8 @@ export  function ClientRegistrationForm({compact = false}: ClientManagementProps
           email: "",
           phone: "",
           address: "",
-          identificationNumber: "",
-          fiscalCode: "",
+          identificationNumber: 0,
+          fiscalCode: 0,
           isActive: true,
         })       
          setTimeout(()=>{

@@ -24,8 +24,8 @@ export interface CreateClientRequest {
   email: string;
   phone?:string;
   address?:string;
-  identificationNumber?: string;
-  fiscalCode?: string;
+  identificationNumber?: number;
+  fiscalCode?: number;
   isActive?: boolean; 
 }
 

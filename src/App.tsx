@@ -45,7 +45,7 @@ function App() {
               <Route path="/user" element={<UsersPage />} />           
               <Route path="/transaciones" element={<Transaciones />} />
               <Route path="/productos" element={<ProductsPage />} />
-              <Route path="/pages/add-products" element={<AddProduct />} />
+              <Route path="/productos/addProduct" element={<AddProduct />} />
               <Route path="/stats" element={<StatsPage />} />
               <Route path="/configuraciones" element={<Configuraciones />} />
               <Route path="/clientes" element={<ClientsList />} />

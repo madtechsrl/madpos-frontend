@@ -1,9 +1,9 @@
 // NewProductPage.tsx (Vite + Bootstrap + FontAwesome version)
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { RoleGuard } from "../analitica/role-guard";
-import {ROLES, type RoleUuid   } from "../../types/roles";
-import { useAuth } from "../../contexts/auth-context";
+// import { RoleGuard } from "../analitica/role-guard";
+// import {ROLES, type RoleUuid   } from "../../types/roles";
+// import { useAuth } from "../../contexts/auth-context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
@@ -50,9 +50,9 @@ interface FormData {
   featured: boolean
 }
 
-export default function NewProductPage() {
-  const { user } = useAuth(); // Assuming useAuth is defined in your context
-  const currentUserRole = (user?.role as RoleUuid) ?? ROLES.ADMIN; // Replace with actual role from context or props
+export  function NewProductPage() {
+  // const { user } = useAuth(); // Assuming useAuth is defined in your context
+  // const currentUserRole = (user?.role as RoleUuid) ?? ROLES.ADMIN; // Replace with actual role from context or props
   const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
    productName: "",
@@ -210,10 +210,10 @@ export default function NewProductPage() {
   };
 
   return (
-     <RoleGuard
-          allowedRoles={[ROLES.ADMIN, ROLES.MANAGER, ROLES.CASHIER]}
-          currentUserRole={currentUserRole}
-        >
+    //  <RoleGuard
+    //       allowedRoles={[ROLES.ADMIN, ROLES.MANAGER, ROLES.CASHIER]}
+    //       currentUserRole={currentUserRole}
+    //     >
 
   <div className="d-flex" style={{ minHeight: "100vh" }}>           
      <div className="container py-4">
@@ -650,6 +650,6 @@ export default function NewProductPage() {
         </div>  
       </div>
     </div>
-    </RoleGuard>
+    // </RoleGuard>
   );
 }

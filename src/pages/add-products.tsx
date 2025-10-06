@@ -1,16 +1,19 @@
 import { useAuth } from "../contexts/auth-context"
-import NewProductPage from "../components/productos/addProduct"
+import { NewProductPage }from "../components/productos/addProduct"
 import Sidebar from "../components/layout/sidebar"
 import { ROLES } from "../types/roles"
 import { Header } from "../components/layout/header"
 
-export default function ProductosPage() {
+export default function AddProduct() {
   const { hasPermission } = useAuth()
   const isAdmin = hasPermission([ROLES.ADMIN,ROLES.MANAGER])
+  if(!isAdmin){
+        return <p className="text-center mt-5 text-danger">No tienes permiso para acceder a esta página.</p>;
+  }
 
   return (
     <>   
-      {!isAdmin && ( 
+    
         <div>                        
           <div className="d-flex flex-grow-1 overflow-hidden">
             <Sidebar />
@@ -20,7 +23,7 @@ export default function ProductosPage() {
             </div>
           </div>
         </div>
-      )}
+      
     
     </>
   )

@@ -149,13 +149,14 @@ export default function ProductsPage() {
         </div>
 
         <div className="d-flex gap-2">
-          <button className="btn btn-outline-primary">
-            <FontAwesomeIcon icon={faBoxOpen} />
+          <button className="btn btn-primary" style={{textSizeAdjust:"10px"}}
+          onClick={()=> navigate("/productos/addProduct")}>
+            <FontAwesomeIcon icon={faBoxOpen} className="me-3" />             
+               <span className="fs-5 fw-semibold">Producto</span>       
           </button>
-          <a href="/pages/add-products" className="btn btn-primary">
-            <FontAwesomeIcon icon={faPlus} className="me-2" />
-            Producto
-          </a>
+            
+           
+          
         </div>
       </div>
 

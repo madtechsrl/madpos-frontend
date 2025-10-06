@@ -6,19 +6,25 @@ import axiosInstance  from "../lib/api"
 
 
 // Get all users
-export async function fetchClients(page:number, limit:number): Promise<PaginatedClientResponse> {
+export async function fetchClients(page:number, limit:number, search =""): Promise<PaginatedClientResponse> {
  try {
-  const queryParams : string[] = [];  
-  if(page !== undefined)queryParams.push(`page=${page}`);
-  if(limit !== undefined)queryParams.push(`limit=${limit}`);
-  const queryString = queryParams.length > 0 ? `${queryParams.join("&")}` : "";
+  // const queryParams : string[] = [];  
+  // if(page !== undefined)queryParams.push(`page=${page}`);
+  // if(limit !== undefined)queryParams.push(`limit=${limit}`);
+  // const queryString = queryParams.length > 0 ? `${queryParams.join("&")}` : "";
+  const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+
+  if (search.trim()) params.append("search", search);
 
   // console.log("fetching", `/v1/customers?${queryString}`)
-  const { data } = await axiosInstance.get(`/v1/customers?${queryString}`);
+  const { data } = await axiosInstance.get(`/v1/customers?${params.toString()}`);
   return {
     clients: data?.data?.records ?? [],
     totalPages: data?.data?.totalPages ?? 0,
-      currentPage: data?.data?.page ?? 1,
+      currentPage: data?.data?.page ?? 0,
       totalRecords: data?.data?.totalRecords ?? 0,
       sortBy: data?.data?.sortBy ?? "",
       order: data?.data?.order ?? "ASC",
@@ -26,15 +32,7 @@ export async function fetchClients(page:number, limit:number): Promise<Paginated
 
  } catch (error) {
   console.error("Error fetching user: ", error)
-  return {
-      clients: [],
-      totalPages: 0,
-      currentPage: 1,
-      totalRecords: 0,
-      sortBy: "",
-      order: "ASC"
-
-  } 
+  throw error;
  }
 }
 
@@ -79,16 +77,18 @@ try {
 }
 
 // Update an existing user
-export async function updateClient(id: string, updates: UpdateClientRequest): Promise<Client | null> {
+export async function updateClient(id: string, updates: UpdateClientRequest): Promise<Client> {
   try {
-    const body: UpdateClientRequest = { ...updates };
-  
-    const { data } = await axiosInstance.put(`/v1/customers/${id}`, body);
+ 
+    const { data } = await axiosInstance.put(`/v1/customers/${id}`, updates);
     const rec: Client | undefined = data?.data;
-    return rec ? (rec) : null;
+    if(!rec){
+      throw new Error( `nos se recibio un client valido dede el backend con el ID ${id}`);  
+    }
+    return rec;
   } catch (error) {
     console.error(`Error updating user with ID ${id}:`, error);
-    return null;
+    throw error
   }
 }
 

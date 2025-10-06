@@ -1,4 +1,3 @@
-// import { ROLES } from "../types/User";
 import axiosInstance from "../lib/api";
 import type { Product } from "../contexts/product-context";
 
