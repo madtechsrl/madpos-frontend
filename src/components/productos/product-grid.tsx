@@ -1,17 +1,17 @@
 import { ProductCard } from "./product-card"
-import { useProducts } from "../../hooks/useProduct"
+import  {useProducts}  from "../../hooks/useProduct"
 import { useNavigate } from "react-router-dom"
 import { useEffect } from "react"
 
 export function ProductGrid() {
-  const { filteredProducts, loading, error, reloadProducts } = useProducts()
+  const { filteredProducts, loading, error, refreshProducts } = useProducts()
 
   const navigate = useNavigate()
 
 
   useEffect(()=>{
-    reloadProducts()
-  }, [])
+    refreshProducts()
+  }, [refreshProducts])
 
   if (loading) {
     return (

@@ -1,6 +1,6 @@
 // src/hooks/useProducts.ts
 import { useContext } from "react"
-import ProductContext from "../contexts/product-context"
+import {ProductContext } from "../contexts/product-context"
 
 export function useProducts() {
   const context = useContext(ProductContext)

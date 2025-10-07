@@ -1,3 +1,5 @@
+"use client"
+
 import { createContext, useState, useEffect, type ReactNode } from "react"
 import { fetchProducts } from "../services/product-service"
 
@@ -5,19 +7,10 @@ export type Product = {
   id: string
   name: string
   price: number
-  cost:number
-  stock?: number
-  category: {id:string, name: string}
-  brand: string
-  warehouse: string
-  model: string
-  sku: string
-  barcode: string
-  description: string
+  category: string
   image?: string
   bgColor?: string
-  textColor?: string  
-  minStock?: number
+  textColor?: string
 }
 
 type ProductContextType = {
@@ -30,7 +23,7 @@ type ProductContextType = {
   setSearchQuery: (query: string) => void
   selectedCategory: string | null
   setSelectedCategory: (category: string | null) => void
-  reloadProducts: () => Promise<void>
+  refreshProducts: () => Promise<void>
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined)
@@ -42,58 +35,45 @@ export function ProductProvider({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
-
-  const reloadProducts = async () =>{
-    setLoading(true)
+  // Fetch products function
+  const loadProducts = async () => {
     try {
+      setLoading(true)
+      setError(null)
+
       const data = await fetchProducts()
       setProducts(data)
-      setError(null)
+      console.log("Products loaded successfully:", data.length)
     } catch (err) {
-      console.error("Error cargando los productos", err)
-      setError("Fallo cargando productos. Porfavor Tratar de nuevo")      
-    }finally{
+      console.error("Error loading products:", err)
+      setError("Error al cargar productos. Por favor, intenta de nuevo.")
+      setProducts([])
+    } finally {
       setLoading(false)
     }
   }
 
+  // Refresh products function
+  const refreshProducts = async () => {
+    await loadProducts()
+  }
 
-
-  // Fetch products from API
-  // useEffect(() => {
-  //   const getProducts = async () => {
-  //     try {
-  //       setLoading(true)
-  //       const data = await fetchProducts()
-  //       setProducts(data)
-  //       setError(null)
-  //     } catch (err) {
-  //       setError("Failed to fetch products. Please try again later.")
-  //       console.error("Error fetching products:", err)
-  //     } finally {
-  //       setLoading(false)
-  //     }
-  //   }
-
-  //   getProducts()
-  // }, [])
-
-  useEffect(()=>{
-    reloadProducts()
+  // Load products on mount
+  useEffect(() => {
+    loadProducts()
   }, [])
 
   // Filter products based on search query and selected category
-
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.id.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = !selectedCategory || product.category.name === selectedCategory
+    const matchesCategory = !selectedCategory || product.category === selectedCategory
     return matchesSearch && matchesCategory
   })
 
   // Extract unique categories from products
-  const categories = Array.from(new Set(products.map((product) => product.category.name)))
+  const categories = Array.from(new Set(products.map((product) => product.category)))
 
   return (
     <ProductContext.Provider
@@ -107,7 +87,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         setSearchQuery,
         selectedCategory,
         setSelectedCategory,
-        reloadProducts,
+        refreshProducts,
       }}
     >
       {children}
@@ -123,4 +103,4 @@ export function ProductProvider({ children }: { children: ReactNode }) {
 //   return context
 // }
 
-export default ProductContext
+export {ProductContext};

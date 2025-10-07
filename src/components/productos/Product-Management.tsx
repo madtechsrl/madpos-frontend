@@ -1,35 +1,17 @@
-import { useEffect, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faSearch,
-  faFilter,
-  faDownload,
-  faPlus,
-  faStar,
-  faTrash,
-  faBoxOpen,
-  faEllipsisV,
-} from "@fortawesome/free-solid-svg-icons";
-// import { mockProducts, mockCategories } from "../../lib/data";
-import type { Product } from "../../lib/index";
-import { useNavigate } from "react-router-dom";
-import { useProducts } from "../../hooks/useProduct";
+"use client"
 
-export default function ProductsPage() {
-  const {products, filteredProducts, categories, loading, error, searchQuery, setSelectedCategory, setSearchQuery, selectedCategory, reloadProducts} = useProducts()
-  // const [products] = useState<Product[]>(mockProducts);
-  // const [searchTerm, setSearchTerm] = useState("");
-  // const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const navigate = useNavigate();
-  // const filterProducts = Product.filter((product) => {
-  //   const matchesSearch =
-  //     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     product.code.includes(searchTerm);
-  //   const matchesCategory = !selectedCategory || product.category === selectedCategory;
-  //   return matchesSearch && matchesCategory;
-  // });
+import { useState } from "react"
+import { useProducts } from "../../contexts/product-context"
+import{ formatCurrency}  from "../../lib/utils"
 
-  const totalValue = products.reduce((sum, p) => sum + (p.price || 0) * (p.stock || 0), 0);
+export function ProductManagement() {
+  const { products, loading, error } = useProducts()
+  const [searchTerm, setSearchTerm] = useState("")
+
+
+
+
+ const totalValue = products.reduce((sum, p) => sum + (p.price || 0) * (p.stock || 0), 0);
   const totalCost = products.reduce((sum, p) => sum + (p.cost || 0) * (p.stock || 0), 0);
   const estimatedProfit = totalValue - totalCost;
   const lowStockCount = products.filter((p) => (p.stock || 0) <= (p.minStock || 5)).length;
@@ -37,29 +19,63 @@ export default function ProductsPage() {
   const inStockSummary = products.reduce((sum, p)=> sum + ((p.stock || 0)> 0 ? p.stock! : 0), 0)
   const inStockItems = products.filter((p) => (p.stock || 0) > 0).length;
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("es-DO", {
-      style: "currency",
-      currency: "DOP",
-      minimumFractionDigits: 2,
-    }).format(amount);
 
 
-    useEffect(()=>{
-      reloadProducts()
-    }, [] )
 
-    const handleEditClick=(productId : string)=>{
-      navigate(`/productos/${productId}/editar`);
-    }
 
-    const handleDeleteClick = () =>{}
+
+  const filteredProducts = products.filter(
+    (product) =>
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.category.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: "250px" }}>
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+        <p className="ms-2 mb-0">Cargando productos...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="alert alert-danger" role="alert">
+        <strong>Error: </strong>
+        <span>{error}</span>
+      </div>
+    )
+  }
 
   return (
-    <div className="container py-4">
-      <h2 className="mb-4">Productos</h2>
+    <div>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="fs-4 fw-semibold">Gestión de Productos</h2>
+        <button className="btn btn-success d-flex align-items-center gap-2">
+          <i className="fas fa-plus"></i>
+          <span>Añadir Producto</span>
+        </button>
+      </div>
 
-      {/* Stats */}
+      <div className="mb-4 position-relative">
+        <div className="input-group">
+          <span className="input-group-text bg-white">
+            <i className="fas fa-search"></i>
+          </span>
+          <input
+            type="text"
+            placeholder="Buscar productos..."
+            className="form-control"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+       {/* Stats */}
       <div className="row g-3 mb-4">
         <div className="col-md">
           <div className="card p-3">
@@ -102,132 +118,57 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-3">
-        <div className="d-flex gap-3 flex-wrap">
-          <div className="input-group">
-            <span className="input-group-text">
-              <FontAwesomeIcon icon={faSearch} />
-            </span>
-            <input
-              className="form-control"
-              placeholder="Artículo o código"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
 
-          <div className="dropdown">
-            <button
-              className="btn btn-outline-secondary dropdown-toggle"
-              data-bs-toggle="dropdown"
-            >
-              <FontAwesomeIcon icon={faFilter} className="me-2" />
-              Filtro
-            </button>
-            <ul className="dropdown-menu">
-              <li>
-                <button className="dropdown-item" onClick={() => setSelectedCategory(null)}>
-                  Todas las categorías
-                </button>
-              </li>
-              {categories.map((category) => (
-                <li key={category}>
-                  <button className={`dropdown-item ${selectedCategory === category ? "active" : ""}` }
-                  onClick={() => setSelectedCategory(category)}>
-                    {category}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
 
-          <button className="btn btn-outline-secondary">
-            <FontAwesomeIcon icon={faDownload} className="me-2" />
-            Exportar
-          </button>
-        </div>
-
-        <div className="d-flex gap-2">
-          <button className="btn btn-primary" style={{textSizeAdjust:"10px"}}
-          onClick={()=> navigate("/productos/addProduct")}>
-            <FontAwesomeIcon icon={faBoxOpen} className="me-3" />             
-               <span className="fs-5 fw-semibold">Producto</span>       
-          </button>
-            
-           
-          
-        </div>
-      </div>
-
-      {/* Product Table */}
-      <div className="table-responsive">
-        <table className="table table-hover align-middle">
-          <thead>
-            <tr>
-              <th>
-                <input type="checkbox" />
-              </th>
-              <th></th>
-              <th>Producto</th>
-              <th>Categoría</th>
-              <th>Stock</th>
-              <th>Precio</th>
-              <th>Catálogo</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredProducts.map((product) => (
-              <tr key={product.id}>
-                <td>
-                  <input type="checkbox" />
-                </td>
-                <td>
-                  <button className="btn btn-sm btn-outline-light">
-                    <FontAwesomeIcon icon={faStar} />
-                  </button>
-                </td>
-                <td>
-                  <div className="d-flex align-items-center gap-2">
-                    <div className="bg-light rounded-circle d-flex justify-content-center align-items-center" style={{ width: "40px", height: "40px" }}>
-                      <FontAwesomeIcon icon={faBoxOpen} className="text-secondary" />
-                    </div>
-                    <div>
-                      <div className="fw-medium">{product.name}</div>
-                      <div className="text-muted small">{product.sku}</div>
-                    </div>
-                  </div>
-                </td>
-                <td>{product.category?.name}</td>
-                <td>
-                  <span className={`badge ${product.stock! <= (product.minStock || 5) ? 'bg-danger' : 'bg-secondary'}`}>
-                    {product.stock}
-                  </span>
-                </td>
-                <td>{formatCurrency(product.price)}</td>
-                <td>
-                  <div className="form-check form-switch">
-                    <input className="form-check-input" type="checkbox" checked={true} readOnly />
-                  </div>
-                </td>
-                <td>
-                  <div className="dropdown">
-                    <button className="btn btn-sm btn-light" data-bs-toggle="dropdown">
-                      <FontAwesomeIcon icon={faEllipsisV} />
-                    </button>
-                    <ul className="dropdown-menu">
-                      <li><button className="dropdown-item" onClick={()=>handleEditClick(product.id)}>Editar</button></li>
-                      {/* <li><button className="dropdown-item">Duplicar</button></li> */}
-                      <li><button className="dropdown-item text-danger"><FontAwesomeIcon icon={faTrash} className="me-2" />Eliminar</button></li>
-                    </ul>
-                  </div>
-                </td>
+      <div className="card shadow-sm">
+        <div className="table-responsive">
+          <table className="table table-hover mb-0">
+            <thead className="table-light">
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Producto</th>
+                <th scope="col">Categoría</th>
+                <th scope="col">Precio</th>
+                <th scope="col" className="text-end">
+                  Acciones
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredProducts.map((product) => (
+                <tr key={product.id}>
+                  <td className="text-secondary">{product.id}</td>
+                  <td>
+                    <div className="d-flex align-items-center">
+                      {product.image && (
+                        <div className="me-3" style={{ width: "40px", height: "40px" }}>
+                          <img
+                            className="img-fluid rounded"
+                            src={product.image || "/placeholder.svg"}
+                            alt={product.name}
+                            style={{ width: "40px", height: "40px", objectFit: "cover" }}
+                          />
+                        </div>
+                      )}
+                      <div className="fw-medium">{product.name}</div>
+                    </div>
+                  </td>
+                  <td className="text-secondary">{product.category}</td>
+                  <td className="text-secondary">{formatCurrency(product.price)}</td>
+                  <td className="text-end">
+                    <button className="btn btn-sm btn-outline-primary me-2">
+                      <i className="fas fa-edit"></i>
+                    </button>
+                    <button className="btn btn-sm btn-outline-danger">
+                      <i className="fas fa-trash-alt"></i>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-  );
+  )
 }

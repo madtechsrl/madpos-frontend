@@ -1,5 +1,5 @@
 import { useAuth } from "../contexts/auth-context"
-import ProductManagement from "../components/productos/Product-Management"
+import {ProductManagementAdvanced }from "../components/productos/Product-Management-adv"
 import Sidebar from "../components/layout/sidebar"
 import { ROLES } from "../types/roles"
 import { Header } from "../components/layout/header"
@@ -17,7 +17,7 @@ export default function ProductosPage() {
             <Sidebar />
             <div className="flex-grow-1  p-4" style={{transition: "margin-left 0.3s ease"}}>
                <Header title=""  /> 
-              <ProductManagement/>                     
+              <ProductManagementAdvanced/>                     
             </div>
           </div>
         </div>
