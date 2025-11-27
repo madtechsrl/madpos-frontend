@@ -28,6 +28,7 @@ const Configuraciones = lazy(() => import("./pages/configuraciones"))
 const ClientsList = lazy(() => import("./pages/clients-layout"))
 const ProductEditForm = lazy(() => import("./pages/edit-product"))
 const ClientRegistrationForm = lazy(() => import("./pages/client-register"))
+const MaintenancePage = lazy(()=>import("./pages/matenimientoP"))
 
 // const NotFoundPage = lazy(() => import("./pages/not-found"))
 
@@ -51,6 +52,7 @@ function App() {
               <Route path="/clientes" element={<ClientsList />} />
               <Route path="/productos/:productId/editar" element={<ProductEditForm />} />             
               <Route path="/client-registration" element={<ClientRegistrationForm />} />
+              <Route path="/mantenimientoP" element={<MaintenancePage/>} />
                 {/* Protected routes */}
               <Route path="/home" element={<HomePage/>}>             
               <Route index element={<HomePage />} />

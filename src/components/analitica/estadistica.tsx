@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import type { User } from "../../types/User";
 import { useAuth } from "../../contexts/auth-context";
-import  {RoleGuard} from "./role-guard";
+import  {RoleGuard} from "../layout/role-guard";
 import { useAnalytics } from "../../lib/use-analitycs";
 import { fetchUsers } from "../../services/user-service";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";

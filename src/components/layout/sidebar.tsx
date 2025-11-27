@@ -35,13 +35,13 @@ const menuItems = [
     ROLES: [ROLES.ADMIN, ROLES.CASHIER, ROLES.MANAGER],
     tooltip: "Productos",
   },
-  // {
-  //   href: "/catalogo",
-  //   icon: "fa-list",
-  //   label: "Catálogo",
-  //   ROLES: [ROLES.ADMIN, ROLES.CAJERO],
-  //   tooltip: "Catálogo",
-  // },
+  {
+    href: "/mantenimientoP",
+    icon: "fa-list",
+    label: "Catálogo",
+    ROLES: [ROLES.ADMIN],
+    tooltip: "Catálogo",
+  },
   {
     href: "/clientes",
     icon: "fa-users",

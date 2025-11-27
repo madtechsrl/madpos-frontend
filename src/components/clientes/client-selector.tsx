@@ -29,6 +29,7 @@ export function ClientSelector({ selectedClient, onClientSelect, onNewClient }: 
     status: "Activo" as const,
     identificationNumber: 0,
     fiscalCode: 0,
+    taxId:"",
     isActive: true,
     createAt: new Date().toISOString(),
     lastPurchase:0,
@@ -81,6 +82,7 @@ export function ClientSelector({ selectedClient, onClientSelect, onNewClient }: 
     (client) =>
       client.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.taxId.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.phone?.includes(searchQuery),
   )
 

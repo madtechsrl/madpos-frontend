@@ -10,8 +10,7 @@ export default function ClientLayout() {
 
   return (
     <>   
-      {isAdmin && ( 
-        <div>          
+      {isAdmin && (               
                
           <div className="d-flex flex-grow-1 overflow-hidden">
             <Sidebar />
@@ -20,7 +19,7 @@ export default function ClientLayout() {
               <ClientManagement/>                     
             </div>
           </div>
-        </div>
+        
       )}
     
     </>
