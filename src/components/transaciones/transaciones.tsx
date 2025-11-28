@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { RoleGuard } from "../analitica/role-guard"
+import { RoleGuard } from "../layout/role-guard"
 import { useTransactions } from "../../lib/use-transacion"
 import { useAuth } from "../../contexts/auth-context"
 import {  type Transaction } from "../../types/transacion"

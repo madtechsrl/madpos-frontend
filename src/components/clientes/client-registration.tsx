@@ -5,6 +5,7 @@ import type { Client,  CreateClientRequest } from "../../types/Client"
 import { useAuth } from "../../contexts/auth-context"
 import { ROLES } from "../../types/roles"
 import { createClient } from "../../services/client-service"
+import logger from "../../lib/logger"
 
 interface ClientManagementProps {
   compact?: boolean;
@@ -52,23 +53,17 @@ export  function ClientRegistrationForm({compact = false}: ClientManagementProps
        setCurrentClient({ ...currentClient, isActive: value === "true" });
        }else{
         setCurrentClient({ ...currentClient, [name]: value } as Client);
-        } 
- 
-     
+        }      
    };
-
-
- 
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("🔄 Submitting form");
+      logger.debug({currentClient}, "subminting client")
       if(!currentClient) return;
       console.warn("⚠️ currentClient is null");
       try {
         const newClient = await createClient(currentClient);
-        console.log("✅ Client created:", newClient);
+        logger.info({newClient}, "Client created");
         if(!newClient) throw new Error(" no puedo crear Cliente")
         setClients((prev)=>[...prev, newClient])
         setSavedClients(newClient);

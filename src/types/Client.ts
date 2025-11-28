@@ -11,6 +11,7 @@ export type Client = {
   status: "Activo" | "Inactivo" | "Suspendido"
   identificationNumber?: number;
   fiscalCode?: number;
+  taxId: string;
   isActive?: boolean;
   createAt: string;
   lastPurchase?:number;

@@ -114,8 +114,10 @@ export function CartSidebar() {
           {/* Client Info Display */}
           {state.selectedClient && (
             <div className="mt-2 p-2 bg-light rounded small">
-              <div className="text-muted">Email: {state.selectedClient.email}</div>
+              <div className="text fw-bold " style={{}}>Nombre: {state.selectedClient.firstName} {state.selectedClient.lastName}</div>
               <div className="text-muted">Tel: {state.selectedClient.phone}</div>
+              <div className="fas fa-file-invoice me-1" style={{}}>RNC: {state.selectedClient.fiscalCode}</div>
+              
               {state.selectedClient.currentBalance > 0 && (
                 <div className="text-warning">Balance: {formatCurrency(state.selectedClient.currentBalance)}</div>
               )}

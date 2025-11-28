@@ -10,8 +10,7 @@ export default function ClientRegister() {
 
   return (
     <>   
-      {isAdmin && ( 
-        <div>          
+      {isAdmin && (                 
                 
           <div className="d-flex flex-grow-1 overflow-hidden">
             <Sidebar />
@@ -20,7 +19,7 @@ export default function ClientRegister() {
               <ClientRegistrationForm/>                     
             </div>
           </div>
-        </div>
+        
       )}
     
     </>

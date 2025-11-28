@@ -31,7 +31,7 @@ export async function createAdvancedProduct(
     id: `prod${Date.now()}`,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    createdBy: "1",   
+    
   }
  
   return newProduct

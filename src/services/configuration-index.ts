@@ -12,4 +12,4 @@ export type { BusinessConfiguration, ConfigurationUpdateRequest, ApiError } from
 
 // Export individual services if needed
 export { default as RealConfigurationService } from "./configuration.service"
-export { default as MockConfigurationService } from "./mock-configuration.service"
+export { default as MockConfigurationService } from "./invoice-service"
