@@ -62,7 +62,8 @@ try {
   address: input.address,
   identificationNumber: input.identificationNumber,
   fiscalCode: input.fiscalCode,
-  isActive: true,
+  isActive: input.isActive,
+
  
 }
 
