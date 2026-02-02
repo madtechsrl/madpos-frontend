@@ -7,6 +7,8 @@ import { UserProvider } from "./contexts/user-context"
 import Loading from "./loading"
 import NotFoundPage from "./not-found"
 import LoginPage  from "./pages/login"
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 
 
@@ -65,6 +67,17 @@ function App() {
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>
+          <>
+           <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            closeOnClick
+            pauseOnHover
+            draggable
+            theme="colored"
+            />
+          </>
         </AppProvider>
         </UserProvider>
        

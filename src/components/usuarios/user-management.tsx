@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 import { AxiosError, isAxiosError } from "axios";
+import { toast } from "react-toastify";
 
 
 
@@ -96,7 +97,7 @@ useEffect(() => {
       return;
     }
 
-    if (!hasPermission(ROLES.ADMIN)) {
+    if (!hasPermission(ROLES.ADMIN) && !hasPermission(ROLES.MANAGER)) {
       console.log("UserManagement: Usuario sin rol ADMIN", { role: user?.role });
       setError("Acceso denegado: se requiere rol de administrador");
       setIsLoading(false);
@@ -231,22 +232,29 @@ const filteredUsers = Array.isArray(users)
 
 
 const handleDeleteUser = async (id: string) => {
-  if(window.confirm("¿Estás seguro de querer eliminar este usuario?")){
-    try{
-      const result = await deleteUser(id);
-      if(result){
-      setUsers(users.filter(user => user.id !== id));
-      setShowModal(false);
-      } else {
-        throw new Error(result || "No se pudo eliminar el usuario. Intenta de nuevo.");
-      }
-    } catch (err: unknown) {
-     if(err instanceof AxiosError){
-      console.error("Axios Error al eliminar usuario:", err.response?.status, err.response?.data);
-     }
+  if (!window.confirm("¿Estás seguro de querer eliminar este usuario?")) return;
+
+  try {
+    await deleteUser(id);
+
+    setUsers((prev) => prev.filter((user) => user.id !== id));
+    setShowModal(false);
+
+    toast.success("🗑️ Usuario eliminado correctamente");
+  } catch (err: unknown) {
+    if (err instanceof AxiosError) {
+      const msg =
+        err.response?.data?.message ?? "Error al eliminar el usuario";
+      toast.error(`❌ ${msg}`);
+      console.error("Axios Error al eliminar usuario:", err.response?.data);
+    } else if (err instanceof Error) {
+      toast.error(`❌ ${err.message}`);
+    } else {
+      toast.error("❌ Error desconocido al eliminar el usuario");
     }
   }
-}
+};
+
 
 
 
@@ -254,6 +262,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
     if(!currentUser) return;
   try {
+    //editar usuario
     if(currentUser.id){
       const updatedUser = await updateUser(currentUser.id, {
       fullname: currentUser.fullname,
@@ -264,7 +273,8 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     if(!updatedUser) throw new Error(" no puedo actualizar el usuario. Intenta de Nuevo")
       setUsers((prev)=> prev.map((u)=>(u.id === currentUser.id ? updatedUser : u)));
-
+      setShowModal(false);
+      toast.success(`Usuario "${currentUser.fullname}" actualizado correctamente`)
     }else{
       //Crear usuario
       const newUser = await createUser({
@@ -276,6 +286,8 @@ const handleSubmit = async (e: React.FormEvent) => {
       });
       if(!newUser) throw new Error(" no puedo crear usuario")
       setUsers((prev)=>[...prev, newUser])
+      setShowModal(false);
+      toast.success(`Usuario "${newUser.fullname}" creado correctamente`)
        }    
   } catch (err) {
      if (err instanceof AxiosError) {
@@ -558,11 +570,11 @@ const userCounts = {
                     />
                   </div>
                   <div className="mb-3">
-                    <label htmlFor="email" className="form-label">
+                    <label htmlFor="email_add" className="form-label">
                       Correo electrónico
                     </label>
                     <input
-                      type="email"
+                      type="email_add"
                       className="form-control"
                       id="email"
                       name="email"
@@ -572,11 +584,11 @@ const userCounts = {
                     />
                   </div>
                   <div className="mb-3">
-                    <label htmlFor="password" className="form-label">                      
-                      Telefono
+                    <label htmlFor="password_add" className="form-label">                      
+                      Contraseña
                     </label>
                     <input
-                      type="password"
+                      type="password_add"
                       className="form-control"
                       id="password"
                       name="password"
@@ -597,28 +609,28 @@ const userCounts = {
                       onChange={handleInputChange}
                       required
                     >
-                      <option value="">Escoje Rol</option>
-                      <option value="Cajero">Cajero</option>
-                      <option value="Administrator">Administrador</option>
-                      <option value="Propietario">Manager</option>
-                     
+                     <option value="">Seleccione Rol</option>
+                    <option value={ROLES.CASHIER}>Cajero</option>
+                    <option value={ROLES.ADMIN}>Administrador</option>
+                    <option value={ROLES.MANAGER}>Propietario</option>
+                        
                     </select>
                   </div>
            
                   <div className="mb-3">
-                    <label htmlFor="status" className="form-label">
+                    <label htmlFor="enabled_add" className="form-label">
                       Estado
                     </label>
                     <select
                       className="form-select"
-                      id="status"
-                      name="status"
-                      value={currentUser?.enabled ? "Activo" : "Inactivo"}
+                      id="enabled_add"
+                      name="enabled"
+                      value={currentUser?.enabled ? "true" : "false"}
                       onChange={handleInputChange}
                       required
                     >
-                      <option value="Activo">Activo</option>
-                      <option value="Inactivo">Inactivo</option>
+                      <option value="true">Activo</option>
+                      <option value="false">Inactivo</option>
                     </select>
                   </div>
                 </div>
@@ -672,6 +684,21 @@ const userCounts = {
               />
             </div>
 
+              <div className="mb-3">
+              <label htmlFor="password_edit" className="form-label">Contraseña (dejar en blanco para no cambiar)</label>
+              <input
+                type="password_edit"
+                className="form-control"
+                id="password_edit"
+                name="password_edit"
+                value={currentUser.password ?? ""}
+                onChange={handleInputChange}
+                required={false}
+                placeholder="Opcional"
+              />
+            </div>
+              
+
             <div className="mb-3">
               <label htmlFor="role_edit" className="form-label">Rol</label>
               <select
@@ -689,19 +716,7 @@ const userCounts = {
               </select>
             </div>
 
-            <div className="mb-3">
-              <label htmlFor="password_edit" className="form-label">Contraseña (dejar en blanco para no cambiar)</label>
-              <input
-                type="password"
-                className="form-control"
-                id="password_edit"
-                name="password"
-                value={currentUser.password ?? ""}
-                onChange={handleInputChange}
-                required={false}
-                placeholder="Opcional"
-              />
-            </div>
+          
 
             <div className="mb-3">
               <label htmlFor="enabled_edit" className="form-label">Estado</label>
