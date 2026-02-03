@@ -51,7 +51,6 @@ type AuthContextType = {
   auth: AuthState;
   setAuth: React.Dispatch<React.SetStateAction<AuthState>>;
   setToken: (token: string | null) => void;
-
   loginUser: (email: string, password: string) => void;
   register: (
     fullname: string,
@@ -265,16 +264,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Permisos
-  const hasPermission = (requireRole: RoleUuid | RoleUuid[]): boolean => {
-    const current = user?.role ? normalizeRoleUuid(user.role) : null;
-    if (!current) return false;
-    return Array.isArray(requireRole)
-      ? requireRole.includes(current)
-      : current === requireRole;
-  };
 
-  return (
+function normalizeRequiredRoles(input: RoleUuid | RoleUuid[] | RoleKey | RoleKey[]): RoleUuid[] {
+  const arr = Array.isArray(input) ? input : [input];
+
+  return arr.map((r) => {
+    // r puede ser uuid o key; normalizeRoleUuid lo resuelve
+    return normalizeRoleUuid(String(r));
+  });
+}
+
+
+  // Permisos
+const hasPermission = (requiredRole: RoleUuid | RoleUuid[] | RoleKey | RoleKey[]): boolean => {
+  const current = user?.role ? normalizeRoleUuid(String(user.role)) : null;
+  if (!current) return false;
+
+  const requiredUuids = normalizeRequiredRoles(requiredRole);
+  return requiredUuids.includes(current);
+};
+
+
+
+ return (
     <AuthContext.Provider
       value={{
         auth,

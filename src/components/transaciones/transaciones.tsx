@@ -1,18 +1,16 @@
 import { useState } from "react"
-import { RoleGuard } from "../layout/role-guard"
+import { RoleGuard } from "../auth/role-guard"
 import { useTransactions } from "../../lib/use-transacion"
-import { useAuth } from "../../contexts/auth-context"
 import {  type Transaction } from "../../types/transacion"
 import { TransactionFiltersComponent } from "./transaction-filters"
 import { TransactionSummaryComponent } from "./transaction-summary"
-import { ROLES, type RoleUuid } from "../../types/roles"
+import { ROLES, } from "../../types/roles"
 
 
 export default function TransactionsPage() {
-  const { user } = useAuth()
   const { transactions, summary, loading, error, filters, updateFilters, updateTransactionStatus } = useTransactions()
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
-  const currentUserRole = (user?.role as RoleUuid) ?? ROLES.ADMIN;
+  // const currentUserRole : RoleUuid = (user?.role ?? ROLES.ADMIN) as RoleUuid ;
 
 
 
@@ -111,8 +109,8 @@ export default function TransactionsPage() {
 
   return (
     <RoleGuard
-      allowedRoles={[ROLES.ADMIN, ROLES.CASHIER]}
-      currentUserRole={currentUserRole}
+      allowedRoles={[ROLES.ADMIN, ROLES.MANAGER]}
+      // currentUserRole={currentUserRole}
     >
       <div className="container py-4">
         {/* <Header title="Transacciones" /> */}

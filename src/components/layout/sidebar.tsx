@@ -79,14 +79,14 @@ const menuItems = [
     href: "/user",
     icon: "fa-user-cog",
     label: "Gestión Usuarios",
-    ROLES: [ROLES.ADMIN],
+    ROLES: [ROLES.ADMIN, ROLES.MANAGER],
     tooltip: "Gestión Usuarios",
   },
   {
     href: "/configuraciones",
     icon: "fa-cog",
     label: "Configuracione",
-    ROLES: [ROLES.ADMIN],
+    ROLES: [ROLES.ADMIN, ROLES.MANAGER],
     tooltip: "Configuraciones",
   },
 ]

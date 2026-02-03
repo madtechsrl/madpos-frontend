@@ -24,6 +24,21 @@ function toUpperSafe(s: string): RoleKey | null {
     : null;
 }
 
+export type UserRole = RoleKey | RoleUuid;
+
+export function isRoleUuid(v: string): v is RoleUuid {
+  return (Object.values(ROLES) as string[]).includes(v);
+}
+
+export function toRoleUuid(input: UserRole): RoleUuid {
+  if (typeof input !== "string") return ROLES.CASHIER;
+  // si ya es UUID, devuélvelo
+  if (isRoleUuid(input)) return input;
+  // si es key, mapea a uuid
+  return mapRoleToUuid(input as RoleKey) as RoleUuid;
+}
+
+
 /** Overloads 100% tipados */
 export function mapRoleToUuid(input: RoleKey): RoleUuid;
 export function mapRoleToUuid(input: string): string;

@@ -1,17 +1,19 @@
 
-import { useAuth } from "../contexts/auth-context"
+// import { useAuth } from "../contexts/auth-context"
 import { Header } from "../components/layout/header"
 import UserManagement from "../components/usuarios/user-management"
 import Sidebar from "../components/layout/sidebar"
+import { RoleGuard } from "../components/auth/role-guard"
 import { ROLES } from "../types/roles"
+// import { ROLES } from "../types/roles"
 
 export default function UserPage() {
-  const { hasPermission } = useAuth()
-  const isAdmin = hasPermission(ROLES.ADMIN)
+  // const { hasPermission } = useAuth()
+  // const isAdmin = hasPermission([ROLES.ADMIN, ROLES.MANAGER])
 
   return (
     <>   
-      {isAdmin && ( 
+          <RoleGuard allowedRoles={[ROLES.ADMIN, ROLES.MANAGER]}>
         <div>                
           <div className="d-flex flex-grow-1 overflow-hidden">
             <Sidebar />
@@ -21,7 +23,7 @@ export default function UserPage() {
             </div>
           </div>
         </div>
-      )}
+      </RoleGuard>
     
     </>
   )

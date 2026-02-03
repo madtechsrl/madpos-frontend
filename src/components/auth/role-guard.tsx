@@ -2,35 +2,33 @@
 
 import { useAuth } from "../../contexts/auth-context"
 import { useNavigate } from "react-router-dom"
-import { useEffect, useState, type ReactNode } from "react"
-import { UserRole } from "../../types/roles"
+import { useEffect,  type ReactNode } from "react"
+import { type RoleUuid } from "../../types/roles"
 
 type RoleGuardProps = {
   children: ReactNode
-  allowedRoles: UserRole | UserRole[]
+  allowedRoles: RoleUuid | RoleUuid[];
   fallback?: ReactNode
 }
 
 export function RoleGuard({ children, allowedRoles, fallback }: RoleGuardProps) {
   const { hasPermission, isAuthenticated, isLoading } = useAuth()
   const navigate = useNavigate()
-  const [isPreview, setIsPreview] = useState(false)
-
-  // Check if we're in a preview environment
-//   useEffect(() => {
-//     setIsPreview(isPreviewEnvironment())
-//   }, [])
+ 
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && !isPreview) {
-      navigate("/")
+    if (!isLoading && !isAuthenticated ) {
+      navigate("/",{replace: true})
     }
-  }, [isLoading, isAuthenticated, navigate, isPreview])
+  }, [isLoading, isAuthenticated, navigate])
 
-  // In preview environment, always render children
-  if (isPreview) {
-    return <>{children}</>
-  }
+  // Convierte RoleKey -> RoleUuid para cumplir el tipo que espera hasPermission
+  // const toUuid = (k: RoleKey): RoleUuid => ROLES[k]
+
+  // const allowedUuids: RoleUuid | RoleUuid[] = Array.isArray(allowedRoles)
+  //   ? allowedRoles.map(toUuid)
+  //   : toUuid(allowedRoles)
+
 
   if (isLoading) {
     return (
@@ -42,14 +40,10 @@ export function RoleGuard({ children, allowedRoles, fallback }: RoleGuardProps) 
     )
   }
 
-  if (!isAuthenticated) {
-    return null // Will redirect in the useEffect
-  }
+  if (!isAuthenticated) return null
 
   if (!hasPermission(allowedRoles)) {
-    if (fallback) {
-      return <>{fallback}</>
-    }
+    if (fallback) return <>{fallback}</>
 
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-100">

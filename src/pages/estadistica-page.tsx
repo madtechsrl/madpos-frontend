@@ -7,7 +7,7 @@ import { Header } from "../components/layout/header"
 
 export default function EstadisticaPage() {
   const { hasPermission } = useAuth()
-  const isAdmin = hasPermission(ROLES.ADMIN)
+  const isAdmin = hasPermission([ROLES.ADMIN, ROLES.MANAGER, ROLES.CASHIER])
 
   return (
     <>   
