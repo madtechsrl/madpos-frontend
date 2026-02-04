@@ -7,10 +7,11 @@ import type { User } from "../../types/User";
 import { mapRoleToUuid, mapUuidToRoleName, ROLES , type RoleKey, type RoleUuid } from "../../types/roles";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faEdit, faPlus, faTrash, faShield } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 import { AxiosError, isAxiosError } from "axios";
 import { toast } from "react-toastify";
+import { PermissionsManagement } from "./permisos-management";
 
 
 
@@ -80,6 +81,7 @@ export default function UserManagement({ compact = false }: UserManagementProps)
   const [users, setUsers] = useState<NormalizedUser[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showPermissionsModal, setShowPermissionsModal] = useState(false)
   const [activeTab, setActiveTab] = useState<RoleTab>("all");
   const [error, setError] = useState<string | null>(null);
   const [isloading, setIsLoading] = useState(true);
@@ -329,16 +331,21 @@ const userCounts = {
   return (
     <div className="container-fluid px-0">
       {!compact && (        
-        <div className="d-flex justify-content-lg-between align-items-center mb-4 py-3">
+        <div className="d-flex justify-content-lg-between align-items-center mb-4 py-3 gap-2">
           <div>
           {/* <h2 className="fs-4 fw-semibold mb-1">Usuarios del Sistema</h2> */}
           <p className="text-secondary">
             Gestiona los usuarios del sistema y sus niveles de acceso. Cada rol tiene diferentes permisos y capacidades.
           </p>
-        </div>
+        </div>       
+        
+          {/* <h2 className="fs-4 fw-semibold mb-1">asdf</h2> */}
+          <button className="btn btn-danger d-flex  justify-constent-center align-items-center px-4 py-2 flex-fill"  style = {{minWidth:"180px"}} onClick={() => setShowPermissionsModal(true)}>
+        <i><FontAwesomeIcon icon={faShield} /></i>
+        <span>Gestionar Permisos</span>
+      </button>
 
-          <h2 className="fs-4 fw-semibold mb-1"></h2>
-          <button className="btn btn-success d-flex align-items-center gap-2 p-2" onClick={handleAddUser} disabled={isloading}>
+          <button className="btn btn-success d-flex align-items-center gap-2  px-4 py-2 flex-fill" style = {{minWidth:"180px"}} onClick={handleAddUser} disabled={isloading}>
             <i><FontAwesomeIcon icon={faPlus} /></i>
             <span>Añadir Usuario</span>
           </button>        
@@ -536,10 +543,51 @@ const userCounts = {
             </div>
           );
         })}
+        
       </div>
 
-      {/* User Modal */}
-          
+      {/* User Modal permisos a usuarios */}
+      {showPermissionsModal && (
+  <div
+    className="modal d-block"
+    tabIndex={-1}
+    style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+  >
+    <div className="modal-dialog modal-xl"> {/* XL para tener más espacio */}
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title d-flex align-items-center gap-2">
+            <FontAwesomeIcon icon={faShield} />
+            Gestión de Permisos
+          </h5>
+          <button
+            type="button"
+            className="btn-close"
+            onClick={() => setShowPermissionsModal(false)}
+            aria-label="Close"
+          />
+        </div>
+
+        <div className="modal-body">
+          {/* Render directo del componente de permisos */}
+          <PermissionsManagement />
+        </div>
+
+        <div className="modal-footer">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setShowPermissionsModal(false)}
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+           {/* User Modal  anadir y editar usuarios*/}
       {showModal && modalMode === "anadir" &&  (
         <div key= {modalMode} className="modal d-block" tabIndex={-1} style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog">
