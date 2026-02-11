@@ -1,5 +1,3 @@
-"use client"
-
 import { useCart } from "../../contexts/cart-context"
 import { formatCurrency } from "../../lib/utils"
 

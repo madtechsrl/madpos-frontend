@@ -12,11 +12,6 @@ import "react-toastify/dist/ReactToastify.css";
 
 
 
-
-
-
-
-
 // Lazy load pages
 // const LoginPage = lazy(() => import("./pages/login"))
 // const DashboardLayout = lazy(() => import("./pages/dashboard-layout"))

@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import type { Packaging } from "../../types/products"
 import {

@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import type { Brand } from "../../types/products"
 import { fetchBrands, createBrand, updateBrand, deleteBrand } from "../../services/brand-service"

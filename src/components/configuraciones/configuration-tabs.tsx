@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { GeneralSettings } from "../configuraciones/general-settings"
 import { ReceiptSettings } from "./recibo-setting"

@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 // import { Plus, Search, Edit, Trash2, Truck, Mail, Phone } from "lucide-react"

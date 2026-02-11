@@ -1,5 +1,3 @@
-"use client"
-
 import { useAuth} from "../../contexts/auth-context"
 import { useNavigate } from "react-router-dom"
 import { useEffect, type ReactNode } from "react"

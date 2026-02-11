@@ -14,7 +14,7 @@ export default function HomePage() {
 
   return (
     <>
-    <RoleGuard allowedRoles={[ROLES.ADMIN, ROLES.MANAGER]}>          
+    <RoleGuard allowedRoles={[ROLES.ADMIN, ROLES.MANAGER, ROLES.CASHIER]}>          
       <div className="d-flex flex-grow-1 overflow-hidden">
         <Sidebar />
         <div className="flex-grow-1  p-4" style={{transition: "margin-left 0.3s ease"}}>

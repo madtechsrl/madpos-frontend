@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { transactionsApi } from "../lib/mock-api-transaciones"
 import type { Transaction, TransactionSummary, TransactionFilters } from "../types/transacion"

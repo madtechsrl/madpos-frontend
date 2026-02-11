@@ -1,5 +1,3 @@
-"use client"
-
 import type { TransactionSummary } from "../../types/transacion"
 
 interface TransactionSummaryProps {

@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 // import { Plus, Search, Edit, Trash2, Tag } from "lucide-react"
 import type { Category } from "../../types/products"

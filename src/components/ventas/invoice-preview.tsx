@@ -1,5 +1,3 @@
-"use client"
-
 import { formatCurrency } from "../../lib/utils"
 import type { Invoice } from "../../types/invoice"
 

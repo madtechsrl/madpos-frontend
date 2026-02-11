@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState, useEffect } from "react"
 import type { Product, Category, Brand, Supplier, Warehouse } from "../../types/products"

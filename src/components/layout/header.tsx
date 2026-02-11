@@ -10,7 +10,7 @@ type HeaderProps = {
 
 const roleDisplayNames = {
   [ROLES.ADMIN]: "Administrador",
-  [ROLES.CASHIER]: "Usuario",
+  [ROLES.CASHIER]: "Cajero",
   [ROLES.MANAGER]: "Propietario",
  
 }

@@ -1,5 +1,3 @@
-"use client"
-
 import { createContext, useState, useEffect, type ReactNode } from "react"
 import { fetchProducts } from "../services/product-service"
 

@@ -1,8 +1,4 @@
-"use client"
-
 import {useState, useEffect} from "react"
-
-
 import type { Product, Packaging } from "../../types/products"
 import { fetchPackagingsByProduct, createPackaging, updatePackaging, deletePackaging } from "../../services/packaging-service"
 

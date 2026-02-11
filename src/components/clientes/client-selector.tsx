@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { fetchClients, searchClients } from "../../services/client-service"
 import type { Client } from "../../types/Client"

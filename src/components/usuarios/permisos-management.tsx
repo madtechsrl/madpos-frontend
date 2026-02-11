@@ -1,5 +1,3 @@
-"use client"
-
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import {
@@ -27,9 +25,11 @@ import {
   permissionMetadata,
   categoryMetadata,
   getPermissionsByCategory,
+  roleHasPermission,
   type RolePermissions,
 } from "../../services/persmission-service"
 import { ROLES, type RoleUuid } from "../../types/roles"
+import { useAuth } from "../../contexts/auth-context"
 
 // Category icon map
 const categoryIcons: Record<PermissionCategory, React.ReactNode> = {
@@ -81,6 +81,17 @@ export function PermissionsManagement() {
       setIsLoading(false)
     }
   }
+
+function PermisosRoute(){
+  const { user } = useAuth() as any
+  const roleId = user.roleId;
+  
+  const allowwed = roleHasPermission(roleId, Permission.USUARIOS_PERMISOS);
+  if(!allowwed) return<div>No Autorizado</div>
+
+  return <PermissionsManagement/>
+  
+}
 
   const getRoleName = (roleId: RoleUuid): string => {
     switch (roleId) {
@@ -142,6 +153,10 @@ export function PermissionsManagement() {
       return next
     })
   }
+
+
+
+
 
   const handleSave = async () => {
     setIsSaving(true)

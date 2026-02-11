@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { useProducts } from "../../contexts/product-context"
 import{ formatCurrency}  from "../../lib/utils"
