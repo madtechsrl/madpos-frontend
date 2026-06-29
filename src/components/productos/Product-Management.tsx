@@ -1,170 +1,165 @@
-import { useState } from "react"
-import { useProducts } from "../../contexts/product-context"
-import{ formatCurrency}  from "../../lib/utils"
+import { useEffect, useMemo, useState } from "react"
+import { Link } from "react-router-dom"
+import {
+  deactivateProduct,
+  fetchManagedProducts,
+  type ManagedProduct,
+} from "../../services/product-service"
 
-export function ProductManagement() {
-  const { products, loading, error } = useProducts()
-  const [searchTerm, setSearchTerm] = useState("")
+const money = (value: number) =>
+  new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP" }).format(value)
 
+export default function ProductManagement() {
+  const [products, setProducts] = useState<ManagedProduct[]>([])
+  const [search, setSearch] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [message, setMessage] = useState("")
 
-
-
- const totalValue = products.reduce((sum, p) => sum + (p.price || 0) * (p.stock || 0), 0);
-  const totalCost = products.reduce((sum, p) => sum + (p.cost || 0) * (p.stock || 0), 0);
-  const estimatedProfit = totalValue - totalCost;
-  const lowStockCount = products.filter((p) => (p.stock || 0) <= (p.minStock || 5)).length;
-  const outOfStockCount = products.filter((product) => product.stock === 0).length;
-  const inStockSummary = products.reduce((sum, p)=> sum + ((p.stock || 0)> 0 ? p.stock! : 0), 0)
-  const inStockItems = products.filter((p) => (p.stock || 0) > 0).length;
-
-
-
-
-
-
-  const filteredProducts = products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
-
-  if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: "250px" }}>
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Cargando...</span>
-        </div>
-        <p className="ms-2 mb-0">Cargando productos...</p>
-      </div>
-    )
+  const load = async () => {
+    try {
+      setLoading(true)
+      setProducts(await fetchManagedProducts())
+    } catch (error: any) {
+      setMessage(error.response?.data?.message || "No fue posible cargar los productos.")
+    } finally {
+      setLoading(false)
+    }
   }
 
-  if (error) {
-    return (
-      <div className="alert alert-danger" role="alert">
-        <strong>Error: </strong>
-        <span>{error}</span>
-      </div>
+  useEffect(() => {
+    void load()
+  }, [])
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    if (!term) return products
+    return products.filter((product) =>
+      `${product.name} ${product.sku} ${product.brand?.name || ""} ${product.category?.name || ""}`
+        .toLowerCase()
+        .includes(term),
     )
+  }, [products, search])
+
+  const deactivate = async (product: ManagedProduct) => {
+    if (!window.confirm(`¿Desactivar el producto "${product.name}"?`)) return
+    try {
+      await deactivateProduct(product.id)
+      setMessage("Producto desactivado. Su historial permanece disponible.")
+      await load()
+    } catch (error: any) {
+      setMessage(error.response?.data?.message || "No fue posible desactivar el producto.")
+    }
   }
 
   return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fs-4 fw-semibold">Gestión de Productos</h2>
-        <button className="btn btn-success d-flex align-items-center gap-2">
-          <i className="fas fa-plus"></i>
-          <span>Añadir Producto</span>
-        </button>
-      </div>
-
-      <div className="mb-4 position-relative">
-        <div className="input-group">
-          <span className="input-group-text bg-white">
-            <i className="fas fa-search"></i>
-          </span>
-          <input
-            type="text"
-            placeholder="Buscar productos..."
-            className="form-control"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
-       {/* Stats */}
-      <div className="row g-3 mb-4">
-        <div className="col-md">
-          <div className="card p-3">
-            <div className="h5 text-success">{formatCurrency(totalValue)}</div>
-            <small>Valor en stock</small>
-          </div>
-        </div>
-        <div className="col-md">
-          <div className="card p-3">
-            <div className="h5 text-primary">{formatCurrency(totalCost)}</div>
-            <small>Costo de stock</small>
-          </div>
-        </div>
-        <div className="col-md">
-          <div className="card p-3">
-            <div className="h5 text-purple">{formatCurrency(estimatedProfit)}</div>
-            <small>Ganancia estimada</small>
-          </div>
-        </div>
-        <div className="col-md">
-          <div className="card p-3 d-flex align-items-center">
-            <span className="badge bg-warning me-2">{lowStockCount}</span>
-            <small>Stock bajo</small>
-          </div>
-        </div>
-          <div className="col-md">
-          <div className="card p-3 d-flex align-items-center">
-            <span className="badge bg-warning me-2">{inStockItems}</span>
-            <small>Cant de Productos</small>
-          </div>
-        </div>
-        <div className="col-md">
-          <div className="card p-3 d-flex justify-content-between">
-            <div>
-              <span className="badge bg-danger me-2">{outOfStockCount}</span>
-              <span className="badge bg-success">{inStockSummary}</span>
-            </div>
-            <small>Sin stock / En stock</small>
-          </div>
-        </div>
-      </div>
-
-
-
+    <div className="container-fluid">
+      {message && <div className="alert alert-info">{message}</div>}
       <div className="card shadow-sm">
-        <div className="table-responsive">
-          <table className="table table-hover mb-0">
-            <thead className="table-light">
-              <tr>
-                <th scope="col">ID</th>
-                <th scope="col">Producto</th>
-                <th scope="col">Categoría</th>
-                <th scope="col">Precio</th>
-                <th scope="col" className="text-end">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProducts.map((product) => (
-                <tr key={product.id}>
-                  <td className="text-secondary">{product.id}</td>
-                  <td>
-                    <div className="d-flex align-items-center">
-                      {product.image && (
-                        <div className="me-3" style={{ width: "40px", height: "40px" }}>
-                          <img
-                            className="img-fluid rounded"
-                            src={product.image || "/placeholder.svg"}
-                            alt={product.name}
-                            style={{ width: "40px", height: "40px", objectFit: "cover" }}
-                          />
+        <div className="card-body">
+          <div className="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
+            <div>
+              <h4 className="mb-1">Mantenimiento de productos</h4>
+              <div className="text-muted">
+                Cada producto puede venderse en una o varias presentaciones.
+              </div>
+            </div>
+            <Link to="/productos/nuevo" className="btn btn-primary align-self-start">
+              Nuevo producto
+            </Link>
+          </div>
+
+          <input
+            className="form-control mb-3"
+            style={{ maxWidth: 460 }}
+            placeholder="Buscar por nombre, SKU, marca o categoría"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+
+          {loading ? (
+            <div className="py-5 text-center">Cargando productos...</div>
+          ) : (
+            <div className="table-responsive">
+              <table className="table align-middle">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Marca / categoría</th>
+                    <th>Unidad base</th>
+                    <th>Presentaciones</th>
+                    <th>Precios</th>
+                    <th>Estado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((product) => (
+                    <tr key={product.id}>
+                      <td>
+                        <strong>{product.name}</strong>
+                        <div className="small text-muted">{product.sku}</div>
+                      </td>
+                      <td>
+                        {product.brand?.name || "Sin marca"}
+                        <div className="small text-muted">
+                          {product.category?.name || "Sin categoría"}
                         </div>
-                      )}
-                      <div className="fw-medium">{product.name}</div>
-                    </div>
-                  </td>
-                  <td className="text-secondary">{product.category}</td>
-                  <td className="text-secondary">{formatCurrency(product.price)}</td>
-                  <td className="text-end">
-                    <button className="btn btn-sm btn-outline-primary me-2">
-                      <i className="fas fa-edit"></i>
-                    </button>
-                    <button className="btn btn-sm btn-outline-danger">
-                      <i className="fas fa-trash-alt"></i>
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      </td>
+                      <td>{product.baseUom}</td>
+                      <td>
+                        {product.packagings?.length || 0}
+                        <div className="small text-muted">
+                          {product.packagings
+                            ?.slice()
+                            .sort((a, b) => a.factorBase - b.factorBase)
+                            .map((item) => `${item.name} × ${item.factorBase}`)
+                            .join(" · ") || "Sin presentaciones"}
+                        </div>
+                      </td>
+                      <td>
+                        {product.packagings
+                          ?.filter((item) => item.fixedPrice != null)
+                          .map((item) => `${item.name}: ${money(item.fixedPrice || 0)}`)
+                          .join(" · ") || "Sin precios"}
+                      </td>
+                      <td>
+                        <span
+                          className={`badge ${
+                            product.status === "ACTIVE" ? "bg-success" : "bg-secondary"
+                          }`}
+                        >
+                          {product.status === "ACTIVE" ? "Activo" : "Inactivo"}
+                        </span>
+                      </td>
+                      <td className="text-nowrap">
+                        <Link
+                          to={`/productos/${product.id}/editar`}
+                          className="btn btn-sm btn-outline-primary me-2"
+                        >
+                          Editar
+                        </Link>
+                        {product.status === "ACTIVE" && (
+                          <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => void deactivate(product)}
+                          >
+                            Desactivar
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {!filtered.length && (
+                    <tr>
+                      <td colSpan={7} className="py-5 text-center text-muted">
+                        No se encontraron productos.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,3 +1,5 @@
+"use client"
+
 import { useState } from "react"
 import type { TransactionFilters } from "../../types/transacion"
 
@@ -59,22 +61,6 @@ export function TransactionFiltersComponent({ filters, onFiltersChange, onClearF
             </div>
           </div>
 
-          {/* Type Filter */}
-          <div className="col-md-6 col-lg-3">
-            <select
-              className="form-select"
-              value={localFilters.type || "all"}
-              onChange={(e) => handleFilterChange("type", e.target.value || undefined)}
-            >
-              <option value="all">Todos los tipos</option>
-              <option value="sale">Venta</option>
-              <option value="return">Devolución</option>
-              <option value="refund">Reembolso</option>
-              <option value="adjustment">Ajuste</option>
-              <option value="payment">Pago</option>
-            </select>
-          </div>
-
           {/* Status Filter */}
           <div className="col-md-6 col-lg-3">
             <select
@@ -101,9 +87,26 @@ export function TransactionFiltersComponent({ filters, onFiltersChange, onClearF
               <option value="cash">Efectivo</option>
               <option value="card">Tarjeta</option>
               <option value="transfer">Transferencia</option>
-              <option value="check">Cheque</option>
-              <option value="credit">Crédito</option>
+              <option value="other">Otro</option>
             </select>
+          </div>
+          <div className="col-md-6 col-lg-3">
+            <input
+              className="form-control"
+              type="date"
+              value={localFilters.dateFrom || ""}
+              onChange={(e) => handleFilterChange("dateFrom", e.target.value || undefined)}
+              title="Fecha desde"
+            />
+          </div>
+          <div className="col-md-6 col-lg-3">
+            <input
+              className="form-control"
+              type="date"
+              value={localFilters.dateTo || ""}
+              onChange={(e) => handleFilterChange("dateTo", e.target.value || undefined)}
+              title="Fecha hasta"
+            />
           </div>
         </div>
       </div>

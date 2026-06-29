@@ -7,17 +7,16 @@ import { Header } from "../components/layout/header"
 
 export default function EstadisticaPage() {
   const { hasPermission } = useAuth()
-  const isAdmin = hasPermission([ROLES.ADMIN, ROLES.MANAGER, ROLES.CASHIER])
+  const isAdmin = hasPermission(ROLES.ADMIN)
 
   return (
     <>   
       {isAdmin && ( 
         <div>          
-                 
+          <Header title="Estadísticas" />        
           <div className="d-flex flex-grow-1 overflow-hidden">
           <Sidebar />
             <div className="flex-grow-1  p-4" style={{transition: "margin-left 0.3s ease"}}>
-              <Header title="Estadísticas" /> 
               <Estadistica />                     
             </div>
           </div>

@@ -7,7 +7,7 @@ import type {
     SaleRecord,
     SalesHistoryFilters,
   } from "../types/analytics"
-  import { transactionsApi } from "../lib/mock-api-transaciones"
+  import { transactionsApi } from "../lib/transactions-api"
   
   // Helper function to get date range
   const getDateRange = (period: "today" | "yesterday" | "thisWeek" | "thisMonth") => {

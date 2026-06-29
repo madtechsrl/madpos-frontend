@@ -1,13 +1,13 @@
 // StatsPage.tsx (Vite + Bootstrap + FontAwesome)
 import { useState, useEffect } from "react";
-import type { User } from "../../types/User";
 import { useAuth } from "../../contexts/auth-context";
-import  {RoleGuard} from "../layout/role-guard";
+import  {RoleGuard} from "./role-guard";
 import { useAnalytics } from "../../lib/use-analitycs";
 import { fetchUsers } from "../../services/user-service";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronLeft, faChevronRight, faUsers, faSync, faCircle } from "@fortawesome/free-solid-svg-icons";
-import { ROLES, type RoleUuid } from "../../types/roles";
+import type { User } from "../../types/User";
+import { getRoleById, type UserRoleId } from "../../types/User";
 
 export default function StatsPage() {
   const { user } = useAuth();
@@ -16,10 +16,9 @@ export default function StatsPage() {
     fetchUsers().then(setUsers).catch((error) => console.error(error));
   }, []);
   const [selectedUserId, setSelectedUserId] = useState<string>("all");
-  // const [selectedPeriod, setSelectedPeriod] = useState<"hour" | "day" | "week" | "month">("hour");
+  const [selectedPeriod, setSelectedPeriod] = useState<"hour" | "day" | "week" | "month">("hour");
   const [currentDate, setCurrentDate] = useState(new Date());
-  const currentUserRole = (user?.role as RoleUuid) ?? ROLES.ADMIN;
-
+  const currentUserRole = getRoleById(user?.role as UserRoleId)
   const {
     analytics,
     topProducts,
@@ -31,10 +30,6 @@ export default function StatsPage() {
     refetch,
   } = useAnalytics(selectedUserId === "all" ? undefined : selectedUserId);
 
-
-  useEffect(()=>{
-    fetchUsers().then(setUsers).catch(console.error)
-  },[])
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat("es-DO", {
       style: "currency",
@@ -55,47 +50,14 @@ export default function StatsPage() {
     refetch(newDate);
   };
 
-  // const chartData = hourlySales.map((item) => ({
-  //   hour: `${item.hour}h`,
-  //   revenue: item.billing,
-  // }));
-
- if (loading) {
-    return (
-      <RoleGuard allowedRoles={[ROLES.ADMIN, ROLES.MANAGER]}
-      currentUserRole={currentUserRole}
-      >
-        <div className="d-flex justify-content-center align-items-center p-5">
-          <div className="text-center">
-            <div className="spinner-border text-primary mb-3" role="status">
-              <span className="visually-hidden">Cargando estadísticas...</span>
-            </div>
-            <p className="text-muted">Cargando estadísticas...</p>
-          </div>
-        </div>
-      </RoleGuard>
-    )
-  }
-
-  if (error) {
-    return (
-      <RoleGuard allowedRoles={[ROLES.ADMIN, ROLES.MANAGER]}
-      currentUserRole={currentUserRole}
-      >
-        <div className="alert alert-danger m-4">
-          <h4 className="alert-heading">Error</h4>
-          <p>{error}</p>
-          <button className="btn btn-outline-danger" onClick={() => refetch(currentDate)}>
-            Reintentar
-          </button>
-        </div>
-      </RoleGuard>
-    )
-  }
-
+  const chartData = hourlySales.map((item) => ({
+    hour: `${item.hour}h`,
+    revenue: item.billing,
+  }));
+  
   return (
     <RoleGuard
-      allowedRoles={[ ROLES.ADMIN, ROLES.MANAGER]}
+      allowedRoles={["ADMIN", "PROPIETARIO", "ALMACENISTA", "USER"]}
       currentUserRole={currentUserRole}
       fallbackMessage="No tienes permisos para acceder a esta sección."
     >
@@ -120,7 +82,7 @@ export default function StatsPage() {
           </button>
         </div>
 
-        <div className="d-flex align-items-center gap-1">
+        <div className="d-flex align-items-center gap-2">
           <FontAwesomeIcon icon={faUsers} />
           <select
             className="form-select"
@@ -183,43 +145,6 @@ export default function StatsPage() {
                   <td>{formatCurrency(hour.averageTicket)}</td>
                 </tr>
               ))}
-            </tbody>
-          </table>
-          {hourlySales.filter(h => h.sales > 0).length === 0 && (
-            <p className="text-muted text-center">No hay ventas registradas para este día</p>
-          )}
-        </div>
-      </div>
-      {/* Top Products */}
-      <div className="card p-3">
-        <h5>Mejor Producto Vendido</h5>
-        <div className="table-responsive">
-          <table className="table table-sm">
-            <thead>
-              <tr>
-                <th>Hora</th>
-                <th>Facturación</th>
-                <th>Ventas</th>
-                <th>Ticket Medio</th>
-              </tr>
-            </thead>
-            <tbody>
-             {topProducts.map((product, index)=>(
-              <div key={index} className="d-flex justify-content-between align-items-center mb-3">
-                    <div className="flex-grow-1">
-                      <div className="fw-medium">{product.name}</div>
-                      <small className="text-muted">{product.category}</small>
-                      <div className="progress mt-1" style={{ height: "4px" }}>
-                        <div className="progress-bar bg-primary" style={{ width: `${product.percentage}%` }}></div>
-                      </div>
-                    </div>
-                    <div className="text-end ms-3">
-                      <div className="fw-bold">{product.quantity}</div>
-                      <small className="text-muted">{formatCurrency(product.revenue)}</small>
-                    </div>
-                  </div>
-             ))}
-              
             </tbody>
           </table>
           {hourlySales.filter(h => h.sales > 0).length === 0 && (

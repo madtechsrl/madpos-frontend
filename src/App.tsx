@@ -3,56 +3,58 @@ import { Suspense , lazy} from "react"
 import { AppProvider } from "./contexts/app-provider"
 import { AuthProvider} from "./contexts/auth-context"
 import { UserProvider } from "./contexts/user-context"
-// import ProtectedRoute from "./components/proctect-route"
+import ProtectedRoute from "./components/proctect-route"
 import Loading from "./loading"
 import NotFoundPage from "./not-found"
 import LoginPage  from "./pages/login"
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
-
+import { ROLES } from "./types/roles"
 
 // Lazy load pages
 // const LoginPage = lazy(() => import("./pages/login"))
-// const DashboardLayout = lazy(() => import("./pages/dashboard-layout"))
+const DashboardLayout = lazy(() => import("./pages/dashboard-layout"))
 const HomePage = lazy(() => import("./pages/home"))
 const ProductsPage = lazy(() => import("./pages/productos-page"))
 const Transaciones = lazy(() => import("./pages/transaciones-page"))
-const AddProduct = lazy(() => import("./pages/add-products"))
+const AddProduct = lazy(() => import("./components/productos/addProduct"))
 const UsersPage = lazy(() => import("./pages/user"))
 const StatsPage = lazy(() => import("./pages/estadistica-page"))
-const Configuraciones = lazy(() => import("./pages/configuraciones"))
-const ClientsList = lazy(() => import("./pages/clients-layout"))
-const ProductEditForm = lazy(() => import("./pages/edit-product"))
-const ClientRegistrationForm = lazy(() => import("./pages/client-register"))
-const MaintenancePage = lazy(()=>import("./pages/matenimientoP"))
-
+const ClientesPage = lazy(() => import("./pages/clientes-page"))
+const InventarioPage = lazy(() => import("./pages/inventario-page"))
+const ProveedoresPage = lazy(() => import("./pages/proveedores-page"))
+const ConfiguracionesPage = lazy(() => import("./pages/configuraciones-page"))
 // const NotFoundPage = lazy(() => import("./pages/not-found"))
 
 function App() {
  
   return (
     <Router>
-      <AuthProvider>       
+      <AuthProvider>
         <UserProvider>
         <AppProvider>
           <Suspense fallback={<Loading />}>
             <Routes>
               {/* Public routes */}
-              <Route path="/" element={<LoginPage />} />   
-              <Route path="/user" element={<UsersPage />} />           
-              <Route path="/transaciones" element={<Transaciones />} />
-              <Route path="/productos" element={<ProductsPage />} />
-              <Route path="/productos/addProduct" element={<AddProduct />} />
-              <Route path="/stats" element={<StatsPage />} />
-              <Route path="/configuraciones" element={<Configuraciones />} />
-              <Route path="/clientes" element={<ClientsList />} />
-              <Route path="/productos/:productId/editar" element={<ProductEditForm />} />             
-              <Route path="/client-registration" element={<ClientRegistrationForm />} />
-              <Route path="/mantenimientoP" element={<MaintenancePage/>} />
+              <Route path="/" element={<LoginPage />} />
+              <Route path="/user" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
+              <Route path="/transaciones" element={<ProtectedRoute><Transaciones /></ProtectedRoute>} />
+              <Route path="/productos" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
+              <Route path="/productos/nuevo" element={<ProtectedRoute><AddProduct /></ProtectedRoute>} />
+              <Route path="/productos/:id/editar" element={<ProtectedRoute><AddProduct /></ProtectedRoute>} />
+              <Route path="/stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
+              <Route path="/clientes" element={<ProtectedRoute><ClientesPage /></ProtectedRoute>} />
+              <Route path="/inventario" element={<ProtectedRoute><InventarioPage /></ProtectedRoute>} />
+              <Route path="/proveedores" element={<ProtectedRoute><ProveedoresPage /></ProtectedRoute>} />
+              <Route
+                path="/configuraciones"
+                element={
+                  <ProtectedRoute requiredRoles={[ROLES.ADMIN, ROLES.PROPIETARIO]}>
+                    <ConfiguracionesPage />
+                  </ProtectedRoute>
+                }
+              />
                 {/* Protected routes */}
-              <Route path="/home" element={<HomePage/>}>             
-              <Route index element={<HomePage />} />
+              <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                <Route index element={<HomePage />} />
                 {/* <Route path="productos" element={<ProductsPage />} />
                 <Route path="pedidos" element={<OrdersPage />} />
                 <Route path="usuarios" element={<UsersPage />} /> */}
@@ -62,20 +64,8 @@ function App() {
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>
-          <>
-           <ToastContainer
-            position="top-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            closeOnClick
-            pauseOnHover
-            draggable
-            theme="colored"
-            />
-          </>
         </AppProvider>
         </UserProvider>
-       
       </AuthProvider>
     </Router>
   )

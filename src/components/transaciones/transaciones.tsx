@@ -1,19 +1,13 @@
 import { useState } from "react"
-import { RoleGuard } from "../auth/role-guard"
 import { useTransactions } from "../../lib/use-transacion"
 import {  type Transaction } from "../../types/transacion"
 import { TransactionFiltersComponent } from "./transaction-filters"
 import { TransactionSummaryComponent } from "./transaction-summary"
-import { ROLES, } from "../../types/roles"
 
 
 export default function TransactionsPage() {
-  const { transactions, summary, loading, error, filters, updateFilters, updateTransactionStatus } = useTransactions()
+  const { transactions, summary, loading, error, filters, updateFilters, refetch } = useTransactions()
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
-  // const currentUserRole : RoleUuid = (user?.role ?? ROLES.ADMIN) as RoleUuid ;
-
-
-
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat("es-DO", {
       style: "currency",
@@ -90,14 +84,6 @@ export default function TransactionsPage() {
 
   const handleClearFilters = () => updateFilters({})
 
-  const handleStatusUpdate = async (transactionId: string, newStatus: string) => {
-    try {
-      await updateTransactionStatus(transactionId, newStatus)
-    } catch (err) {
-      console.error("Error updating transaction status:", err)
-    }
-  }
-
   if (loading) {
     return (
       <div className="container mt-5 text-center">
@@ -108,24 +94,14 @@ export default function TransactionsPage() {
   }
 
   return (
-    <RoleGuard
-      allowedRoles={[ROLES.ADMIN, ROLES.MANAGER]}
-      // currentUserRole={currentUserRole}
-    >
-      <div className="container py-4">
-        {/* <Header title="Transacciones" /> */}
-
+      <div className="container-fluid py-2">
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
             <h2>Gestión de Transacciones</h2>
             <p className="text-muted">Monitorea y gestiona todas las transacciones del sistema</p>
           </div>
           <div className="d-flex gap-2">
-            <button className="btn btn-outline-secondary">
-              <i className="fas fa-file-export me-1" />
-              Exportar
-            </button>
-            <button className="btn btn-outline-secondary">
+            <button className="btn btn-outline-secondary" onClick={() => void refetch()}>
               <i className="fas fa-sync-alt me-1" />
               Actualizar
             </button>
@@ -182,48 +158,13 @@ export default function TransactionsPage() {
                       </td>
                       <td>{transaction.userName}</td>
                       <td>
-                        <div className="dropdown">
-                          <button
-                            className="btn btn-sm btn-light dropdown-toggle"
-                            type="button"
-                            data-bs-toggle="dropdown"
-                          >
-                            <i className="fas fa-ellipsis-v" />
-                          </button>
-                          <ul className="dropdown-menu dropdown-menu-end">
-                            <li>
-                              <button
-                                className="dropdown-item"
-                                onClick={() => setSelectedTransaction(transaction)}
-                              >
-                                <i className="fas fa-eye me-2" />
-                                Ver detalles
-                              </button>
-                            </li>
-                            {transaction.status === "pending" && (
-                              <>
-                                <li>
-                                  <button
-                                    className="dropdown-item"
-                                    onClick={() => handleStatusUpdate(transaction.id, "completed")}
-                                  >
-                                    <i className="fas fa-check-circle me-2" />
-                                    Marcar como completado
-                                  </button>
-                                </li>
-                                <li>
-                                  <button
-                                    className="dropdown-item"
-                                    onClick={() => handleStatusUpdate(transaction.id, "cancelled")}
-                                  >
-                                    <i className="fas fa-times-circle me-2" />
-                                    Cancelar
-                                  </button>
-                                </li>
-                              </>
-                            )}
-                          </ul>
-                        </div>
+                        <button
+                          className="btn btn-sm btn-outline-primary"
+                          onClick={() => setSelectedTransaction(transaction)}
+                        >
+                          <i className="fas fa-eye me-1" />
+                          Detalles
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -237,7 +178,78 @@ export default function TransactionsPage() {
             </div>
           </div>
         </div>
+        {selectedTransaction && (
+          <div className="modal d-block" style={{ background: "rgba(0,0,0,.45)" }}>
+            <div className="modal-dialog modal-lg">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <div>
+                    <h5 className="modal-title">{selectedTransaction.reference}</h5>
+                    <div className="small text-muted">
+                      {formatDate(new Date(selectedTransaction.createdAt))}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={() => setSelectedTransaction(null)}
+                  />
+                </div>
+                <div className="modal-body">
+                  <div className="row g-3 mb-4">
+                    <div className="col-md-4">
+                      <div className="text-muted small">Cliente</div>
+                      <strong>{selectedTransaction.customerName}</strong>
+                    </div>
+                    <div className="col-md-4">
+                      <div className="text-muted small">Cajero</div>
+                      <strong>{selectedTransaction.userName}</strong>
+                    </div>
+                    <div className="col-md-4">
+                      <div className="text-muted small">Almacén</div>
+                      <strong>{selectedTransaction.warehouseName || "—"}</strong>
+                    </div>
+                  </div>
+                  <div className="table-responsive">
+                    <table className="table align-middle">
+                      <thead>
+                        <tr>
+                          <th>Producto</th>
+                          <th>Presentación</th>
+                          <th className="text-end">Cantidad</th>
+                          <th className="text-end">Precio</th>
+                          <th className="text-end">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedTransaction.items.map((item) => (
+                          <tr key={item.id}>
+                            <td>{item.productName}</td>
+                            <td>{item.packagingName}</td>
+                            <td className="text-end">{item.quantity}</td>
+                            <td className="text-end">{formatCurrency(item.unitPrice)}</td>
+                            <td className="text-end">{formatCurrency(item.total)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <th colSpan={4} className="text-end">Total vendido</th>
+                          <th className="text-end">{formatCurrency(selectedTransaction.amount)}</th>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-secondary" onClick={() => setSelectedTransaction(null)}>
+                    Cerrar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </RoleGuard>
   )
 }

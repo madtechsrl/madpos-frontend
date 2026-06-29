@@ -1,10 +1,9 @@
-import { createContext,  useState,useContext, type ReactNode } from "react"
+import { createContext, useContext, useState, type ReactNode } from "react"
 
 export type UserProfile = {
   fullname: string
   email: string
-  role: string
-
+  avatar: string
 }
 
 type UserContextType = {
@@ -17,11 +16,12 @@ type UserContextType = {
 const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [customerName, setCustomerName] = useState("")
+  const [customerName, setCustomerName] = useState("HECMANUEL")
   const [userProfile, setUserProfile] = useState<UserProfile>({
     fullname: "",
-    email: "", 
-    role:"",  
+    email: "",
+    avatar: "",
+   
   })
 
   return (
@@ -45,4 +45,3 @@ export function useUser() {
   }
   return context
 }
-// export default UserContext

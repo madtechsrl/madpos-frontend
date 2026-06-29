@@ -1,53 +1,80 @@
-import { type RoleKey, type RoleUuid, ROLES } from "./roles";
+
 
 export type User = {
   id: string;
+  email: string;
   fullname: string;
-  email: string; 
   password?: string;
   role?: string;
   enabled: boolean;
   createdAt: string;
-  updatedAt: string;
   token?: string;
   permissions?: string[];
   accessToken?: string;
 }
 
-export type CreateUserRequest = {
- fullname: string
+export const ROLES = {
+  ADMIN: "7c9e6679-7425-40de-944b-e07fc1f907cb",
+  USER: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  CAJERO: "7c9e6679-7425-40de-944b-e07fc1f907c9",
+  ALMACENISTA: "7c9e6679-7425-40de-944b-e07fc1f907ca",
+  PROPIETARIO: "195dfc25-f5d9-49ed-bed7-82409fe2e7df",
+} as const
+
+export type UserRoleId = (typeof ROLES)[keyof typeof ROLES]
+
+export type UserRole = "ADMIN" | "USER" | "CAJERO" | "ALMACENISTA" | "PROPIETARIO"
+
+
+
+export interface CreateUserRequest {
+  name: string
   email: string
-  password?: string
-  role: RoleUuid | RoleKey
-  enabled: boolean
- 
+  password: string
+  role: UserRole
+  roleId: UserRoleId
 }
 
-export type UpdateUserRequest = Partial <{
-  fullname?: string
+export interface UpdateUserRequest {
+  name?: string
   email?: string
-  password?: string
-  role?: RoleUuid | RoleKey
+  role?: UserRole
+  roleId?: UserRoleId
   status?: "active" | "inactive"
-}>;
+}
 
-export type RolePermissions = {
-  role: string  
-  fullname: string
+export interface RolePermissions {
+  role: UserRole
+  roleId: UserRoleId
+  name: string
   description: string
   permissions: string[]
-  canManage: string[]
+  canManage: UserRole[]
 }
 
-export const getRoleName = (role: RoleUuid): string => {
+// Helper functions to work with roles
+export const getRoleById = (roleId: UserRoleId): UserRole => {
+  const roleEntry = Object.entries(ROLES).find(([_, id]) => id === roleId)
+  return roleEntry ? (roleEntry[0].toUpperCase() as UserRole) : "USER"
+}
+
+export const getRoleIdByRole = (role: UserRole): UserRoleId => {
+  const roleKey = role.toUpperCase() as keyof typeof ROLES
+  return ROLES[roleKey] || ROLES.USER
+}
+
+export const getRoleName = (role: UserRole): string => {
   switch (role) {
-    case ROLES.ADMIN:
+    case "ADMIN":
       return "Administrador"
-    case ROLES.MANAGER:
+    case "PROPIETARIO":
       return "Propietario"
-    case ROLES.CASHIER:
+    case "CAJERO":
       return "Cajero"
-  
+    case "ALMACENISTA":
+      return "Almacenista"
+    case "USER":
+      return "Usuario"
     default:
       return role
   }

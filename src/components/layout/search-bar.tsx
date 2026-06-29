@@ -1,4 +1,6 @@
-import { useProducts } from "../../hooks/useProduct"
+"use client"
+
+import { useProducts } from "../../contexts/product-context"
 import { useState } from "react"
 
 export function SearchBar() {
@@ -32,7 +34,7 @@ export function SearchBar() {
             <i className="fas fa-chevron-down small"></i>
           </button>
           <ul className={`dropdown-menu ${dropdownOpen ? "show" : ""}`}>
-            <li key="all">
+            <li>
               <button
                 className="dropdown-item"
                 onClick={() => {

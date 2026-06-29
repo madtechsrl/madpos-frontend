@@ -1,16 +1,34 @@
-import { createContext, useState, useEffect, type ReactNode } from "react"
+
+
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { fetchProducts } from "../services/product-service"
+import { useAuth } from "./auth-context"
 
 export type Product = {
   id: string
   name: string
   price: number
   category: string
+  packagingId: string
+  productId: string
+  warehouseId: string
+  stock: number
+  sku: string
   image?: string
   bgColor?: string
   textColor?: string
 }
 
+export type Categories = {
+  id: string
+  name: string
+}
+
+export type costType = {
+  cost: number
+  unit: string
+  currentStock: number  
+}
 type ProductContextType = {
   products: Product[]
   filteredProducts: Product[]
@@ -21,45 +39,43 @@ type ProductContextType = {
   setSearchQuery: (query: string) => void
   selectedCategory: string | null
   setSelectedCategory: (category: string | null) => void
-  refreshProducts: () => Promise<void>
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined)
 
 export function ProductProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated } = useAuth()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
-  // Fetch products function
-  const loadProducts = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const data = await fetchProducts()
-      setProducts(data)
-      console.log("Products loaded successfully:", data.length)
-    } catch (err) {
-      console.error("Error loading products:", err)
-      setError("Error al cargar productos. Por favor, intenta de nuevo.")
-      setProducts([])
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Refresh products function
-  const refreshProducts = async () => {
-    await loadProducts()
-  }
-
-  // Load products on mount
+  // Fetch products from API
   useEffect(() => {
-    loadProducts()
-  }, [])
+    if (!isAuthenticated) {
+      setProducts([])
+      setLoading(false)
+      setError(null)
+      return
+    }
+
+    const getProducts = async () => {
+      try {
+        setLoading(true)
+        const data = await fetchProducts()
+        setProducts(data)
+        setError(null)
+      } catch (err) {
+        setError("No fue posible cargar el catálogo. Verifique que la API esté disponible.")
+        console.error("Error fetching products:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    getProducts()
+  }, [isAuthenticated])
 
   // Filter products based on search query and selected category
   const filteredProducts = products.filter((product) => {
@@ -85,7 +101,6 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         setSearchQuery,
         selectedCategory,
         setSelectedCategory,
-        refreshProducts,
       }}
     >
       {children}
@@ -93,12 +108,10 @@ export function ProductProvider({ children }: { children: ReactNode }) {
   )
 }
 
-// export function useProducts() {
-//   const context = useContext(ProductContext)
-//   if (context === undefined) {
-//     throw new Error("useProducts must be used within a ProductProvider")
-//   }
-//   return context
-// }
-
-export {ProductContext};
+export function useProducts() {
+  const context = useContext(ProductContext)
+  if (context === undefined) {
+    throw new Error("useProducts must be used within a ProductProvider")
+  }
+  return context
+}

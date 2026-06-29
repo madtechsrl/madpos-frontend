@@ -1,5 +1,7 @@
+"use client"
+
 import { useState, useEffect } from "react"
-import { transactionsApi } from "../lib/mock-api-transaciones"
+import { fetchTransactions as fetchTransactionsApi } from "../services/transaction-service"
 import type { Transaction, TransactionSummary, TransactionFilters } from "../types/transacion"
 
 export function useTransactions(initialFilters: TransactionFilters = {}) {
@@ -14,13 +16,9 @@ export function useTransactions(initialFilters: TransactionFilters = {}) {
       setLoading(true)
       setError(null)
 
-      const [transactionsData, summaryData] = await Promise.all([
-        transactionsApi.getTransactions(newFilters),
-        transactionsApi.getTransactionSummary(newFilters),
-      ])
-
-      setTransactions(transactionsData)
-      setSummary(summaryData)
+      const data = await fetchTransactionsApi(newFilters)
+      setTransactions(data.records)
+      setSummary(data.summary)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar transacciones")
     } finally {
@@ -31,16 +29,6 @@ export function useTransactions(initialFilters: TransactionFilters = {}) {
   const updateFilters = (newFilters: TransactionFilters) => {
     setFilters(newFilters)
     fetchTransactions(newFilters)
-  }
-
-  const updateTransactionStatus = async (id: string, status: any) => {
-    try {
-      const updatedTransaction = await transactionsApi.updateTransactionStatus(id, status)
-      setTransactions((prev) => prev.map((t) => (t.id === id ? updatedTransaction : t)))
-      return updatedTransaction
-    } catch (err) {
-      throw new Error(err instanceof Error ? err.message : "Error al actualizar transacción")
-    }
   }
 
   useEffect(() => {
@@ -54,7 +42,6 @@ export function useTransactions(initialFilters: TransactionFilters = {}) {
     error,
     filters,
     updateFilters,
-    updateTransactionStatus,
     refetch: fetchTransactions,
   }
 }

@@ -1,93 +1,83 @@
+"use client"
+
 import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/auth-context";
-import { createUser, deleteUser, fetchUsers, updateUser, type NormalizedUser } from "../../services/user-service";
+import { createUser, deleteUser, updateUser } from "../../services/user-service";
 import type { User } from "../../types/User";
-import { mapRoleToUuid, mapUuidToRoleName, ROLES , type RoleKey, type RoleUuid } from "../../types/roles";
+import { roleDisplayNames, ROLES, roleUuidToCode, getRoleConfig, mapUuidToRole } from "../../types/roles";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit, faPlus, faTrash, faShield } from "@fortawesome/free-solid-svg-icons";
+import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
-import { AxiosError, isAxiosError } from "axios";
-import { toast } from "react-toastify";
-import { PermissionsManagement } from "./permisos-management";
+// import axios from "axios";
+import axiosInstance from "../../lib/api";
+
+//  const BASE_URL = "http://localhost:8184"
 
 
 
-const toRoleUuid = (input?: string) => mapRoleToUuid(input ?? "");
-const toRoleKey = (uuid?: string) => (uuid ? mapUuidToRoleName(uuid): "")
-
-
-type RoleMeta = {
-  label: string;
-  description: string;
-  canManage: RoleKey[];
-  badgeClass: string; // Bootstrap class (bg-primary, etc.)
-};
-const ROLE_META_BY_KEY: Record<RoleKey, RoleMeta> = {
-   MANAGER: {
+const rolePermissions = {
+  [roleUuidToCode[ROLES.PROPIETARIO]]: {
     label: "Propietario",
-    description:
-      "Acceso completo al sistema, incluyendo configuraciones financieras y reportes avanzados.",
-    canManage: ["CASHIER"],
+    description: "Acceso completo al sistema, incluyendo configuraciones financieras y reportes avanzados.",
+    canManage: [roleUuidToCode[ROLES.CAJERO]],
+    badge: "bg-danger",
     badgeClass: "bg-danger",
   },
-  ADMIN: {
+  [roleUuidToCode[ROLES.ADMIN]]: {
     label: "Administrador",
-    description:
-      "Acceso a la mayoría de funciones administrativas, excepto configuraciones financieras sensibles.",
-    canManage: ["MANAGER", "CASHIER", "ADMIN"], // ajusta si es necesario
+    description: "Acceso a la mayoría de funciones administrativas, excepto configuraciones financieras sensibles.",
+    canManage: [roleUuidToCode[ROLES.ADMIN], roleUuidToCode[ROLES.CAJERO], roleUuidToCode[ROLES.PROPIETARIO]],
+    badge: "bg-primary",
     badgeClass: "bg-primary",
   },
-  CASHIER: {
+  [roleUuidToCode[ROLES.CAJERO]]: {
     label: "Cajero",
     description: "Acceso limitado a ventas, pedidos y clientes.",
     canManage: [],
+    badge: "bg-secondary",
     badgeClass: "bg-secondary",
   },
 }
 
-const ROLE_META_BY_UUID: Record<RoleUuid, RoleMeta> = {
-  [ROLES.MANAGER]: ROLE_META_BY_KEY.MANAGER,
-  [ROLES.ADMIN]: ROLE_META_BY_KEY.ADMIN,
-  [ROLES.CASHIER]: ROLE_META_BY_KEY.CASHIER,
-};
-
-function ensureRoleUuid(value: string): RoleUuid {
-  const all = Object.values(ROLES) as string[];
-  return (all.includes(value) ? value : ROLES.CASHIER) as RoleUuid;
-}
 
 interface UserManagementProps {
   compact?: boolean;
 }
 
-
-type ModalMode = "anadir" | "editar"
-
-// const emptyUser: User ={
-// id:"",
-// fullname:"",
-// email:"",
-// password:"",
-// role: ROLES.CASHIER,
-// enabled: true,
-// createdAt: new Date().toISOString(),
-// }
-
 export default function UserManagement({ compact = false }: UserManagementProps) {
-  const { user, isAuthenticated, hasPermission , token,} = useAuth();
-  const [users, setUsers] = useState<NormalizedUser[]>([]);
+  const { user, isAuthenticated, hasPermission , register, token, setToken} = useAuth();
+  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [showPermissionsModal, setShowPermissionsModal] = useState(false)
-  const [activeTab, setActiveTab] = useState<RoleTab>("all");
+  const [activeTab, setActiveTab] = useState<string>("all");
   const [error, setError] = useState<string | null>(null);
   const [isloading, setIsLoading] = useState(true);
-  const [modalMode, setModalMode] = useState<ModalMode>("anadir")
-  const [currentUser, setCurrentUser] = useState<NormalizedUser | null>(null);
-  const navigate = useNavigate(); 
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const navigate = useNavigate();
+  // const roleBadgeColors: { [key: string]: string } = {
+  //   ADMIN: "bg-primary",
+  //   CAJERO: "bg-info",
+  //   MANAGER: "bg-success",
+  //   SUPERVISOR: "bg-warning",
+  //   EMPLOYEE: "bg-secondary",
+  //   CUSTOMER: "bg-dark",
+  //   GUEST: "bg-light text-dark",
+  //   OTHER: "bg-secondary",
+  //   // Add more as needed
+  // };
+  const role = mapUuidToRole(user?.role ?? "")
+  const roleConf = getRoleConfig(role)  
 
- 
+
+useEffect(() => {
+  if (!token || !isAuthenticated) return;
+  axiosInstance.get('/v1/auth/profile')
+    // .then(() => console.log("UserManagement: Profile valid"))
+    .catch(err => console.error("Profile fetch failed", err));
+}, [token, isAuthenticated]);
+
+
 // Fetch users
 useEffect(() => {
   async function loadUsers() {
@@ -97,7 +87,7 @@ useEffect(() => {
       return;
     }
 
-    if (!hasPermission(ROLES.ADMIN) && !hasPermission(ROLES.MANAGER)) {
+    if (!hasPermission(ROLES.ADMIN)) {
       console.log("UserManagement: Usuario sin rol ADMIN", { role: user?.role });
       setError("Acceso denegado: se requiere rol de administrador");
       setIsLoading(false);
@@ -106,247 +96,221 @@ useEffect(() => {
 
     try {
       // console.log("UserManagement: Obteniendo usuarios");
-     const data = await fetchUsers();
-      setUsers(data);
+      const response = await axiosInstance.get("/v1/users", {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
+      });
+      const fetchedUsers: User[] = response.data?.data?.records || [];
+      // console.log("UserManagement: Usuarios obtenidos", fetchedUsers);
+      // if (fetchedUsers.length > 0) {
+      //   console.log("UserManagement: First user structure", {
+      //     id: fetchedUsers[0].id,
+      //     role: fetchedUsers[0].role,
+      //     fullname: fetchedUsers[0].fullname,
+      //     email: fetchedUsers[0].email,
+      //     enabled: fetchedUsers[0].enabled,
+      //     createdAt: fetchedUsers[0].createdAt,
+      //   });
+      // }
+      setUsers(fetchedUsers);
       setError(null);
-    } catch (err: unknown) {
-   if (isAxiosError(err)) {
-    const status = err.response?.status;
-    if (status === 401 || status === 403) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      navigate("/");
-      return;
-    }
-    setError(err.response?.data?.message ?? err.message);
-  } else if (err instanceof Error) {
-    setError(err.message);
-  } else {
-    setError("No se pudieron cargar los usuarios. Intenta de nuevo.");
-  }
+    } catch (err: any) {
+      console.error("UserManagement: Error", err);
+      if (err.message.includes("CORS")) {
+        setError("Error de CORS: verifica la configuración del servidor.");
+      } else if (err.response?.status === 401 || err.response?.status === 403) {
+        console.log("UserManagement: Token inválido o acceso denegado, redirigiendo a /login");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/");
+      } else {
+        setError(err.message || "No se pudieron cargar los usuarios. Intenta de nuevo.");
+      }
     } finally {
       setIsLoading(false);
     }
   }
 
   loadUsers();
-}, [isAuthenticated, hasPermission, navigate, token, user]);  
+}, [isAuthenticated, hasPermission, navigate, user, token]);
+
+    
  
-type RoleTab = "all" | "administradores" | "propietarios" | "cajeros";
-
-const roleMatchesTab = (roleUuid: string | undefined, tab: RoleTab) => {
-  const code = toRoleUuid(roleUuid);
-  if (tab === "administradores") return code === ROLES.ADMIN;
-  if (tab === "propietarios")   return code === ROLES.MANAGER;
-  if (tab === "cajeros")        return code === ROLES.CASHIER;
-  return true; // "all"
-};
 
 
+const filteredUsers = Array.isArray(users) ? users.filter((user) => {
+  const matchesRole = 
+  activeTab === "all" ||   
+  activeTab === "administradores" && user.role === ROLES.ADMIN ||
+  activeTab === "propietarios" && user.role === ROLES.PROPIETARIO ||
+  activeTab === "cajeros" && user.role === ROLES.CAJERO ||
+  activeTab === "usuarios" && user.role === ROLES.USER;
+  const matchesSearch =
+    user.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase());
+  return matchesRole && matchesSearch;
+}) : [];
 
-const searchMatches = (u: User, q: string) =>
-  u.fullname.toLowerCase().includes(q.toLowerCase()) ||
-  u.email.toLowerCase().includes(q.toLowerCase());
-
-
-const filteredUsers = Array.isArray(users)
-  ? users.filter(u => roleMatchesTab(u.role as string, activeTab ) && searchMatches(u, searchTerm))
-  : [];
  const displayedUsers = compact ? filteredUsers.slice(0, 5) : filteredUsers;
 
-// const openAddModal= ()=>{
-//   setModalMode("anadir");
-//   setCurrentUser({... emptyUser});
-//   setShowModal(true);
-// }
  
-//  const openEditMotal = (u: User) =>{
-//   setModalMode("editar");
-//   setCurrentUser({
-//     id: u.id,
-//     fullname: u.fullname ?? "",
-//     email: u.email ?? "",
-//     password:"",
-//     role: toRoleUuid(u.role as string),
-//     enabled: !! u.enabled,
-//     createdAt: u.createdAt,
-//   })
-//   setShowModal(true);
-// }
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    if (!currentUser) return;
-    const { name, value } = e.target;
+ const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  if (!currentUser) return;
+  const { name, value } = e.target;
 
-    if (name === "enabled") {
-      setCurrentUser({ ...currentUser, enabled: value === "true" });
-      return;
-    }
-
-    if (name === "role") {
-      // value proviene del <select>, es string → normalizar a UUID
-      const roleUuid = ensureRoleUuid(value);
-      const roleName = mapUuidToRoleName(roleUuid) || "CASHIER";
-      setCurrentUser({ ...currentUser, role: roleUuid, roleUuid, roleName });
-      return;
-    }
-    setCurrentUser({ ...currentUser, [name]: value } as NormalizedUser);
-  };
-
-
-
-  const handleAddUser = () => {
-    setModalMode("anadir");
+  if(name === "enabled"){
     setCurrentUser({
-      id: "",
-      email: "",
-      fullname: "",
-      password: "",
-      role: ROLES.CASHIER,
-      roleUuid: ROLES.CASHIER,
-      roleName: "CASHIER",
-      enabled: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      ...currentUser,
+      enabled: value === "true",
     });
-    setShowModal(true);
-  };
-
-  const handleEditUser = (u: NormalizedUser) => {
-    setModalMode("editar");
+    return;
+  }else{
     setCurrentUser({
-      ...u,
-      // asegura consistencia:
-      role: u.role as RoleUuid,
-      roleUuid: u.role as RoleUuid,
-      roleName: mapUuidToRoleName(u.role as RoleUuid) || "CASHIER",
-      password: "",
-      updatedAt: u.updatedAt ?? u.createdAt,
+      ...currentUser,
+      [name]: value,
     });
-    setShowModal(true);
-  };
+  }  
+ };
 
 
-
-
-const handleDeleteUser = async (id: string) => {
-  if (!window.confirm("¿Estás seguro de querer eliminar este usuario?")) return;
-
-  try {
-    await deleteUser(id);
-
-    setUsers((prev) => prev.filter((user) => user.id !== id));
-    setShowModal(false);
-
-    toast.success("🗑️ Usuario eliminado correctamente");
-  } catch (err: unknown) {
-    if (err instanceof AxiosError) {
-      const msg =
-        err.response?.data?.message ?? "Error al eliminar el usuario";
-      toast.error(`❌ ${msg}`);
-      console.error("Axios Error al eliminar usuario:", err.response?.data);
-    } else if (err instanceof Error) {
-      toast.error(`❌ ${err.message}`);
-    } else {
-      toast.error("❌ Error desconocido al eliminar el usuario");
-    }
-  }
+const handleAddUser = () => {
+  setCurrentUser({
+    id: "",
+    email: "",
+    fullname: "",
+    password: "",
+    role: "",
+    enabled: true,
+    createdAt: new Date().toISOString(),
+  });
+  setShowModal(true);
 };
 
+const handleEditUser = (user: User) =>{
+  setCurrentUser({
+    id: user.id,
+    email: user.email,
+    fullname: user.fullname,
+    password: "",
+    role: user.role,
+    enabled: user.enabled,
+    createdAt: user.createdAt,
+  });
+  setShowModal(true);
+};
+  
 
-
-
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-    if(!currentUser) return;
-  try {
-    //editar usuario
-    if(currentUser.id){
-      const updatedUser = await updateUser(currentUser.id, {
-      fullname: currentUser.fullname,
-      email: currentUser.email,
-      role: currentUser.role as RoleUuid,
-      ...(currentUser.password ? {password: currentUser.password}: {})
-    });
-
-    if(!updatedUser) throw new Error(" no puedo actualizar el usuario. Intenta de Nuevo")
-      setUsers((prev)=> prev.map((u)=>(u.id === currentUser.id ? updatedUser : u)));
+const handleDeleteUser = async (id: string) => {
+  if(window.confirm("¿Estás seguro de querer eliminar este usuario?")){
+    try{
+      const result = await deleteUser(id);
+      if(result){
+      setUsers(users.filter(user => user.id !== id));
       setShowModal(false);
-      toast.success(`Usuario "${currentUser.fullname}" actualizado correctamente`)
-    }else{
-      //Crear usuario
+      } else {
+        throw new Error(result || "No se pudo eliminar el usuario. Intenta de nuevo.");
+      }
+    } catch (err: any) {
+      console.error("UserManagement: Error al eliminar usuario", err);
+      setError(err.message || "No se pudo eliminar el usuario. Intenta de nuevo.");
+    }
+  }
+}
+
+
+const handleSubmit = async (e: React.FormEvent) =>{
+  e.preventDefault();
+  if(!currentUser){
+    return;
+  }
+  try{
+    if(currentUser.id){
+      const updatedUser = await updateUser(currentUser.id,{
+        fullname: currentUser.fullname,
+        email: currentUser.email,
+        role: currentUser.role,
+        ...(currentUser.password ? {password : currentUser.password}: {})
+      });
+      if(updatedUser){
+        setUsers(users.map((user) => (user.id === currentUser.id ? updatedUser : user)));        
+      } else {
+        throw new Error("No se pudo actualizar el usuario. Intenta de nuevo.");
+      }
+    } else {
       const newUser = await createUser({
         fullname: currentUser.fullname,
         email: currentUser.email,
         password: currentUser.password,
-        role: currentUser.role as RoleUuid,
-        enabled: true,
-      });
-      if(!newUser) throw new Error(" no puedo crear usuario")
-      setUsers((prev)=>[...prev, newUser])
-      setShowModal(false);
-      toast.success(`Usuario "${newUser.fullname}" creado correctamente`)
-       }    
-  } catch (err) {
-     if (err instanceof AxiosError) {
-        console.error("Axios Error al crear/actualizar usuario:", err.response?.status, err.response?.data);
-        setError(err.response?.data?.message || "Error al crear/actualizar el usuario. Intenta de nuevo.");
-      } else if (err instanceof Error) {
-        console.error("Error al crear/actualizar usuario:", err.message);
-        setError(err.message || "Error al crear/actualizar el usuario. Intenta de nuevo.");
-      } else {
-        console.error("Error desconocido al crear/actualizar usuario:", err);
-        setError("Error desconocido al crear/actualizar el usuario. Intenta de nuevo.");
+        role: currentUser.role,
+        enabled: currentUser.enabled,
+        createdAt: currentUser.createdAt
+      })
+      if (newUser){
+        setUsers([...users, newUser])
+        await register(
+          currentUser.fullname,
+          currentUser.email,
+          currentUser.password || "",
+          currentUser.role || "",
+          currentUser.enabled,
+          
+        )
+      }else{
+        throw new Error("No se pudo crear el usuario. Intenta de nuevo.");
       }
     }
+  } catch (err: any) {
+    console.error("UserManagement: Error al crear/actualizar usuario", err);
+    setError(err.message || "No se pudo crear/actualizar el usuario. Intenta de nuevo.");
+  } finally {
+    setIsLoading(false);
   }
-  
+  setShowModal(false);
+}
 
 const userCounts = {
-  all: users.length,
-  admin:  users.filter(u => toRoleUuid(u.role) === ROLES.ADMIN).length,
-  manager: users.filter(u => toRoleUuid(u.role) === ROLES.MANAGER).length,
-  cashier: users.filter(u => toRoleUuid(u.role) === ROLES.CASHIER).length,
+  all: Array.isArray(users) ? users.length : 0,
+  active: Array.isArray(users) ? users.filter(user => user.enabled).length : 0,
+  inactive: Array.isArray(users) ? users.filter(user => !user.enabled).length : 0,
+  admin: Array.isArray(users) ? users.filter(user => user.role === ROLES.ADMIN).length : 0,
+  cajero: Array.isArray(users) ? users.filter(user => user.role === ROLES.CAJERO).length : 0,
+  almacenista: Array.isArray(users) ? users.filter(user => user.role === ROLES.ALMACENISTA).length : 0,
+  propietario: Array.isArray(users) ? users.filter(user => user.role === ROLES.PROPIETARIO).length : 0,
+  usuario: Array.isArray(users) ? users.filter(user => user.role === ROLES.USER).length : 0,
 };
 
  
 
- 
-  // if (isloading && users.length === 0) {
-  //   return (
-  //     <div className="text-center p-5">
-  //       <div className="spinner-border text-primary" role="status">
-  //         <span className="visually-hidden">Cargando...</span>
-  //       </div>
-  //       <p className="mt-2">Cargando usuarios...</p>
-  //     </div>
-  //   )
-  // }
+  ///////////////test2////
+  if (isloading && users.length === 0) {
+    return (
+      <div className="text-center p-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+        <p className="mt-2">Cargando usuarios...</p>
+      </div>
+    )
+  }
 
 
   return (
     <div className="container-fluid px-0">
       {!compact && (        
-        <div className="d-flex justify-content-lg-between align-items-center mb-4 py-3 gap-2">
+        <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
-          {/* <h2 className="fs-4 fw-semibold mb-1">Usuarios del Sistema</h2> */}
+          <h2 className="fs-4 fw-semibold mb-1">Usuarios del Sistema</h2>
           <p className="text-secondary">
             Gestiona los usuarios del sistema y sus niveles de acceso. Cada rol tiene diferentes permisos y capacidades.
           </p>
-        </div>       
-        
-          {/* <h2 className="fs-4 fw-semibold mb-1">asdf</h2> */}
-          <button className="btn btn-danger d-flex  justify-constent-center align-items-center px-4 py-2 flex-fill"  style = {{minWidth:"180px"}} onClick={() => setShowPermissionsModal(true)}>
-        <i><FontAwesomeIcon icon={faShield} /></i>
-        <span>Gestionar Permisos</span>
-      </button>
+        </div>
 
-          <button className="btn btn-success d-flex align-items-center gap-2  px-4 py-2 flex-fill" style = {{minWidth:"180px"}} onClick={handleAddUser} disabled={isloading}>
+          <h2 className="fs-4 fw-semibold mb-1">Gestión de Usuarios</h2>
+          <button className="btn btn-success d-flex align-items-center gap-2" onClick={handleAddUser} disabled={isloading}>
             <i><FontAwesomeIcon icon={faPlus} /></i>
             <span>Añadir Usuario</span>
-          </button>        
+          </button>
         </div>
       )}
 
@@ -363,8 +327,6 @@ const userCounts = {
           ></button>
         </div>
       )}
-
-      
 
       {!compact && (
         <div className="row mb-4">
@@ -402,7 +364,7 @@ const userCounts = {
             className={`nav-link ${activeTab === 'propietarios' ? "active" : ""}`}
             onClick={() => setActiveTab('propietarios')}
           >
-            Propietarios <span className="badge bg-light text-dark ms-1">{userCounts.manager}</span>
+            Propietarios <span className="badge bg-light text-dark ms-1">{userCounts.propietario}</span>
           </button>
           </li>
           <li className="nav-item" role="presentation">
@@ -419,9 +381,15 @@ const userCounts = {
             className={`nav-link ${activeTab === 'cajeros' ? "active" : ""}`}
             onClick={() => setActiveTab('cajeros')}
           >
-            Cajeros <span className="badge bg-light text-dark ms-1">{userCounts.cashier}</span>
+            Cajeros <span className="badge bg-light text-dark ms-1">{userCounts.cajero}</span>
           </button>
-       
+          <button
+            type="button"
+            className={`nav-link ${activeTab === 'usuarios' ? "active" : ""}`}
+            onClick={() => setActiveTab('usuarios')}
+          >
+            Usuarios <span className="badge bg-light text-dark ms-1">{userCounts.usuario}</span>
+          </button>
         </div>
       </div>
 
@@ -442,40 +410,36 @@ const userCounts = {
             </thead>
             <tbody>
               {displayedUsers.length > 0 ? (
-                displayedUsers.map((u) => {
-                  const uuid = toRoleUuid(u.role as string);
-                  const meta = ROLE_META_BY_UUID[uuid as RoleUuid];
-                  const label = meta?.label ?? toRoleKey(uuid) ?? "—";
-                  const badgeClass = meta?.badgeClass ?? "bg-secondary";
+                displayedUsers.map((user) => (
+                  <tr key={user.id}>
+                    <td className="fw-medium">{user.fullname}</td>
+                    <td>{user.email}</td>
+                    <td>
+                    <span className={`badge bg-${getRoleConfig(mapUuidToRole(user.role ?? "")).badgeColor}`}>
+                    {getRoleConfig(mapUuidToRole(user.role ?? "")).label}
+                    </span>
 
-                  return (
-                    <tr key={u.id}>
-                      <td className="fw-medium">{u.fullname}</td>
-                      <td>{u.email}</td>
-                      <td>
-                        <span className={`badge ${badgeClass}`}>{label}</span>
-                      </td>
-                      {!compact && <td className="text-secondary">{u.createdAt || "-"}</td>}
-                      <td>
-                        <span className={`badge ${u.enabled ? "bg-success" : "bg-danger"}`}>
-                          {u.enabled ? "Activo" : "Inactivo"}
-                        </span>
-                      </td>
-                      <td className="text-end">
-                        <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleEditUser(u)}>
-                          <i>
-                            <FontAwesomeIcon icon={faEdit} />
-                          </i>
-                        </button>
-                        <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteUser(u.id)}>
-                          <i>
-                            <FontAwesomeIcon icon={faTrash} />
-                          </i>
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
+                    {/* <span className={`badge bg-${roleConf?.badgeColor ?? "secondary"}`}>
+                      {roleConf?.label ?? ` (${user.role ?? "undefined"})`}
+                    </span> */}
+
+                    </td>
+                    {!compact && <td className="text-secondary">{user.createdAt || "-"}</td>}
+                    <td>
+                      <span className={`badge ${user.enabled ? "bg-success" : "bg-danger"}`}>
+                        {user.enabled ? "Activo" : "Inactivo"}
+                      </span>
+                    </td>
+                    <td className="text-end">
+                      <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleEditUser(user)}>
+                        <i><FontAwesomeIcon icon={faEdit} /></i>
+                      </button>
+                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteUser(user.id)}>
+                        <i><FontAwesomeIcon icon={faTrash} /></i>
+                      </button>
+                    </td>
+                  </tr>
+                ))
               ) : (
                 <tr>
                   <td colSpan={compact ? 5 : 6} className="text-center py-4">
@@ -498,100 +462,53 @@ const userCounts = {
         {compact && (
           <div className="p-2 text-end border-top">
             <button className="btn btn-success btn-sm" onClick={handleAddUser}>
-              <i><FontAwesomeIcon icon={faPlus} />Añadir Usuario</i> 
+              <i><FontAwesomeIcon icon={faPlus} /></i> Añadir Usuario
             </button>
           </div>
         )}
       </div>
 
-          <br />
+
       <h3 className="fs-5 fw-semibold mb-3">Roles y Permisos</h3>
       <div className="row">
-        {(Object.keys(ROLE_META_BY_KEY) as RoleKey[]).map((key) => {
-          const meta = ROLE_META_BY_KEY[key];
-          // const uuid = ROLES[key]; // por si quieres mostrarlo
-          return (
-            <div className="col-md-4 mb-3" key={key}>
-              <div className="card h-100">
-                <div className="card-header d-flex justify-content-between align-items-center">
-                  <h5 className="mb-0">{meta.label}</h5>
-                  <span className={`badge ${meta.badgeClass}`}>{key}</span>
-                </div>
-                <div className="card-body">
-                  <p className="card-text">{meta.description}</p>
-                  <h6 className="mt-3 mb-2">Puede gestionar:</h6>
-                  <ul className="list-unstyled">
-                    {meta.canManage.length > 0 ? (
-                      meta.canManage.map((managed) => (
-                        <li key={`${key}-${managed}`} className="mb-1">
-                          <i className="fas fa-check-circle text-success me-2"></i>
-                          {ROLE_META_BY_KEY[managed].label}
-                        </li>
-                      ))
-                    ) : (
-                      <li className="text-muted">
-                        <i className="fas fa-times-circle me-2"></i>
-                        No puede gestionar usuarios
+        {Object.entries(rolePermissions).map(([role, info]) => (
+          <div className="col-md-4 mb-3" key={role}>
+            <div className="card h-100">
+              <div className="card-header d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">{info.label}</h5>
+                <span className={`badge ${info.badge}`}>{role}</span>
+              </div>
+              <div className="card-body">
+                <p className="card-text">{info.description}</p>
+                <h6 className="mt-3 mb-2">Puede gestionar:</h6>
+                <ul className="list-unstyled">
+                  {info.canManage.length > 0 ? (
+                    info.canManage.map((managedRole) => (
+                      <li key={managedRole} className="mb-1">
+                        <i className="fas fa-check-circle text-success me-2"></i>
+                        {rolePermissions[managedRole as keyof typeof rolePermissions]?.label || managedRole}
                       </li>
-                    )}
-                  </ul>
-                  {/* <div className="text-muted small">UUID: {uuid}</div> */}
-                </div>
+                    ))
+                  ) : (
+                    <li className="text-muted">
+                      <i className="fas fa-times-circle me-2"></i>
+                      No puede gestionar usuarios
+                    </li>
+                  )}
+                </ul>
               </div>
             </div>
-          );
-        })}
-        
+          </div>
+        ))}
       </div>
 
-      {/* User Modal permisos a usuarios */}
-      {showPermissionsModal && (
-  <div
-    className="modal d-block"
-    tabIndex={-1}
-    style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-  >
-    <div className="modal-dialog modal-xl"> {/* XL para tener más espacio */}
-      <div className="modal-content">
-        <div className="modal-header">
-          <h5 className="modal-title d-flex align-items-center gap-2">
-            <FontAwesomeIcon icon={faShield} />
-            Gestión de Permisos
-          </h5>
-          <button
-            type="button"
-            className="btn-close"
-            onClick={() => setShowPermissionsModal(false)}
-            aria-label="Close"
-          />
-        </div>
-
-        <div className="modal-body">
-          {/* Render directo del componente de permisos */}
-          <PermissionsManagement />
-        </div>
-
-        <div className="modal-footer">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => setShowPermissionsModal(false)}
-          >
-            Cerrar
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-
-           {/* User Modal  anadir y editar usuarios*/}
-      {showModal && modalMode === "anadir" &&  (
-        <div key= {modalMode} className="modal d-block" tabIndex={-1} style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+      {/* User Modal */}
+      {showModal && (
+        <div className="modal d-block" tabIndex={-1} style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Anadir Usuario</h5>
+                <h5 className="modal-title">{currentUser?.id ? "Editar Usuario" : "Añadir Usuario"}</h5>
                 <button
                   type="button"
                   className="btn-close"
@@ -602,43 +519,29 @@ const userCounts = {
               <form onSubmit={handleSubmit}>
                 <div className="modal-body">
                   <div className="mb-3">
-                    <label htmlFor="fullname" className="form-label">
+                    <label htmlFor="name" className="form-label">
                       Nombre completo
                     </label>
                     <input
                       type="text"
                       className="form-control"
-                      id="fullname"
-                      name="fullname"
+                      id="name"
+                      name="name"
                       value={currentUser?.fullname}
                       onChange={handleInputChange}
                       required
                     />
                   </div>
                   <div className="mb-3">
-                    <label htmlFor="email_add" className="form-label">
+                    <label htmlFor="email" className="form-label">
                       Correo electrónico
                     </label>
                     <input
-                      type="email_add"
+                      type="email"
                       className="form-control"
                       id="email"
                       name="email"
-                      value= {currentUser?.email || ""}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label htmlFor="password_add" className="form-label">                      
-                      Contraseña
-                    </label>
-                    <input
-                      type="password_add"
-                      className="form-control"
-                      id="password"
-                      name="password"
-                      value= {currentUser?.password || ""}
+                      value={currentUser?.email}
                       onChange={handleInputChange}
                       required
                     />
@@ -649,34 +552,50 @@ const userCounts = {
                     </label>
                     <select
                       className="form-select"
-                      id="role_add"
+                      id="role"
                       name="role"
-                      value= {currentUser?.role}
+                      value={currentUser?.role}
                       onChange={handleInputChange}
                       required
                     >
-                     <option value="">Seleccione Rol</option>
-                    <option value={ROLES.CASHIER}>Cajero</option>
-                    <option value={ROLES.ADMIN}>Administrador</option>
-                    <option value={ROLES.MANAGER}>Propietario</option>
-                        
+                      <option value="Cajero">Cajero</option>
+                      <option value="Administrator">Administrador</option>
+                      <option value="Propietario">Gerente</option>
+                      <option value="Almacenista">Supervisor</option>
+                      <option value="Usuario">Empleado</option>
+                      <option value="Cliente">Cliente</option>
+                      <option value="Invitado">Invitado</option>
+                      <option value="Otro">Otro</option>
                     </select>
                   </div>
-           
                   <div className="mb-3">
-                    <label htmlFor="enabled_add" className="form-label">
+                    <label htmlFor="password" className="form-label">
+                      {currentUser?.id ? "Contraseña (dejar en blanco para no cambiar)" : "Contraseña"}
+                    </label>
+                    <input
+                      type="password"
+                      className="form-control"
+                      id="password"
+                      name="password"
+                      value={currentUser?.password}
+                      onChange={handleInputChange}
+                      required={!currentUser?.id}
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="status" className="form-label">
                       Estado
                     </label>
                     <select
                       className="form-select"
-                      id="enabled_add"
-                      name="enabled"
-                      value={currentUser?.enabled ? "true" : "false"}
+                      id="status"
+                      name="status"
+                      value={currentUser?.enabled ? "Activo" : "Inactivo"}
                       onChange={handleInputChange}
                       required
                     >
-                      <option value="true">Activo</option>
-                      <option value="false">Inactivo</option>
+                      <option value="Activo">Activo</option>
+                      <option value="Inactivo">Inactivo</option>
                     </select>
                   </div>
                 </div>
@@ -684,116 +603,20 @@ const userCounts = {
                   <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
                     Cancelar
                   </button>
-                  <button type="submit" className="btn btn-success">Crear</button>       
-                 
+                  <button type="submit" className="btn btn-success">
+                    {currentUser?.id ? "Actualizar" : "Crear"}
+                  </button>
                 </div>
               </form>
             </div>
           </div>
         </div>
       )}
-
-      {showModal && modalMode === "editar" && currentUser && (
-  <div key={modalMode} className="modal d-block" tabIndex={-1} style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-    <div className="modal-dialog">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h5 className="modal-title">Editar Usuario</h5>
-          <button type="button" className="btn-close" onClick={() => setShowModal(false)} aria-label="Close" />
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          <div className="modal-body">
-            <div className="mb-3">
-              <label htmlFor="fullname_edit" className="form-label">Nombre completo</label>
-              <input
-                type="text"
-                className="form-control"
-                id="fullname_edit"
-                name="fullname"
-                value={currentUser.fullname ?? ""}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            <div className="mb-3">
-              <label htmlFor="email_edit" className="form-label">Correo electrónico</label>
-              <input
-                type="email"
-                className="form-control"
-                id="email_edit"
-                name="email"
-                value={currentUser.email ?? ""}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-              <div className="mb-3">
-              <label htmlFor="password_edit" className="form-label">Contraseña (dejar en blanco para no cambiar)</label>
-              <input
-                type="password_edit"
-                className="form-control"
-                id="password_edit"
-                name="password_edit"
-                value={currentUser.password ?? ""}
-                onChange={handleInputChange}
-                required={false}
-                placeholder="Opcional"
-              />
-            </div>
-              
-
-            <div className="mb-3">
-              <label htmlFor="role_edit" className="form-label">Rol</label>
-              <select
-                className="form-select"
-                id="role_edit"
-                name="role"
-                value={toRoleUuid(currentUser.role as string)}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Seleccione Rol</option>
-                <option value={ROLES.CASHIER}>Cajero</option>
-                <option value={ROLES.ADMIN}>Administrador</option>
-                <option value={ROLES.MANAGER}>Propietario</option>
-              </select>
-            </div>
-
-          
-
-            <div className="mb-3">
-              <label htmlFor="enabled_edit" className="form-label">Estado</label>
-              <select
-                className="form-select"
-                id="enabled_edit"
-                name="enabled"
-                value={currentUser.enabled ? "true" : "false"}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="true">Activo</option>
-                <option value="false">Inactivo</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
-            <button type="submit" className="btn btn-success">Actualizar</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-)}
-
     </div>
   )
   
 
+
+
+
 }
-
-

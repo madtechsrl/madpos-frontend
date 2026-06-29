@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
@@ -37,7 +39,7 @@ const LoginPage: React.FC = () => {
       // console.log("onSubmit: Login API", {email: form.email, });
       await loginUser(form.email, form.password);          
     } catch (error) {
-      console.error("Error during login:", error);
+      setError("Correo o contraseña incorrectos.");
     } 
   };
 
@@ -53,6 +55,7 @@ const LoginPage: React.FC = () => {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)}>
+            {error && <div className="alert alert-danger">{error}</div>}
             <div className="mb-3">
               <label htmlFor="email-address" className="form-label">
                 Correo electrónico

@@ -21,16 +21,18 @@ export function ProductCard({ product }: { product: Product }) {
   }
 
   return (
-    <button className="card product-card border-0 overflow-hidden" style={cardStyle} 
-    onClick={() => addToCart(product)}>
+    <button className="card product-card border-0 overflow-hidden" style={cardStyle} disabled={product.stock <= 0} onClick={() => addToCart(product)}>
       {image && (
         <div className="d-flex align-items-center justify-content-center p-2 flex-grow-1">
           <img src={image || "/placeholder.svg"} width={10} height={100} alt={name} className="object-fit-contain" />
         </div>
       )}
-      <div className="p-4">
-        <div className="font-medium text-sm mb-1 truncate">{name}</div>
-        <div className="text-lg font-bold text-gray-900">{formatCurrency(price)}</div>
+      <div className="p-3 text-start">
+        <div className="fw-medium">{name}</div>
+        <div className="small">{formatCurrency(price)}</div>
+        <div className={`small ${product.stock <= 0 ? "text-danger" : "text-muted"}`}>
+          {product.stock <= 0 ? "Sin existencia" : `${product.stock} disponibles`}
+        </div>
       </div>
     </button>
   )

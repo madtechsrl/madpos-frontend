@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "../../contexts/auth-context"
-import { ROLES, type RoleUuid } from "../../types/roles"
+import { ROLES } from "../../types/roles"
 import { Tooltip } from "react-tooltip"
 
 
@@ -9,10 +9,10 @@ import { Tooltip } from "react-tooltip"
 // Define menu items with role-based access
 const menuItems = [
   {
-    href: "/home",
+    href: "/dashboard",
     icon: "fa-light fa-shop",
     label: "Vender",
-    ROLES: [ROLES.ADMIN, ROLES.CASHIER, ROLES.MANAGER],
+    roles: [ROLES.ADMIN, ROLES.CAJERO, ROLES.ALMACENISTA, ROLES.PROPIETARIO, ROLES.USER],
     highlight: true,
    
   },
@@ -20,73 +20,87 @@ const menuItems = [
   //   href: "/demo",
   //   icon: "fa-shopping-cart",
   //   label: "Demo Pagos",
-  //   ROLES: [ROLES.ADMIN, ROLES.CAJERO],
+  //   roles: [ROLES.ADMIN, ROLES.CAJERO],
   // },
   // {
   //   href: "/pedidos",
   //   icon: "fa-shopping-cart",
   //   label: "Pedidos",
-  //   ROLES: [userROLES.administrador, userROLES.cajero, userROLES.propietario],
+  //   roles: [userRoles.administrador, userRoles.cajero, userRoles.propietario],
   // },
   {
     href: "/productos",
     icon: "fa-light fa-boxes-stacked", 
     label: "Productos",
-    ROLES: [ROLES.ADMIN, ROLES.CASHIER, ROLES.MANAGER],
+    roles: [ROLES.ADMIN, ROLES.CAJERO, ROLES.ALMACENISTA, ROLES.PROPIETARIO, ROLES.USER],
     tooltip: "Productos",
   },
+  // {
+  //   href: "/catalogo",
+  //   icon: "fa-list",
+  //   label: "Catálogo",
+  //   roles: [ROLES.ADMIN, ROLES.CAJERO],
+  //   tooltip: "Catálogo",
+  // },
   {
-    href: "/mantenimientoP",
-    icon: "fa-list",
-    label: "Catálogo",
-    ROLES: [ROLES.ADMIN],
-    tooltip: "Catálogo",
+    href: "/inventario",
+    icon: "fa-warehouse",
+    label: "Inventario",
+    roles: [ROLES.ADMIN, ROLES.ALMACENISTA, ROLES.PROPIETARIO],
+    tooltip: "Inventario",
+  },
+  {
+    href: "/proveedores",
+    icon: "fa-truck",
+    label: "Proveedores",
+    roles: [ROLES.ADMIN, ROLES.ALMACENISTA, ROLES.PROPIETARIO],
+    tooltip: "Proveedores",
   },
   {
     href: "/clientes",
     icon: "fa-users",
     label: "Clientes",
-    ROLES: [ROLES.ADMIN, ROLES.MANAGER],
+    roles: [ROLES.ADMIN, ROLES.PROPIETARIO],
     tooltip: "Clientes",
   },
   {
     href: "/transaciones",
     icon: "fa-exchange-alt",
     label: "Transacciones",
-    ROLES: [ROLES.ADMIN, ROLES.MANAGER],
+    roles: [ROLES.ADMIN, ROLES.PROPIETARIO],
     tooltip: "Transacciones",
   },
   // {
   //   href: "/finanzas",
   //   icon: "fa-dollar-sign",
   //   label: "Finanzas",
-  //   ROLES: [userROLES.administrador, userROLES.propietario],
+  //   roles: [userRoles.administrador, userRoles.propietario],
   // },
   {
     href: "/stats",
     icon: "fa-light fa-chart-simple",
     label: "Estadísticas",
-    ROLES: [ROLES.ADMIN, ROLES.MANAGER],
+    roles: [ROLES.ADMIN, ROLES.PROPIETARIO],
     tooltip: "Estadísticas",
   },
   // {
   //   href: "/usuarios",
   //   icon: "fa-user-friends",
   //   label: "Usuarios",
-  //   ROLES: [userROLES.administrador, userROLES.propietario],
+  //   roles: [userRoles.administrador, userRoles.propietario],
   // },
   {
     href: "/user",
     icon: "fa-user-cog",
     label: "Gestión Usuarios",
-    ROLES: [ROLES.ADMIN, ROLES.MANAGER],
+    roles: [ROLES.ADMIN],
     tooltip: "Gestión Usuarios",
   },
   {
     href: "/configuraciones",
     icon: "fa-cog",
-    label: "Configuracione",
-    ROLES: [ROLES.ADMIN, ROLES.MANAGER],
+    label: "Configuraciones",
+    roles: [ROLES.ADMIN, ROLES.PROPIETARIO],
     tooltip: "Configuraciones",
   },
 ]
@@ -98,7 +112,7 @@ export default function Sidebar() {
   const [isMobile, setIsMobile] = useState(false)
 
   // Filter menu items based on user role
-  const filteredMenuItems = menuItems.filter((item) => user && hasPermission(item.ROLES as RoleUuid[]))
+  const filteredMenuItems = menuItems.filter((item) => user && hasPermission(item.roles as unknown as string[]))
 
   // Handle responsive behavior
   useEffect(() => {
@@ -185,7 +199,7 @@ export default function Sidebar() {
               className={`badge ${
                 user?.role === ROLES.ADMIN
                   ? "bg-danger"
-                  : ([ROLES.CASHIER, ROLES.ADMIN, ROLES.MANAGER] as readonly string[]).includes(user?.role ?? "")
+                  : ([ROLES.CAJERO, ROLES.ALMACENISTA, ROLES.PROPIETARIO] as readonly string[]).includes(user?.role ?? "")
                     ? "bg-primary"
                     : "bg-secondary"
               } text-white`}

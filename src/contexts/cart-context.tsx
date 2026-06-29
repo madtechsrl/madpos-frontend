@@ -1,193 +1,177 @@
-import { createContext, useContext, useReducer, type ReactNode } from "react"
-import type { Client } from "../types/Client"
+"use client"
 
-export interface CartItem {
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+
+type CartItem = {
   id: string
   name: string
   price: number
   quantity: number
   image?: string
+  packagingId: string
+  productId: string
+  warehouseId: string
+  stock: number
 }
 
-// type Product = {
-//   id: string
-//   name: string
-//   price: number
-//   image?: string
-// }
+type Product = {
+  id: string
+  name: string
+  price: number
+  image?: string
+  packagingId: string
+  productId: string
+  warehouseId: string
+  stock: number
+}
 
-// type PaymentRecord = {
-//   id: string
-//   date: string
-//   total: number
-//   method: string
-//   items: CartItem[]
-// }
-
-interface CartState {
-  items: CartItem[]
+type PaymentRecord = {
+  id: string
+  date: string
   total: number
-  selectedClient: Client | null
-  paymentMethod: "Efectivo" | "Tarjeta" | "Transferencia" | "Crédito"
-  discount: number
-  tax: number
+  method: string
+  items: CartItem[]
 }
 
-type CartAction =
-  | { type: "ADD_ITEM"; payload: Omit<CartItem, "quantity"> }
-  | { type: "REMOVE_ITEM"; payload: string }
-  | { type: "UPDATE_QUANTITY"; payload: { id: string; quantity: number } }
-  | { type: "CLEAR_CART" }
-  | { type: "SET_CLIENT"; payload: Client | null }
-  | { type: "SET_PAYMENT_METHOD"; payload: CartState["paymentMethod"] }
-  | { type: "SET_DISCOUNT"; payload: number }
-  | { type: "SET_TAX"; payload: number }
-
-const initialState: CartState = {
-  items: [],
-  total: 0,
-  selectedClient: null,
-  paymentMethod: "Efectivo",
-  discount: 0,
-  tax: 0,
-}
-function cartReducer(state: CartState, action: CartAction): CartState {
-  switch (action.type) {
-    case "ADD_ITEM": {
-      const existingItem = state.items.find((item) => item.id === action.payload.id)
-      let newItems: CartItem[]
-
-      if (existingItem) {
-        newItems = state.items.map((item) =>
-          item.id === action.payload.id ? { ...item, quantity: item.quantity + 1 } : item,
-        )
-      } else {
-        newItems = [...state.items, { ...action.payload, quantity: 1 }]
-      }
-
-      const subtotal = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-      const total = subtotal - state.discount + state.tax
-
-      return { ...state, items: newItems, total }
-    }
-
-    case "REMOVE_ITEM": {
-      const newItems = state.items.filter((item) => item.id !== action.payload)
-      const subtotal = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-      const total = subtotal - state.discount + state.tax
-
-      return { ...state, items: newItems, total }
-    }
-
-    case "UPDATE_QUANTITY": {
-      const newItems = state.items
-        .map((item) =>
-          item.id === action.payload.id ? { ...item, quantity: Math.max(0, action.payload.quantity) } : item,
-        )
-        .filter((item) => item.quantity > 0)
-
-      const subtotal = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-      const total = subtotal - state.discount + state.tax
-
-      return { ...state, items: newItems, total }
-    }
-
-    case "CLEAR_CART":
-      return { ...initialState, selectedClient: state.selectedClient }
-
-    case "SET_CLIENT":
-      return { ...state, selectedClient: action.payload }
-
-    case "SET_PAYMENT_METHOD":
-      return { ...state, paymentMethod: action.payload }
-
-    case "SET_DISCOUNT": {
-      const subtotal = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-      const total = subtotal - action.payload + state.tax
-      return { ...state, discount: action.payload, total }
-    }
-
-    case "SET_TAX": {
-      const subtotal = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-      const total = subtotal - state.discount + action.payload
-      return { ...state, tax: action.payload, total }
-    }
-
-    default:
-      return state
-  }
-}
-
-const CartContext = createContext<{
-  state: CartState
-  addItem: (item: Omit<CartItem, "quantity">) => void
-  removeItem: (id: string) => void
-  updateQuantity: (id: string, quantity: number) => void
+type CartContextType = {
+  cart: CartItem[]
+  addToCart: (product: Product) => void
+  removeFromCart: (productId: string) => void
+  updateQuantity: (productId: string, newQuantity: number) => void
   clearCart: () => void
-  setClient: (client: Client | null) => void
-  setPaymentMethod: (method: CartState["paymentMethod"]) => void
-  setDiscount: (discount: number) => void
-  setTax: (tax: number) => void
-  // Legacy support
-  items: CartItem[]
-  total: number
-  selectedClient: Client | null
+  cartTotal: number
+  cartCount: number
+  isCartOpen: boolean
+  setIsCartOpen: (isOpen: boolean) => void
+  recentPayments: PaymentRecord[]
+  addPaymentRecord: (method: string) => void
+}
 
-} | null>(null)
-
-
+const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(cartReducer, initialState)
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [isCartOpen, setIsCartOpen] = useState(true)
+  const [recentPayments, setRecentPayments] = useState<PaymentRecord[]>([])
 
-  const addItem = (item: Omit<CartItem, "quantity">) => {
-    dispatch({ type: "ADD_ITEM", payload: item })
+  // Calculate cart totals
+  const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
+  const cartCount = cart.reduce((count, item) => count + item.quantity, 0)
+
+  // Add product to cart
+  const addToCart = (product: Product) => {
+    if (product.stock <= 0) return
+    setCart((prevCart) => {
+      const existingItem = prevCart.find((item) => item.id === product.id)
+
+      if (existingItem) {
+        if (existingItem.quantity >= product.stock) return prevCart
+        // Increase quantity if item already in cart
+        return prevCart.map((item) => (item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item))
+      } else {
+        // Add new item to cart
+        return [
+          ...prevCart,
+          {
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: 1,
+            image: product.image,
+            packagingId: product.packagingId,
+            productId: product.productId,
+            warehouseId: product.warehouseId,
+            stock: product.stock,
+          },
+        ]
+      }
+    })
   }
 
-  const removeItem = (id: string) => {
-    dispatch({ type: "REMOVE_ITEM", payload: id })
+  // Remove item from cart
+  const removeFromCart = (productId: string) => {
+    setCart((prevCart) => prevCart.filter((item) => item.id !== productId))
   }
 
-  const updateQuantity = (id: string, quantity: number) => {
-    dispatch({ type: "UPDATE_QUANTITY", payload: { id, quantity } })
+  // Update item quantity
+  const updateQuantity = (productId: string, newQuantity: number) => {
+    if (newQuantity < 1) {
+      removeFromCart(productId)
+      return
+    }
+
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item.id === productId ? { ...item, quantity: Math.min(newQuantity, item.stock) } : item,
+      ),
+    )
   }
 
+  // Clear cart
   const clearCart = () => {
-    dispatch({ type: "CLEAR_CART" })
+    setCart([])
   }
 
-  const setClient = (client: Client | null) => {
-    dispatch({ type: "SET_CLIENT", payload: client })
+  // Add payment record
+  const addPaymentRecord = (method: string) => {
+    if (cart.length === 0) return
+
+    const newPayment: PaymentRecord = {
+      id: `payment-${Date.now()}`,
+      date: new Date().toISOString(),
+      total: cartTotal,
+      method,
+      items: [...cart],
+    }
+
+    setRecentPayments((prev) => [newPayment, ...prev].slice(0, 10)) // Keep only the 10 most recent payments
   }
 
-  const setPaymentMethod = (method: CartState["paymentMethod"]) => {
-    dispatch({ type: "SET_PAYMENT_METHOD", payload: method })
-  }
+  // Load cart and payments from localStorage on initial render
+  useEffect(() => {
+    const savedCart = localStorage.getItem("cart")
+    const savedPayments = localStorage.getItem("recentPayments")
 
-  const setDiscount = (discount: number) => {
-    dispatch({ type: "SET_DISCOUNT", payload: discount })
-  }
+    if (savedCart) {
+      try {
+        setCart(JSON.parse(savedCart))
+      } catch (error) {
+        console.error("Failed to parse cart from localStorage:", error)
+      }
+    }
 
-  const setTax = (tax: number) => {
-    dispatch({ type: "SET_TAX", payload: tax })
-  }
+    if (savedPayments) {
+      try {
+        setRecentPayments(JSON.parse(savedPayments))
+      } catch (error) {
+        console.error("Failed to parse payments from localStorage:", error)
+      }
+    }
+  }, [])
+
+  // Save cart and payments to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cart))
+  }, [cart])
+
+  useEffect(() => {
+    localStorage.setItem("recentPayments", JSON.stringify(recentPayments))
+  }, [recentPayments])
 
   return (
     <CartContext.Provider
       value={{
-        state,
-        addItem,
-        removeItem,
+        cart,
+        addToCart,
+        removeFromCart,
         updateQuantity,
         clearCart,
-        setClient,
-        setPaymentMethod,
-        setDiscount,
-        setTax,
-        // Legacy support
-        items: state.items,
-        total: state.total,
-        selectedClient: state.selectedClient,
+        cartTotal,
+        cartCount,
+        isCartOpen,
+        setIsCartOpen,
+        recentPayments,
+        addPaymentRecord,
       }}
     >
       {children}
@@ -197,7 +181,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
 export function useCart() {
   const context = useContext(CartContext)
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useCart must be used within a CartProvider")
   }
   return context

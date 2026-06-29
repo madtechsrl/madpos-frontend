@@ -1,17 +1,10 @@
+"use client"
+
 import { ProductCard } from "./product-card"
-import  {useProducts}  from "../../hooks/useProduct"
-import { useNavigate } from "react-router-dom"
-// import { useEffect } from "react"
+import { useProducts } from "../../contexts/product-context"
 
 export function ProductGrid() {
-  const { filteredProducts, loading, error, } = useProducts()
-
-  const navigate = useNavigate()
-
-
-  // useEffect(()=>{
-  //   refreshProducts()
-  // }, [refreshProducts])
+  const { filteredProducts, loading, error } = useProducts()
 
   if (loading) {
     return (
@@ -55,7 +48,8 @@ export function ProductGrid() {
           className="btn btn-success product-card d-flex align-items-center justify-content-center w-75 h-100"
           style={{height:"100%"}}
           onClick={() => {
-            navigate("/productos/addProduct")
+            // This would typically open a modal to add a new product
+            alert("Añadir nuevo producto")
           }}
         >
           <i className="fas fa-plus fa-2x"></i>

@@ -1,6 +1,6 @@
-export type TransactionType = "sale" | "return" | "refund" | "adjustment" | "payment"
+export type TransactionType = "sale"
 export type TransactionStatus = "completed" | "pending" | "cancelled" | "failed"
-export type PaymentMethodType = "cash" | "card" | "transfer" | "check" | "credit"
+export type PaymentMethodType = "cash" | "card" | "transfer" | "other"
 
 export interface Transaction {
   id: string
@@ -17,12 +17,15 @@ export interface Transaction {
   saleId?: string
   createdAt: Date
   updatedAt: Date
-  metadata?: {
-    cardLast4?: string
-    authCode?: string
-    batchNumber?: string
-    terminalId?: string
-  }
+  warehouseName?: string
+  items: {
+    id: string
+    productName: string
+    packagingName: string
+    quantity: number
+    unitPrice: number
+    total: number
+  }[]
 }
 
 export interface TransactionSummary {
@@ -35,10 +38,10 @@ export interface TransactionSummary {
 
 export interface TransactionFilters {
   search?: string
-  type?: TransactionType
-  status?: TransactionStatus
-  paymentMethod?: PaymentMethodType
+  type?: TransactionType | "all"
+  status?: TransactionStatus | "all"
+  paymentMethod?: PaymentMethodType | "all"
   userId?: string
-  dateFrom?: Date
-  dateTo?: Date
+  dateFrom?: string
+  dateTo?: string
 }

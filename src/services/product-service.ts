@@ -1,74 +1,183 @@
-import axiosInstance from "../lib/api";
-import type { Product } from "../contexts/product-context";
+import type { Product, Categories } from "../contexts/product-context"
+import api from "../lib/api"
 
-type ListPayLoad<T> = {records?:T[]; total?: number; page?: number};
-type ApiListResponse<T> = { data?: ListPayLoad<T> };
-type ApiItemResponse<T> = { data?: T | { record?: T } };
+export type CatalogOption = {
+  id: string
+  name: string
+}
 
+export type ProductPackaging = {
+  id: string
+  name: string
+  barcode?: string
+  factorBase: number
+  unitMeasure: string
+  contentQuantity?: number
+  pricingMode: "FIXED_PRICE" | "MARGIN_FROM_LAST_COST"
+  fixedPrice?: number
+  marginPct?: number
+  minStock?: number
+  maxStock?: number
+  reorderPoint?: number
+  status: number
+}
 
+export type ManagedProduct = {
+  id: string
+  sku: string
+  name: string
+  baseUom: string
+  description?: string
+  status: "ACTIVE" | "INACTIVE" | "DISCONTINUED"
+  category?: CatalogOption
+  brand?: CatalogOption
+  supplier?: CatalogOption
+  packagings: ProductPackaging[]
+  createdAt: string
+  updatedAt: string
+}
 
+export type ProductPayload = {
+  sku: string
+  name: string
+  baseUom: string
+  description?: string | null
+  status?: ManagedProduct["status"]
+  categoryId: string
+  brandId: string
+  supplierId: string
+}
 
-// Get all products
+export type SupplierRecord = CatalogOption & {
+  contactPerson?: string
+  email?: string
+  phone?: string
+  address?: string
+  rnc?: string
+  isActive: boolean
+}
+
+export type SupplierPayload = {
+  name: string
+  contactPerson?: string
+  email?: string
+  phone?: string
+  address?: string
+  rnc?: string
+  isActive?: boolean
+}
+
+export type PackagingPayload = {
+  name: string
+  barcode?: string | null
+  factorBase: number
+  unitMeasure: string
+  contentQuantity?: number | null
+  pricingMode: "FIXED_PRICE"
+  fixedPrice: number
+  minStock?: number | null
+  maxStock?: number | null
+  reorderPoint?: number | null
+  status?: number
+}
+
 export async function fetchProducts(): Promise<Product[]> {
-  
-  try {
-   
-    const response = await axiosInstance.get<ApiListResponse<Product>>("/v1/products")
-     const records = response.data?.data?.records ?? [];
-    
-    // console.log("fetchProducts: Response from", axiosInstance, response.data)
-
-    // const products = response.data?.data?.records || []
-
-    if(!Array.isArray(records)){
-      console.error("fetchProducts: Invalid response format. Expected array, got:", response.data) 
-      return[]    
-    }
-    return records; 
-    // console.log("fetchUsers: Mapped Products", mappedProducts)
-     } catch (error) {
-    console.error("Error fetching Products:", error)
-    return [];
-  }
+  const response = await api.get("/v1/pos/catalog")
+  return response.data.data.records
 }
 
-export async function fetchProductsId(id: string): Promise<Product | null> {
-  try {
-    const response = await axiosInstance.get<ApiItemResponse<Product>>(`/v1/products/${id}`)
-    const data = response.data?.data;
-    if(!data) return null;
-    if(typeof (data as {record?: Product}).record !== "undefined"){
-      return (data as {record?: Product}).record ?? null;
-    }
-    return (data as Product) ?? null;
-  } catch (error) {
-    console.error(`Error cargando productos con ID ${id}:`, error)
-    return null
-  }
+export async function fetchCategories(): Promise<Categories[]> {
+  const response = await api.get("/v1/categories", { params: { limit: 100 } })
+  return response.data.data.records
 }
 
-export async function editProductId(id: string): Promise <Product | null>{
-  try {
-    const response = await axiosInstance.put<ApiItemResponse<Product>>(`/v1/products/${id}`)
-    const data = response.data?.data;
-    if (!data) return null;
-    if (typeof (data as { record?: Product }).record !== "undefined") {
-      return (data as { record?: Product }).record ?? null;
-    }
-    return (data as Product) ?? null;
-  } catch (error) {
-    console.error(`Error editando producto con ID ${id}:`, error)
-    return null
-  }
+export async function fetchManagedProducts(): Promise<ManagedProduct[]> {
+  const response = await api.get("/v1/products", { params: { limit: 100 } })
+  return response.data.data.records
 }
 
-export async function deleteProduct(id: string): Promise<boolean> {
-  try {
-    const response = await axiosInstance.delete(`/v1/products/${id}`)
-    return response.status >= 200 && response.status < 300;
-  } catch (error) {
-    console.error(`Error borrando producto con ID ${id}:`, error)
-    return false
-  }
-  
+export async function fetchManagedProduct(id: string): Promise<ManagedProduct> {
+  const response = await api.get(`/v1/products/${id}`)
+  return response.data.data
+}
+
+export async function createProduct(payload: ProductPayload): Promise<ManagedProduct> {
+  const response = await api.post("/v1/products", payload)
+  return response.data.data
+}
+
+export async function updateProduct(id: string, payload: ProductPayload): Promise<ManagedProduct> {
+  const response = await api.put(`/v1/products/${id}`, payload)
+  return response.data.data
+}
+
+export async function deactivateProduct(id: string): Promise<ManagedProduct> {
+  const response = await api.delete(`/v1/products/${id}`)
+  return response.data.data
+}
+
+export async function createPackaging(productId: string, payload: PackagingPayload) {
+  const response = await api.post(`/v1/products/${productId}/packagings`, payload)
+  return response.data.data as ProductPackaging
+}
+
+export async function updatePackaging(
+  productId: string,
+  packagingId: string,
+  payload: PackagingPayload,
+) {
+  const response = await api.put(
+    `/v1/products/${productId}/packagings/${packagingId}`,
+    payload,
+  )
+  return response.data.data as ProductPackaging
+}
+
+export async function deactivatePackaging(productId: string, packagingId: string) {
+  const response = await api.delete(`/v1/products/${productId}/packagings/${packagingId}`)
+  return response.data.data as ProductPackaging
+}
+
+export async function fetchBrands(): Promise<CatalogOption[]> {
+  const response = await api.get("/v1/brands/", { params: { limit: 100 } })
+  return response.data.data.records
+}
+
+export async function fetchSuppliers(): Promise<CatalogOption[]> {
+  const response = await api.get("/v1/suppliers", { params: { limit: 100 } })
+  return response.data.data.records
+}
+
+export async function createBrand(name: string): Promise<CatalogOption> {
+  const response = await api.post("/v1/brands/", { name })
+  return response.data.data
+}
+
+export async function createCategory(name: string): Promise<CatalogOption> {
+  const response = await api.post("/v1/categories", { name })
+  return response.data.data
+}
+
+export async function createSupplier(payload: SupplierPayload): Promise<SupplierRecord> {
+  const response = await api.post("/v1/suppliers", payload)
+  return response.data.data
+}
+
+export async function fetchSupplierRecords(): Promise<SupplierRecord[]> {
+  const response = await api.get("/v1/suppliers", { params: { limit: 100 } })
+  return response.data.data.records
+}
+
+export async function updateSupplier(
+  id: string,
+  payload: SupplierPayload,
+): Promise<SupplierRecord> {
+  const response = await api.put(`/v1/suppliers/${id}`, payload)
+  return response.data.data
+}
+
+export async function deactivateSupplier(
+  supplier: SupplierRecord,
+): Promise<SupplierRecord> {
+  return updateSupplier(supplier.id, { ...supplier, isActive: false })
 }
