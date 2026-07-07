@@ -30,6 +30,10 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="p-3 text-start">
         <div className="fw-medium">{name}</div>
         <div className="small">{formatCurrency(price)}</div>
+        <div className="small text-muted">
+          ITBIS {formatCurrency(product.itbis ?? 0)}
+          {(product.isc ?? 0) > 0 ? ` · ISC ${formatCurrency(product.isc ?? 0)}` : ""}
+        </div>
         <div className={`small ${product.stock <= 0 ? "text-danger" : "text-muted"}`}>
           {product.stock <= 0 ? "Sin existencia" : `${product.stock} disponibles`}
         </div>

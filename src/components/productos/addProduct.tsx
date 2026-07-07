@@ -15,6 +15,7 @@ import {
   updateProduct,
   type CatalogOption,
   type PackagingPayload,
+  type ProductTaxConfig,
 } from "../../services/product-service"
 import {
   adjustInventory,
@@ -27,6 +28,32 @@ type PackagingForm = PackagingPayload & {
   initialQuantity: number
 }
 type CatalogKind = "brand" | "category" | "supplier" | null
+
+const defaultTaxConfig = (): ProductTaxConfig => ({
+  itbisEnabled: true,
+  itbisRate: 18,
+  iscEnabled: false,
+  iscAdValoremRate: 10,
+  iscSpecificAmount: 758.26,
+  alcoholByVolume: 0,
+  containerLiters: 0,
+  pvp: 0,
+  tariffCode: "",
+})
+
+const baseUnitToForm = (unit: string) => {
+  const map: Record<string, string> = {
+    bottle: "BOTELLA",
+    can: "LATA",
+    unit: "UNIDAD",
+    gal: "GALON",
+    l: "LITRO",
+    bag: "BOLSA",
+    barrel: "BARRIL",
+    pack: "PAQUETE",
+  }
+  return map[unit] || unit
+}
 
 const emptyPackaging = (): PackagingForm => ({
   name: "Unidad",
@@ -75,6 +102,7 @@ export default function ProductFormPage() {
     supplierId: "",
     status: "ACTIVE" as "ACTIVE" | "INACTIVE" | "DISCONTINUED",
   })
+  const [taxConfig, setTaxConfig] = useState<ProductTaxConfig>(defaultTaxConfig())
   const [packagings, setPackagings] = useState<PackagingForm[]>([emptyPackaging()])
   const standardBaseUnits = ["BOTELLA", "LATA", "UNIDAD", "GALON", "LITRO", "BOLSA", "BARRIL", "PAQUETE"]
   const customBaseUnit = !standardBaseUnits.includes(form.baseUom)
@@ -84,10 +112,10 @@ export default function ProductFormPage() {
       try {
         setLoading(true)
         const [brandRecords, categoryRecords, supplierRecords, warehouseRecords] = await Promise.all([
-          fetchBrands(),
-          fetchCategories(),
+          fetchBrands().catch(() => []),
+          fetchCategories().catch(() => []),
           fetchSuppliers().catch(() => []),
-          fetchWarehouses(),
+          fetchWarehouses().catch(() => []),
         ])
         setBrands(brandRecords)
         setCategories(categoryRecords)
@@ -100,13 +128,14 @@ export default function ProductFormPage() {
           setForm({
             sku: product.sku,
             name: product.name,
-            baseUom: product.baseUom,
+            baseUom: baseUnitToForm(product.baseUom),
             description: product.description || "",
             categoryId: product.category?.id || "",
             brandId: product.brand?.id || "",
             supplierId: product.supplier?.id || "",
             status: product.status,
           })
+          setTaxConfig({ ...defaultTaxConfig(), ...(product.taxConfig || {}) })
           setPackagings(
             product.packagings?.map((item) => ({
               id: item.id,
@@ -235,7 +264,7 @@ export default function ProductFormPage() {
         setMessage("Seleccione o cree un proveedor.")
         return
       }
-      const payload = { ...form, supplierId: form.supplierId }
+      const payload = { ...form, supplierId: form.supplierId, taxConfig }
       const product = editing && id
         ? await updateProduct(id, payload)
         : await createProduct(payload)
@@ -426,6 +455,180 @@ export default function ProductFormPage() {
         </div>
 
         <div className="card shadow-sm mb-4">
+          <div className="card-header">
+            <strong>Impuestos</strong>
+            <div className="small text-muted">
+              Activa o desactiva ITBIS/ISC y define las tasas que aplican a este producto.
+            </div>
+          </div>
+          <div className="card-body">
+            <div className="row g-3">
+              <div className="col-md-3">
+                <div className="form-check form-switch mt-4">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    checked={taxConfig.itbisEnabled}
+                    onChange={(event) =>
+                      setTaxConfig((current) => ({
+                        ...current,
+                        itbisEnabled: event.target.checked,
+                      }))
+                    }
+                    id="itbis-enabled"
+                  />
+                  <label className="form-check-label" htmlFor="itbis-enabled">
+                    Cobrar ITBIS
+                  </label>
+                </div>
+              </div>
+              <div className="col-md-3">
+                <label className="form-label">ITBIS %</label>
+                <input
+                  className="form-control"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  disabled={!taxConfig.itbisEnabled}
+                  value={taxConfig.itbisRate === 0 ? "" : taxConfig.itbisRate}
+                  placeholder="18"
+                  onChange={(event) =>
+                    setTaxConfig((current) => ({
+                      ...current,
+                      itbisRate: event.target.value === "" ? 0 : Number(event.target.value),
+                    }))
+                  }
+                />
+              </div>
+              <div className="col-md-3">
+                <div className="form-check form-switch mt-4">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    checked={taxConfig.iscEnabled}
+                    onChange={(event) =>
+                      setTaxConfig((current) => ({
+                        ...current,
+                        iscEnabled: event.target.checked,
+                      }))
+                    }
+                    id="isc-enabled"
+                  />
+                  <label className="form-check-label" htmlFor="isc-enabled">
+                    Cobrar ISC
+                  </label>
+                </div>
+              </div>
+              <div className="col-md-3">
+                <label className="form-label">ISC sobre PVP %</label>
+                <input
+                  className="form-control"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  disabled={!taxConfig.iscEnabled}
+                  value={taxConfig.iscAdValoremRate === 0 ? "" : taxConfig.iscAdValoremRate}
+                  placeholder="10"
+                  onChange={(event) =>
+                    setTaxConfig((current) => ({
+                      ...current,
+                      iscAdValoremRate: event.target.value === "" ? 0 : Number(event.target.value),
+                    }))
+                  }
+                />
+              </div>
+              {taxConfig.iscEnabled && (
+                <>
+                  <div className="col-md-3">
+                    <label className="form-label">ISC específico</label>
+                    <input
+                      className="form-control"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={taxConfig.iscSpecificAmount === 0 ? "" : taxConfig.iscSpecificAmount}
+                      placeholder="758.26"
+                      onChange={(event) =>
+                        setTaxConfig((current) => ({
+                          ...current,
+                          iscSpecificAmount: event.target.value === "" ? 0 : Number(event.target.value),
+                        }))
+                      }
+                    />
+                    <div className="form-text">Monto por litro de alcohol absoluto.</div>
+                  </div>
+                  <div className="col-md-3">
+                    <label className="form-label">Alcohol %</label>
+                    <input
+                      className="form-control"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={taxConfig.alcoholByVolume === 0 ? "" : taxConfig.alcoholByVolume}
+                      placeholder="40"
+                      onChange={(event) =>
+                        setTaxConfig((current) => ({
+                          ...current,
+                          alcoholByVolume: event.target.value === "" ? 0 : Number(event.target.value),
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="col-md-3">
+                    <label className="form-label">Contenido litros</label>
+                    <input
+                      className="form-control"
+                      type="number"
+                      min={0}
+                      step="0.001"
+                      value={taxConfig.containerLiters === 0 ? "" : taxConfig.containerLiters}
+                      placeholder="0.750"
+                      onChange={(event) =>
+                        setTaxConfig((current) => ({
+                          ...current,
+                          containerLiters: event.target.value === "" ? 0 : Number(event.target.value),
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="col-md-3">
+                    <label className="form-label">PVP base ISC</label>
+                    <input
+                      className="form-control"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={taxConfig.pvp === 0 ? "" : taxConfig.pvp}
+                      placeholder="1000"
+                      onChange={(event) =>
+                        setTaxConfig((current) => ({
+                          ...current,
+                          pvp: event.target.value === "" ? 0 : Number(event.target.value),
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="col-md-3">
+                    <label className="form-label">Código arancelario</label>
+                    <input
+                      className="form-control"
+                      value={taxConfig.tariffCode || ""}
+                      placeholder="22.08"
+                      onChange={(event) =>
+                        setTaxConfig((current) => ({
+                          ...current,
+                          tariffCode: event.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="card shadow-sm mb-4">
           <div className="card-header d-flex justify-content-between align-items-center">
             <div>
               <strong>Presentaciones</strong>
@@ -506,9 +709,10 @@ export default function ProductFormPage() {
                       step="0.01"
                       required
                       disabled={packaging.status === 0}
-                      value={packaging.fixedPrice}
+                      value={packaging.fixedPrice === 0 ? "" : packaging.fixedPrice}
+                      placeholder="0.00"
                       onChange={(event) =>
-                        updatePackage(index, "fixedPrice", Number(event.target.value))
+                        updatePackage(index, "fixedPrice", event.target.value === "" ? 0 : Number(event.target.value))
                       }
                     />
                   </div>
@@ -610,7 +814,8 @@ export default function ProductFormPage() {
                 </div>
                 <div className="small text-muted mt-2">
                   Vender 1 {packaging.name || "presentación"} descontará{" "}
-                  <strong>{packaging.factorBase || 0}</strong> {form.baseUom.toLowerCase()}(s).
+                  <strong>{packaging.factorBase || 0}</strong>{" "}
+                  {(form.baseUom || "unidad").toLowerCase()}(s).
                 </div>
               </div>
             ))}

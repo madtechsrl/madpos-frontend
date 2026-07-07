@@ -14,7 +14,18 @@ const CASH_DENOMINATIONS = [2000, 1000, 500, 200, 100, 50, 25, 10, 5, 1]
 const DEFAULT_OPENING_FUND = Number(import.meta.env.VITE_DEFAULT_CASH_FUND || 2000)
 
 export function CartSidebar() {
-  const { cart, clearCart, cartTotal, isCartOpen, setIsCartOpen, addPaymentRecord } = useCart()
+  const {
+    cart,
+    clearCart,
+    cartTotal,
+    cartSubtotal,
+    cartIsc,
+    cartItbis,
+    cartTaxTotal,
+    isCartOpen,
+    setIsCartOpen,
+    addPaymentRecord,
+  } = useCart()
   const [showPaymentOptions, setShowPaymentOptions] = useState(false)
   const [paymentComplete, setPaymentComplete] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null)
@@ -218,7 +229,19 @@ export function CartSidebar() {
                   <div className="border-top p-3">
                     <div className="d-flex justify-content-between mb-2">
                       <span className="text-secondary">Subtotal:</span>
-                      <span className="fw-medium">{formatCurrency(cartTotal)}</span>
+                      <span className="fw-medium">{formatCurrency(cartSubtotal)}</span>
+                    </div>
+                    <div className="d-flex justify-content-between mb-2">
+                      <span className="text-secondary">ISC:</span>
+                      <span className="fw-medium">{formatCurrency(cartIsc)}</span>
+                    </div>
+                    <div className="d-flex justify-content-between mb-2">
+                      <span className="text-secondary">ITBIS:</span>
+                      <span className="fw-medium">{formatCurrency(cartItbis)}</span>
+                    </div>
+                    <div className="d-flex justify-content-between mb-2">
+                      <span className="text-secondary">Impuestos:</span>
+                      <span className="fw-medium">{formatCurrency(cartTaxTotal)}</span>
                     </div>
                     <div className="d-flex justify-content-between mb-3">
                       <span className="text-secondary">Total:</span>

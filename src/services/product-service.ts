@@ -33,8 +33,21 @@ export type ManagedProduct = {
   brand?: CatalogOption
   supplier?: CatalogOption
   packagings: ProductPackaging[]
+  taxConfig?: ProductTaxConfig
   createdAt: string
   updatedAt: string
+}
+
+export type ProductTaxConfig = {
+  itbisEnabled: boolean
+  itbisRate: number
+  iscEnabled: boolean
+  iscAdValoremRate: number
+  iscSpecificAmount: number
+  alcoholByVolume: number
+  containerLiters: number
+  pvp: number
+  tariffCode?: string
 }
 
 export type ProductPayload = {
@@ -46,6 +59,7 @@ export type ProductPayload = {
   categoryId: string
   brandId: string
   supplierId: string
+  taxConfig?: ProductTaxConfig
 }
 
 export type SupplierRecord = CatalogOption & {
@@ -83,7 +97,15 @@ export type PackagingPayload = {
 
 export async function fetchProducts(): Promise<Product[]> {
   const response = await api.get("/v1/pos/catalog")
-  return response.data.data.records
+  return response.data.data.records.map((record: Product) => ({
+    ...record,
+    basePrice: record.basePrice ?? record.price,
+    isc: record.isc ?? 0,
+    itbis: record.itbis ?? 0,
+    taxTotal: record.taxTotal ?? ((record.isc ?? 0) + (record.itbis ?? 0)),
+    totalPrice: record.totalPrice ?? record.price,
+    price: record.totalPrice ?? record.price,
+  }))
 }
 
 export async function fetchCategories(): Promise<Categories[]> {
@@ -97,7 +119,13 @@ export async function fetchManagedProducts(): Promise<ManagedProduct[]> {
 }
 
 export async function fetchManagedProduct(id: string): Promise<ManagedProduct> {
-  const response = await api.get(`/v1/products/${id}`)
+  const response = await api.get(`/v1/products/${id}`, {
+    params: { _ts: Date.now() },
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+    },
+  })
   return response.data.data
 }
 

@@ -6,6 +6,10 @@ type CartItem = {
   id: string
   name: string
   price: number
+  basePrice: number
+  isc: number
+  itbis: number
+  taxTotal: number
   quantity: number
   image?: string
   packagingId: string
@@ -18,6 +22,11 @@ type Product = {
   id: string
   name: string
   price: number
+  basePrice?: number
+  isc?: number
+  itbis?: number
+  taxTotal?: number
+  totalPrice?: number
   image?: string
   packagingId: string
   productId: string
@@ -40,6 +49,10 @@ type CartContextType = {
   updateQuantity: (productId: string, newQuantity: number) => void
   clearCart: () => void
   cartTotal: number
+  cartSubtotal: number
+  cartIsc: number
+  cartItbis: number
+  cartTaxTotal: number
   cartCount: number
   isCartOpen: boolean
   setIsCartOpen: (isOpen: boolean) => void
@@ -55,6 +68,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [recentPayments, setRecentPayments] = useState<PaymentRecord[]>([])
 
   // Calculate cart totals
+  const cartSubtotal = cart.reduce((total, item) => total + item.basePrice * item.quantity, 0)
+  const cartIsc = cart.reduce((total, item) => total + item.isc * item.quantity, 0)
+  const cartItbis = cart.reduce((total, item) => total + item.itbis * item.quantity, 0)
+  const cartTaxTotal = cartIsc + cartItbis
   const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0)
 
@@ -75,7 +92,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
           {
             id: product.id,
             name: product.name,
-            price: product.price,
+            price: product.totalPrice ?? product.price,
+            basePrice: product.basePrice ?? product.price,
+            isc: product.isc ?? 0,
+            itbis: product.itbis ?? 0,
+            taxTotal: product.taxTotal ?? ((product.isc ?? 0) + (product.itbis ?? 0)),
             quantity: 1,
             image: product.image,
             packagingId: product.packagingId,
@@ -167,6 +188,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         updateQuantity,
         clearCart,
         cartTotal,
+        cartSubtotal,
+        cartIsc,
+        cartItbis,
+        cartTaxTotal,
         cartCount,
         isCartOpen,
         setIsCartOpen,

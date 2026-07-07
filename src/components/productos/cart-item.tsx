@@ -6,6 +6,10 @@ type CartItemProps = {
     id: string
     name: string
     price: number
+    basePrice?: number
+    isc?: number
+    itbis?: number
+    taxTotal?: number
     quantity: number
     image?: string
   }
@@ -60,7 +64,10 @@ export function CartItem({ item }: CartItemProps) {
           </button>
         </div>
 
-        <div className="text-secondary small">{formatCurrency(item.price)}</div>
+        <div className="text-secondary small">
+          Base {formatCurrency(item.basePrice ?? item.price)} · ITBIS {formatCurrency(item.itbis ?? 0)}
+          {(item.isc ?? 0) > 0 ? ` · ISC ${formatCurrency(item.isc ?? 0)}` : ""}
+        </div>
 
         <div className="d-flex align-items-center justify-content-between mt-2">
           <div className="input-group input-group-sm flex-shrink-0" style={{ width: "auto" }}>

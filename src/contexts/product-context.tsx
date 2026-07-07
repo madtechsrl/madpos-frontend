@@ -8,6 +8,11 @@ export type Product = {
   id: string
   name: string
   price: number
+  basePrice?: number
+  isc?: number
+  itbis?: number
+  taxTotal?: number
+  totalPrice?: number
   category: string
   packagingId: string
   productId: string
